@@ -1,7 +1,5 @@
 // components/(welcome)/page.tsx
 
-'use client'
-
 import Navigation from './components/navigation'
 import HeroSection from './components/hero-section'
 import EarlyAdopterOffer from './components/early-adopter-offer'
