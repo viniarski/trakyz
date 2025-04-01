@@ -1,4 +1,4 @@
-// app/terms/page.tsx
+// app/(legal)/terms/page.tsx
 
 'use client'
 

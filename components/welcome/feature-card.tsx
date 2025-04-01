@@ -1,3 +1,5 @@
+// components/welcome/feature-card.tsx
+
 'use client'
 
 export default function FeatureCard({ 

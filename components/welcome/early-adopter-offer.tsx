@@ -1,3 +1,5 @@
+// components/welcome/early-adopter-offer.tsx
+
 'use client'
 
 import Link from 'next/link'

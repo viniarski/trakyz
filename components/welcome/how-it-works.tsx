@@ -1,3 +1,5 @@
+// components/welcome/how-it-works.tsx
+
 'use client'
 
 import { Wallet, PieChart, Shield } from 'lucide-react'

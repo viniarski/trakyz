@@ -1,3 +1,5 @@
+// components/welcome/welcome-page.tsx
+
 'use client'
 
 import Navigation from './navigation'

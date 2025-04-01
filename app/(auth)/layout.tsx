@@ -1,3 +1,5 @@
+// app/(auth)/layout.tsx
+
 import { ThemeToggle } from '@/components/theme-toggle'
 import Link from 'next/link'
 import Image from 'next/image'

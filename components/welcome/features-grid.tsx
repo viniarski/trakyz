@@ -1,3 +1,5 @@
+// components/welcome/features-grid.tsx
+
 'use client'
 
 import { LineChart, BarChart2, TrendingUp } from 'lucide-react'

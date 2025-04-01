@@ -2,7 +2,7 @@
 
 'use client'
 
-import Navigation from '@/app/components/ui/navigation'
+import Navigation from '@/components/ui/navigation'
 import CookieHeader from './components/cookie-header'
 import CookieContent from './components/cookie-content'
 

@@ -1,3 +1,5 @@
+// components/welcome/asset-classes.tsx
+
 'use client'
 
 export default function AssetClasses() {

@@ -1,3 +1,5 @@
+// app/page.tsx
+
 import { createClient } from '@/utils/supabase/server'
 import WelcomePage from '@/components/welcome/welcome-page'
 import { redirect } from 'next/navigation'
