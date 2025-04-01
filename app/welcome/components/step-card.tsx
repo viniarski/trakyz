@@ -1,5 +1,4 @@
-// components/welcome/step-card.tsx
-
+// app/welcome/components/step-card.tsx
 'use client'
 
 export default function StepCard({ 

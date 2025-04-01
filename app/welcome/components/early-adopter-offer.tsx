@@ -1,4 +1,4 @@
-// components/welcome/early-adopter-offer.tsx
+// app/welcome/components/early-adopter-offer.tsx
 
 'use client'
 

@@ -1,4 +1,4 @@
-// components/welcome/hero-section.tsx
+// app/welcome/components/hero-section.tsx
 
 'use client'
 

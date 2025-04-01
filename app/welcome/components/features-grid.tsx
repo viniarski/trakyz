@@ -1,4 +1,4 @@
-// components/welcome/features-grid.tsx
+// app/welcome/components/features-grid.tsx
 
 'use client'
 

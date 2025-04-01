@@ -1,4 +1,4 @@
-// components/welcome/call-to-action.tsx
+// app/welcome/components/call-to-action.tsx
 
 'use client'
 

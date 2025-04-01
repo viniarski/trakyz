@@ -1,4 +1,4 @@
-// components/welcome/feature-card.tsx
+// app/welcome/components/feature-card.tsx
 
 'use client'
 

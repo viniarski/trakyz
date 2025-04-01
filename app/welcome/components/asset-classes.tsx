@@ -1,4 +1,4 @@
-// components/welcome/asset-classes.tsx
+// app/welcome/components/asset-classes.tsx
 
 'use client'
 

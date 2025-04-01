@@ -2,7 +2,9 @@
 
 import { createClient } from '@/utils/supabase/server'
 import { redirect } from 'next/navigation'
-import WelcomePage from '@/app/(welcome)/page'
+
+// This prevents static optimization during build
+export const dynamic = 'force-dynamic';
 
 export default async function Home() {
   // Check if user is authenticated
@@ -14,6 +16,6 @@ export default async function Home() {
     return redirect('/protected')
   }
 
-  // Return the welcome page for unauthenticated users
-  return <WelcomePage />
+  // For non-authenticated users, redirect to the welcome page
+  return redirect('/welcome');
 }

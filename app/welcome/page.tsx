@@ -1,4 +1,6 @@
-// components/(welcome)/page.tsx
+// app/welcome/page.tsx
+
+'use client'
 
 import Navigation from './components/navigation'
 import HeroSection from './components/hero-section'

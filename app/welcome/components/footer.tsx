@@ -1,4 +1,4 @@
-// components/welcome/footer.tsx
+// app/welcome/components/footer.tsx
 
 'use client'
 

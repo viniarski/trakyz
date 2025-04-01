@@ -1,4 +1,4 @@
-// components/welcome/how-it-works.tsx
+// app/welcome/components/how-it-works.tsx
 
 'use client'
 
