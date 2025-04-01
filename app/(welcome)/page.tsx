@@ -1,4 +1,4 @@
-// components/welcome/welcome-page.tsx
+// components/(welcome)/page.tsx
 
 'use client'
 
