@@ -1,6 +1,5 @@
 // app/(auth)/layout.tsx
 
-import { ThemeToggle } from '@/components/theme-toggle'
 import Link from 'next/link'
 import Image from 'next/image'
 
@@ -10,11 +9,7 @@ export default async function AuthLayout({
   children: React.ReactNode;
 }) {
   return (
-    <div className="min-h-screen bg-gray-900 flex items-center justify-center p-4">
-      <div className="absolute top-4 right-4">
-        <ThemeToggle />
-      </div>
-      
+    <div className="min-h-screen bg-gray-900 flex items-center justify-center p-4">      
       <div className="bg-gray-800/50 p-6 rounded-2xl border border-gray-700 w-full max-w-md animate-scale-up">
         <div className="flex justify-center mb-6">
           <Link 

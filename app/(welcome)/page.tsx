@@ -2,14 +2,14 @@
 
 'use client'
 
-import Navigation from './navigation'
-import HeroSection from './hero-section'
-import EarlyAdopterOffer from './early-adopter-offer'
-import FeaturesGrid from './features-grid'
-import AssetClasses from './asset-classes'
-import HowItWorks from './how-it-works'
-import CallToAction from './call-to-action'
-import Footer from './footer'
+import Navigation from './components/navigation'
+import HeroSection from './components/hero-section'
+import EarlyAdopterOffer from './components/early-adopter-offer'
+import FeaturesGrid from './components/features-grid'
+import AssetClasses from './components/asset-classes'
+import HowItWorks from './components/how-it-works'
+import CallToAction from './components/call-to-action'
+import Footer from './components/footer'
 
 export default function WelcomePage() {
   return (
