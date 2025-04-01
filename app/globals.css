@@ -1,84 +1,86 @@
+/* app/styles/globals.css */
 @import 'tailwindcss/base';
 @import 'tailwindcss/components';
 @import 'tailwindcss/utilities';
 
-@layer base {
-  :root {
-    /* Light mode variables - clean white */
-    --background: 0 0% 100%;
-    --foreground: 0 0% 3.9%;
-    --card: 0 0% 98%;
-    --card-foreground: 0 0% 3.9%;
-    --popover: 0 0% 100%;
-    --popover-foreground: 0 0% 3.9%;
-    --primary: 217 91% 60%; /* blue-500 */
-    --primary-foreground: 210 40% 98%;
-    --secondary: 210 40% 96.1%;
-    --secondary-foreground: 222.2 47.4% 11.2%;
-    --muted: 210 40% 96.1%;
-    --muted-foreground: 215.4 16.3% 46.9%;
-    --accent: 210 40% 96.1%;
-    --accent-foreground: 222.2 47.4% 11.2%;
-    --destructive: 0 84.2% 60.2%;
-    --destructive-foreground: 210 40% 98%;
-    --border: 214.3 31.8% 91.4%;
-    --input: 214.3 31.8% 91.4%;
-    --ring: 221.2 83.2% 53.3%;
-    --radius: 0.5rem;
-  }
+[data-theme='blue'] {
+  --bg-primary: rgb(17, 24, 39); /* gray-900 */
+  --bg-secondary: rgb(31, 41, 55); /* gray-800 */
+  --bg-hover: rgb(55, 65, 81); /* gray-700 */
+  --text-primary: rgb(255, 255, 255);
+  --text-secondary: rgb(156, 163, 175); /* gray-400 */
+  --accent-primary: rgb(59, 130, 246); /* blue-500 */
+  --accent-secondary: rgb(96, 165, 250); /* blue-400 */
 
-  .dark {
-    /* Dark mode variables - deep black */
-    --background: 0 0% 7%; /* Darker black for background */
-    --foreground: 210 40% 98%;
-    --card: 0 0% 12%; /* Slightly lighter for card backgrounds */
-    --card-foreground: 210 40% 98%;
-    --popover: 0 0% 9%;
-    --popover-foreground: 210 40% 98%;
-    --primary: 217 91% 60%; /* Maintain consistent blue */
-    --primary-foreground: 210 40% 98%;
-    --secondary: 217 19% 27%;
-    --secondary-foreground: 210 40% 98%;
-    --muted: 217 19% 14%; /* Even more subtle muted color */
-    --muted-foreground: 215 20.2% 65.1%;
-    --accent: 217 19% 14%;
-    --accent-foreground: 210 40% 98%;
-    --destructive: 0 62.8% 30.6%;
-    --destructive-foreground: 210 40% 98%;
-    --border: 217 19% 18%; /* Subtle border */
-    --input: 217 19% 18%;
-    --ring: 224.3 76.3% 48%;
-  }
+  /* Opacity variants for accent-primary */
+  --accent-primary-10: rgba(59, 130, 246, 0.1);
+  --accent-primary-20: rgba(59, 130, 246, 0.2);
+  --accent-primary-80: rgba(59, 130, 246, 0.8);
 
-  /* Animation classes from your original CSS */
-  @keyframes fadeIn {
-    from {
-      opacity: 0;
-    }
-    to {
-      opacity: 1;
-    }
-  }
+  /* Semantic colors with opacity */
+  --success-10: rgba(34, 197, 94, 0.1);
+  --success-20: rgba(34, 197, 94, 0.2);
+  --success-80: rgba(34, 197, 94, 0.8);
 
-  @keyframes scaleUp {
-    from {
-      transform: scale(0.95);
-      opacity: 0;
-    }
-    to {
-      transform: scale(1);
-      opacity: 1;
-    }
-  }
+  --error-10: rgba(239, 68, 68, 0.1);
+  --error-20: rgba(239, 68, 68, 0.2);
+  --error-80: rgba(239, 68, 68, 0.8);
+}
 
-  @keyframes slideInLeft {
-    from {
-      transform: translateX(-100%);
-    }
-    to {
-      transform: translateX(0);
-    }
-  }
+[data-theme='light'] {
+  --bg-primary: rgb(245, 245, 245);
+  --bg-secondary: rgb(230, 230, 230);
+  --bg-hover: rgb(210, 210, 210);
+  --text-primary: rgb(20, 20, 60);
+  --text-secondary: rgb(60, 60, 100);
+  --accent-primary: rgb(59, 130, 246); /* blue-500 */
+  --accent-secondary: rgb(96, 165, 250); /* blue-400 */
+
+  /* Opacity variants for accent-primary */
+  --accent-primary-10: rgba(59, 130, 246, 0.1);
+  --accent-primary-20: rgba(59, 130, 246, 0.2);
+  --accent-primary-80: rgba(59, 130, 246, 0.8);
+
+  /* Semantic colors with opacity */
+  --success-10: rgba(34, 197, 94, 0.1);
+  --success-20: rgba(34, 197, 94, 0.2);
+  --success-80: rgba(34, 197, 94, 0.8);
+
+  --error-10: rgba(239, 68, 68, 0.1);
+  --error-20: rgba(239, 68, 68, 0.2);
+  --error-80: rgba(239, 68, 68, 0.8);
+}
+
+[data-theme='dark'] {
+  --bg-primary: rgb(18, 18, 18);
+  --bg-secondary: rgb(34, 34, 34);
+  --bg-hover: rgb(50, 50, 50);
+  --text-primary: rgb(240, 240, 240);
+  --text-secondary: rgb(160, 160, 160);
+  --accent-primary: rgb(59, 130, 246); /* blue-500 */
+  --accent-secondary: rgb(96, 165, 250); /* blue-400 */
+
+  /* Opacity variants for accent-primary */
+  --accent-primary-10: rgba(59, 130, 246, 0.1);
+  --accent-primary-20: rgba(59, 130, 246, 0.2);
+  --accent-primary-80: rgba(59, 130, 246, 0.8);
+
+  /* Semantic colors with opacity */
+  --success-10: rgba(34, 197, 94, 0.1);
+  --success-20: rgba(34, 197, 94, 0.2);
+  --success-80: rgba(34, 197, 94, 0.8);
+
+  --error-10: rgba(239, 68, 68, 0.1);
+  --error-20: rgba(239, 68, 68, 0.2);
+  --error-80: rgba(239, 68, 68, 0.8);
+}
+
+body {
+  margin: 0;
+  min-width: 320px;
+  min-height: 100vh;
+  background-color: var(--bg-primary);
+  color: var(--text-primary);
 }
 
 @layer utilities {
@@ -89,8 +91,37 @@
   .animate-scale-up {
     animation: scaleUp 0.2s ease-out;
   }
+}
 
-  .animate-slide-in-left {
-    animation: slideInLeft 0.3s ease-out;
+@keyframes fadeIn {
+  from {
+    opacity: 0;
   }
+  to {
+    opacity: 1;
+  }
+}
+
+@keyframes scaleUp {
+  from {
+    transform: scale(0.95);
+    opacity: 0;
+  }
+  to {
+    transform: scale(1);
+    opacity: 1;
+  }
+}
+
+@keyframes slideInLeft {
+  from {
+    transform: translateX(-100%);
+  }
+  to {
+    transform: translateX(0);
+  }
+}
+
+.animate-slide-in-left {
+  animation: slideInLeft 0.3s ease-out;
 }
