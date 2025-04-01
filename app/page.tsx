@@ -2,25 +2,7 @@
 
 import { createClient } from '@/utils/supabase/server'
 import { redirect } from 'next/navigation'
-import dynamic from 'next/dynamic'
-
-// Simple loading component
-function LoadingState() {
-  return (
-    <div className="min-h-screen bg-gray-900 flex items-center justify-center">
-      <div className="h-12 w-12 animate-spin rounded-full border-4 border-blue-500 border-t-transparent"></div>
-    </div>
-  )
-}
-
-// Corrected import path based on your component location
-const WelcomePage = dynamic(
-  () => import('@/app/(welcome)/page'),
-  { 
-    ssr: true,
-    loading: () => <LoadingState />
-  }
-)
+import WelcomePage from '@/app/(welcome)/page'
 
 export default async function Home() {
   // Check if user is authenticated
@@ -32,6 +14,6 @@ export default async function Home() {
     return redirect('/protected')
   }
 
-  // Return the welcome page
+  // Return the welcome page for unauthenticated users
   return <WelcomePage />
 }

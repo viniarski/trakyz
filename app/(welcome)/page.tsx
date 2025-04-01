@@ -16,7 +16,6 @@ export default function WelcomePage() {
     <div className="min-h-screen relative">
       {/* Background image with different image for small screens */}
       <div className="absolute inset-0 bg-[url('/blue_bg_sm.avif')] sm:bg-[url('/blue_bg.avif')] bg-no-repeat bg-cover sm:rotate-180"></div>
-      <div className="absolute inset-0 bg-gray-950/40"></div>
       
       {/* Content */}
       <div className="relative z-10">
