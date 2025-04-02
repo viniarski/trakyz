@@ -1,9 +1,9 @@
 // app/welcome/components/call-to-action.tsx
-
 'use client'
 
 import Link from 'next/link'
 import { ArrowRight } from 'lucide-react'
+import { Button } from '@/components/ui/button'
 
 export default function CallToAction() {
   return (
@@ -15,19 +15,27 @@ export default function CallToAction() {
         Join thousands of successful investors who are already using Trakyz to optimize their portfolios
       </p>
       <div className="flex flex-col sm:flex-row items-center justify-center gap-4">
-        <Link
-          href="/sign-in"
-          className="w-full sm:w-auto inline-flex items-center justify-center gap-2 px-8 py-4 bg-blue-500/20 text-blue-500 rounded-xl hover:bg-blue-500/30 transition-all group"
+        <Button 
+          asChild 
+          variant="ghost" 
+          size="xxl"  // h-14 = 56px, matches original py-4
+          className="w-full sm:w-auto inline-flex items-center justify-center gap-2 bg-blue-500/20 text-blue-500 rounded-xl hover:bg-blue-500/30 transition-all group"
         >
-          Start Free Trial
-          <ArrowRight className="h-5 w-5 group-hover:translate-x-1 transition-transform" />
-        </Link>
-        <Link
-          href="/pricing"
-          className="w-full sm:w-auto inline-flex items-center justify-center gap-2 px-8 py-4 bg-gray-800 text-white rounded-xl hover:bg-gray-700 transition-all"
+          <Link href="/sign-in">
+            Start Free Trial
+            <ArrowRight className="h-5 w-5 group-hover:translate-x-1 transition-transform" />
+          </Link>
+        </Button>
+        <Button 
+          asChild 
+          variant="secondary" 
+          size="xxl"  // h-14 = 56px, matches original py-4
+          className="w-full sm:w-auto inline-flex items-center justify-center gap-2 bg-gray-800 text-white rounded-xl hover:bg-gray-700 transition-all"
         >
-          View Pricing
-        </Link>
+          <Link href="/pricing">
+            View Pricing
+          </Link>
+        </Button>
       </div>
     </div>
   )

@@ -23,7 +23,7 @@ export default function AssetClasses() {
         {assets.map((asset) => (
           <div 
             key={asset}
-            className="bg-gray-800/50 backdrop-blur rounded-xl p-4 text-center text-gray-300 hover:bg-gray-800 transition-colors"
+            className="bg-gray-800/50 backdrop-blur rounded-xl p-4 text-center text-gray-300"
           >
             {asset}
           </div>
