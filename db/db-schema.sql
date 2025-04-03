@@ -2,28 +2,28 @@
 CREATE EXTENSION IF NOT EXISTS "uuid-ossp";
 CREATE EXTENSION IF NOT EXISTS "pgcrypto";
 
--- USER TABLES
+----------------------- USER TABLES ---------------------------------
 -- (Note: auth.users is already created by Supabase)
 
 -- User profiles table
 CREATE TABLE public.user_profiles (
     id UUID PRIMARY KEY REFERENCES auth.users(id) ON DELETE CASCADE,
-    email TEXT NOT NULL,
-    username TEXT, 
-    name TEXT,
+    name TEXT DEFAULT NULL,
     role TEXT NOT NULL DEFAULT 'user' CHECK (role IN ('user', 'admin')),
-    avatar_url TEXT,
+    avatar_url TEXT DEFAULT NULL,
     selected_currency TEXT NOT NULL DEFAULT 'USD' CHECK (selected_currency IN ('USD', 'EUR', 'GBP', 'CHF', 'BTC', 'ETH', 'GOLD')),
     selected_period TEXT NOT NULL DEFAULT '24H' CHECK (selected_period IN ('24H', '7D')),
     theme_preference TEXT NOT NULL DEFAULT 'blue' CHECK (theme_preference IN ('blue', 'dark', 'light')),
-    watchlist JSONB DEFAULT '[]'::jsonb,
     last_active_tab TEXT DEFAULT 'portfolio',
     language TEXT DEFAULT 'en',
-    expanded_portfolio_categories JSONB DEFAULT '[]'::jsonb,
     market_show_more BOOLEAN DEFAULT false,
     created_at TIMESTAMPTZ DEFAULT NOW(),
     updated_at TIMESTAMPTZ DEFAULT NOW()
 );
+
+-- REMOVED THESE BELOW ENTRIES FROM THE ABOVE TABLE, WILL ADD THEM AGAIN LATER.
+-- watchlist JSONB DEFAULT '[]'::jsonb,
+-- expanded_portfolio_categories JSONB DEFAULT '[]'::jsonb,
 
 -- User plan table
 CREATE TABLE public.user_plans (
@@ -44,7 +44,7 @@ CREATE TABLE public.user_plans (
     updated_at TIMESTAMPTZ DEFAULT NOW()
 );
 
--- ASSET TABLES
+--------------- ASSET TABLES ---------------
 
 -- Portfolios table
 CREATE TABLE public.portfolios (
@@ -154,21 +154,53 @@ CREATE TABLE public.real_estate_properties (
     updated_at TIMESTAMPTZ DEFAULT NOW()
 );
 
--- Budget table
-CREATE TABLE public.budgets (
-    user_id UUID NOT NULL REFERENCES auth.users(id) ON DELETE CASCADE,
-    month DATE NOT NULL,
-    income JSONB NOT NULL DEFAULT '[]'::jsonb,
-    expenses JSONB NOT NULL DEFAULT '[]'::jsonb,
-    planned_income NUMERIC NOT NULL DEFAULT 0,
-    planned_expenses NUMERIC NOT NULL DEFAULT 0,
-    encrypted BOOLEAN DEFAULT false,
-    created_at TIMESTAMPTZ DEFAULT NOW(),
-    updated_at TIMESTAMPTZ DEFAULT NOW(),
-    PRIMARY KEY (user_id, month)
+-------------------- BUDGET TABLES --------------------
+
+-- Table storing predefined income options
+CREATE TABLE public.income_options (
+    id SERIAL PRIMARY KEY,
+    name TEXT NOT NULL UNIQUE
 );
 
--- MARKET DATA TABLES
+-- Table storing predefined expense options
+CREATE TABLE public.expense_options (
+    id SERIAL PRIMARY KEY,
+    name TEXT NOT NULL UNIQUE
+);
+
+-- User-selected incomes in budgets
+CREATE TABLE public.budget_income (
+    budget_month DATE NOT NULL,
+    user_id UUID NOT NULL,
+    income_option_id INT NOT NULL,
+    is_selected BOOLEAN NOT NULL DEFAULT FALSE,
+    PRIMARY KEY (budget_month, user_id, income_option_id),
+    FOREIGN KEY (budget_month, user_id) REFERENCES public.budgets (month, user_id) ON DELETE CASCADE,
+    FOREIGN KEY (income_option_id) REFERENCES public.income_options (id) ON DELETE CASCADE
+);
+
+-- User-selected expenses in budgets
+CREATE TABLE public.budget_expenses (
+    budget_month DATE NOT NULL,
+    user_id UUID NOT NULL,
+    expense_option_id INT NOT NULL,
+    is_selected BOOLEAN NOT NULL DEFAULT FALSE,
+    PRIMARY KEY (budget_month, user_id, expense_option_id),
+    FOREIGN KEY (budget_month, user_id) REFERENCES public.budgets (month, user_id) ON DELETE CASCADE,
+    FOREIGN KEY (expense_option_id) REFERENCES public.expense_options (id) ON DELETE CASCADE
+);
+
+-- budgets table 
+CREATE TABLE public.budgets (
+    month DATE NOT NULL,
+    user_id UUID NOT NULL,
+    planned_income NUMERIC NOT NULL DEFAULT 0,
+    planned_expenses NUMERIC NOT NULL DEFAULT 0,
+    updated_at TIMESTAMP WITH TIME ZONE DEFAULT now(),
+    PRIMARY KEY (month, user_id)
+);
+
+------------------ MARKET DATA TABLES ------------------
 
 -- Metals table
 CREATE TABLE public.metals (
@@ -222,7 +254,7 @@ CREATE TABLE public.stocks (
     UNIQUE(symbol, date)
 );
 
--- SYSTEM TABLES
+------------------- SYSTEM TABLES ----------------------
 
 -- System settings table
 CREATE TABLE public.system_settings (
