@@ -1,17 +1,21 @@
 "use client";
 
-import { BudgetData } from "@/types/budgetTypes";
+import { BudgetData } from "@/lib/types/budgetTypes";
 import { useState } from "react";
 
 interface BudgetProps {
   budgets: BudgetData[];
+  userId: string;
 }
 
-export default function Budget({ budgets }: BudgetProps) {
+export default function Budget({ budgets, userId }: BudgetProps) {
   const [selectedMonth, setSelectedMonth] = useState<string | null>(null);
 
   // Added this log here so you can map them easier later
   console.log(budgets);
+
+  // Logging user to ensure its avaliable to the component
+  console.log(userId);
 
   // example return for future reference
   return (

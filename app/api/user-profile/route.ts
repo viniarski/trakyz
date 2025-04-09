@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
-import { createClient } from "@/utils/supabase/server";
+import { createClient } from "@/lib/utils/supabase/server";
 
 //  Make a request here to either insert a new user profile or update existing fields dynamically.
 export async function POST(req: NextRequest) {
