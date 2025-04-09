@@ -1,8 +1,8 @@
 // app/(auth)/sign-up/page.tsx
 
 import { signUpAction } from "@/app/actions";
-import { FormMessage, Message } from "@/components/form-message";
-import { SubmitButton } from "@/components/submit-button";
+import { FormMessage, Message } from "@/components/FormMessage";
+import { SubmitButton } from "@/components/SubmitButton";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import Link from "next/link";
@@ -22,11 +22,15 @@ export default async function Signup(props: {
 
   return (
     <>
-      <h1 className="text-2xl font-bold text-white text-center mb-6">Create an Account</h1>
-      
+      <h1 className="text-2xl font-bold text-white text-center mb-6">
+        Create an Account
+      </h1>
+
       <form className="flex-1 flex flex-col gap-5 w-full" action={signUpAction}>
         <div className="grid gap-2">
-          <Label htmlFor="email" className="text-gray-300">Email</Label>
+          <Label htmlFor="email" className="text-gray-300">
+            Email
+          </Label>
           <Input
             id="email"
             name="email"
@@ -36,9 +40,11 @@ export default async function Signup(props: {
             className="bg-gray-700/50 border-gray-600 text-white placeholder:text-gray-400"
           />
         </div>
-        
+
         <div className="grid gap-2">
-          <Label htmlFor="password" className="text-gray-300">Password</Label>
+          <Label htmlFor="password" className="text-gray-300">
+            Password
+          </Label>
           <Input
             id="password"
             name="password"
@@ -50,14 +56,17 @@ export default async function Signup(props: {
           />
         </div>
 
-        <SubmitButton pendingText="Signing Up..." className="bg-blue-500 hover:bg-blue-600 text-white">
+        <SubmitButton
+          pendingText="Signing Up..."
+          className="bg-blue-500 hover:bg-blue-600 text-white"
+        >
           Sign Up
         </SubmitButton>
 
         <FormMessage message={searchParams} />
 
         <div className="mt-4 text-center text-sm text-gray-300">
-          Already have an account?{' '}
+          Already have an account?{" "}
           <Link href="/sign-in" className="text-blue-400 hover:underline">
             Sign In
           </Link>
@@ -80,11 +89,11 @@ export default async function Signup(props: {
         </div>
 
         <p className="text-xxs text-gray-400 text-center mt-4">
-          By signing up, you agree to our{' '}
+          By signing up, you agree to our{" "}
           <Link href="/terms" className="text-blue-400 hover:underline">
             Terms of Service
-          </Link>{' '}
-          and{' '}
+          </Link>{" "}
+          and{" "}
           <Link href="/privacy" className="text-blue-400 hover:underline">
             Privacy Policy
           </Link>

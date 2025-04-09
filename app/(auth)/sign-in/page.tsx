@@ -1,8 +1,8 @@
 // app/(auth)/sign-in/page.tsx
 
 import { signInAction } from "@/app/actions";
-import { FormMessage, Message } from "@/components/form-message";
-import { SubmitButton } from "@/components/submit-button";
+import { FormMessage, Message } from "@/components/FormMessage";
+import { SubmitButton } from "@/components/SubmitButton";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import Link from "next/link";
@@ -12,11 +12,15 @@ export default async function Login(props: { searchParams: Promise<Message> }) {
   const searchParams = await props.searchParams;
   return (
     <>
-      <h1 className="text-2xl font-bold text-white text-center mb-6">Sign In</h1>
-      
+      <h1 className="text-2xl font-bold text-white text-center mb-6">
+        Sign In
+      </h1>
+
       <form className="flex-1 flex flex-col gap-5 w-full" action={signInAction}>
         <div className="grid gap-2">
-          <Label htmlFor="email" className="text-gray-300">Email</Label>
+          <Label htmlFor="email" className="text-gray-300">
+            Email
+          </Label>
           <Input
             id="email"
             name="email"
@@ -26,12 +30,14 @@ export default async function Login(props: { searchParams: Promise<Message> }) {
             className="bg-gray-700/50 border-gray-600 text-white placeholder:text-gray-400"
           />
         </div>
-        
+
         <div className="grid gap-2">
           <div className="flex items-center justify-between">
-            <Label htmlFor="password" className="text-gray-300">Password</Label>
-            <Link 
-              href="/forgot-password" 
+            <Label htmlFor="password" className="text-gray-300">
+              Password
+            </Label>
+            <Link
+              href="/forgot-password"
               className="text-xs text-blue-400 hover:underline"
             >
               Forgot Password?
@@ -47,14 +53,17 @@ export default async function Login(props: { searchParams: Promise<Message> }) {
           />
         </div>
 
-        <SubmitButton pendingText="Signing In..." className="bg-blue-500 hover:bg-blue-600 text-white">
+        <SubmitButton
+          pendingText="Signing In..."
+          className="bg-blue-500 hover:bg-blue-600 text-white"
+        >
           Sign In
         </SubmitButton>
 
         <FormMessage message={searchParams} />
 
         <div className="mt-4 text-center text-sm text-gray-300">
-          Don't have an account?{' '}
+          Don't have an account?{" "}
           <Link href="/sign-up" className="text-blue-400 hover:underline">
             Sign Up
           </Link>

@@ -1,4 +1,4 @@
-import { createClient } from "@/utils/supabase/server";
+import { createClient } from "@/lib/utils/supabase/server";
 import { redirect } from "next/navigation";
 
 // This prevents static optimization during build
@@ -13,7 +13,7 @@ export default async function Home() {
 
   // If the user is logged in, redirect to the dashboard
   if (user) {
-    return redirect("/protected");
+    return redirect("/dashboard");
   }
 
   // For non-authenticated users, redirect to the welcome page

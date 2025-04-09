@@ -1,41 +1,45 @@
 // app/(auth)/oauth-signin.tsx
 
-'use client'
+"use client";
 
-import { useState } from 'react'
-import { createClient } from '@/utils/supabase/client'
+import { useState } from "react";
+import { createClient } from "@/lib/utils/supabase/client";
 
 interface OAuthProviderProps {
-  provider: 'google' | 'github' | 'twitter' | 'linkedin'
-  children: React.ReactNode
-  className?: string
+  provider: "google" | "github" | "twitter" | "linkedin";
+  children: React.ReactNode;
+  className?: string;
 }
 
-export function OAuthProvider({ provider, children, className }: OAuthProviderProps) {
-  const [isLoading, setIsLoading] = useState(false)
+export function OAuthProvider({
+  provider,
+  children,
+  className,
+}: OAuthProviderProps) {
+  const [isLoading, setIsLoading] = useState(false);
 
   const handleSignIn = async () => {
     try {
-      setIsLoading(true)
-      const supabase = createClient()
+      setIsLoading(true);
+      const supabase = createClient();
 
       const { error } = await supabase.auth.signInWithOAuth({
         provider,
         options: {
           redirectTo: `${window.location.origin}/auth/callback`,
         },
-      })
+      });
 
       if (error) {
-        console.error('OAuth sign in error:', error)
-        throw error
+        console.error("OAuth sign in error:", error);
+        throw error;
       }
     } catch (error) {
-      console.error(`Error signing in with ${provider}:`, error)
+      console.error(`Error signing in with ${provider}:`, error);
     } finally {
-      setIsLoading(false)
+      setIsLoading(false);
     }
-  }
+  };
 
   return (
     <button
@@ -53,14 +57,17 @@ export function OAuthProvider({ provider, children, className }: OAuthProviderPr
         children
       )}
     </button>
-  )
+  );
 }
 
 export function GoogleSignIn({ className }: { className?: string }) {
   return (
-    <OAuthProvider 
+    <OAuthProvider
       provider="google"
-      className={className || "flex items-center justify-center gap-2 p-2 border border-gray-700 bg-gray-700/50 rounded-lg hover:bg-gray-700 transition-colors text-white"}
+      className={
+        className ||
+        "flex items-center justify-center gap-2 p-2 border border-gray-700 bg-gray-700/50 rounded-lg hover:bg-gray-700 transition-colors text-white"
+      }
     >
       <svg className="w-5 h-5" viewBox="0 0 24 24">
         <path
@@ -82,14 +89,17 @@ export function GoogleSignIn({ className }: { className?: string }) {
       </svg>
       Google
     </OAuthProvider>
-  )
+  );
 }
 
 export function GithubSignIn({ className }: { className?: string }) {
   return (
-    <OAuthProvider 
+    <OAuthProvider
       provider="github"
-      className={className || "flex items-center justify-center gap-2 p-2 border border-gray-700 bg-gray-700/50 rounded-lg hover:bg-gray-700 transition-colors text-white"}
+      className={
+        className ||
+        "flex items-center justify-center gap-2 p-2 border border-gray-700 bg-gray-700/50 rounded-lg hover:bg-gray-700 transition-colors text-white"
+      }
     >
       <svg
         xmlns="http://www.w3.org/2000/svg"
@@ -105,5 +115,5 @@ export function GithubSignIn({ className }: { className?: string }) {
       </svg>
       GitHub
     </OAuthProvider>
-  )
+  );
 }

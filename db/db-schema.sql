@@ -260,7 +260,8 @@ CREATE TABLE public.stocks (
 CREATE TABLE public.system_settings (
     id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
     key TEXT NOT NULL UNIQUE,
-    value JSONB NOT NULL,
+    free_trial_enabled BOOLEAN DEFAULT true,
+    early_adopter_enabled BOOLEAN DEFAULT true,
     created_at TIMESTAMPTZ DEFAULT NOW(),
     updated_at TIMESTAMPTZ DEFAULT NOW()
 );
@@ -275,11 +276,6 @@ CREATE TABLE public.notifications (
     is_read BOOLEAN DEFAULT false,
     created_at TIMESTAMPTZ DEFAULT NOW()
 );
-
--- Insert default system settings
-INSERT INTO public.system_settings (key, value) VALUES 
-('free_trial_enabled', '{"enabled":true}'::jsonb),
-('early_adopter_enabled', '{"enabled":true}'::jsonb);
 
 -- Create RLS policies
 -- Enable Row Level Security

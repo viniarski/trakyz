@@ -2,8 +2,8 @@
 
 "use server";
 
-import { encodedRedirect } from "@/utils/utils";
-import { createClient } from "@/utils/supabase/server";
+import { encodedRedirect } from "@/lib/utils/utils";
+import { createClient } from "@/lib/utils/supabase/server";
 import { headers } from "next/headers";
 import { redirect } from "next/navigation";
 
@@ -17,7 +17,7 @@ export const signUpAction = async (formData: FormData) => {
     return encodedRedirect(
       "error",
       "/sign-up",
-      "Email and password are required",
+      "Email and password are required"
     );
   }
 
@@ -36,7 +36,7 @@ export const signUpAction = async (formData: FormData) => {
     return encodedRedirect(
       "success",
       "/sign-up",
-      "Thanks for signing up! Please check your email for a verification link.",
+      "Thanks for signing up! Please check your email for a verification link."
     );
   }
 };
@@ -78,7 +78,7 @@ export const forgotPasswordAction = async (formData: FormData) => {
     return encodedRedirect(
       "error",
       "/forgot-password",
-      "Could not reset password",
+      "Could not reset password"
     );
   }
 
@@ -89,7 +89,7 @@ export const forgotPasswordAction = async (formData: FormData) => {
   return encodedRedirect(
     "success",
     "/forgot-password",
-    "Check your email for a link to reset your password.",
+    "Check your email for a link to reset your password."
   );
 };
 
@@ -103,7 +103,7 @@ export const resetPasswordAction = async (formData: FormData) => {
     return encodedRedirect(
       "error",
       "/reset-password",
-      "Password and confirm password are required",
+      "Password and confirm password are required"
     );
   }
 
@@ -111,7 +111,7 @@ export const resetPasswordAction = async (formData: FormData) => {
     return encodedRedirect(
       "error",
       "/reset-password",
-      "Passwords do not match",
+      "Passwords do not match"
     );
   }
 
@@ -123,13 +123,13 @@ export const resetPasswordAction = async (formData: FormData) => {
     return encodedRedirect(
       "error",
       "/reset-password",
-      "Password update failed",
+      "Password update failed"
     );
   }
 
   return encodedRedirect(
-    "success", 
-    "/reset-password", 
+    "success",
+    "/reset-password",
     "Password updated successfully. You can now sign in with your new password."
   );
 };

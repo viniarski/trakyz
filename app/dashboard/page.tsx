@@ -1,0 +1,285 @@
+import { createClient } from "@/lib/utils/supabase/server";
+import { redirect } from "next/navigation";
+import Header from "@/components/Header";
+import Budget from "@/app/dashboard/components/budget/Budget";
+import { BudgetData } from "@/lib/types/budgetTypes";
+import { User } from "@supabase/supabase-js";
+import Markets from "./components/market/Market";
+import { MarketData } from "@/lib/types/marketTypes";
+import Debt from "./components/debt/Debt";
+import { RealEstateProperty } from "@/lib/types/realEstateTypes";
+import RealEstate from "./components/real-estate/RealEstate";
+import Portfolios from "./components/portfolio/Portfolio";
+import { Portfolio } from "@/lib/types/portfolioTypes";
+import { Transaction } from "@/lib/types/transactionTypes";
+import Transactions from "./components/transactions/Transactions";
+import TabNavigation from "@/components/TabNavigation";
+import { DebtData } from "@/lib/types/debtTypes";
+import Analytics from "./components/analytics/Analytics";
+
+// Define valid tab names
+const validTabs = [
+  "budget",
+  "markets",
+  "debt",
+  "real-estate",
+  "portfolios",
+  "transactions",
+  "analytics",
+];
+
+export default async function ProtectedPage({
+  searchParams,
+}: {
+  searchParams: { tab?: string };
+}) {
+  // Get the current tab from URL, default to 'budget' if not set or invalid
+  const currentTab = validTabs.includes(searchParams.tab || "")
+    ? searchParams.tab
+    : "budget";
+
+  const supabase = await createClient();
+
+  // Fetch the authenticated user
+  const { data } = await supabase.auth.getUser();
+
+  const user: User | null = data?.user ?? null;
+
+  // redirect users to sign in if not authenticated
+  if (!user) {
+    return redirect("/sign-in");
+  }
+
+  // Login debug log (can remove later)
+  console.log("User is logged in:", user);
+
+  // Only fetch the data needed for the current tab
+  let budgetData: BudgetData[] = [];
+  let marketData: MarketData = {
+    metals: [],
+    crypto: [],
+    currencies: [],
+    stocks: [],
+  };
+  let debtData: DebtData = { loans: [], creditCards: [] };
+  let realEstateData: RealEstateProperty[] = [];
+  let portfoliosData: Portfolio[] = [];
+  let transactionsData: Transaction[] = [];
+
+  // Fetch only the data needed for the currently selected tab
+  switch (currentTab) {
+    case "budget":
+      const { data: budgets, error: budgetError } = await supabase
+        .from("budgets")
+        .select(
+          `
+          month, 
+          planned_income, 
+          planned_expenses, 
+          updated_at,
+          budget_income (
+            income_options (name),
+            is_selected
+          ),
+          budget_expenses (
+            expense_options (name),
+            is_selected
+          )
+          `
+        )
+        .eq("user_id", user.id)
+        .order("month", { ascending: false });
+      // log budget errors
+      budgetData = budgets || [];
+      if (budgetError) console.error("Error fetching budget data", budgetError);
+      break;
+
+    case "markets":
+      const [
+        { data: metals, error: metalsError },
+        { data: crypto, error: cryptoError },
+        { data: currencies, error: currencyError },
+        { data: stocks, error: stocksError },
+      ] = await Promise.all([
+        supabase.from("metals").select("*").order("date", { ascending: false }),
+        supabase.from("crypto").select("*").order("date", { ascending: false }),
+        supabase
+          .from("currencies")
+          .select("*")
+          .order("date", { ascending: false }),
+        supabase.from("stocks").select("*").order("date", { ascending: false }),
+      ]);
+
+      marketData = {
+        metals: metals || [],
+        crypto: crypto || [],
+        currencies: currencies || [],
+        stocks: stocks || [],
+      };
+
+      // Log any market data errors
+      if (metalsError) {
+        console.error("Error fetching metals data:", metalsError);
+      }
+      if (cryptoError) {
+        console.error("Error fetching crypto data:", cryptoError);
+      }
+      if (currencyError) {
+        console.error("Error fetching currency data:", currencyError);
+      }
+      if (stocksError) {
+        console.error("Error fetching stocks data:", stocksError);
+      }
+      break;
+
+    case "debt":
+      const [
+        { data: loans, error: loanError },
+        { data: cards, error: cardsError },
+      ] = await Promise.all([
+        supabase.from("loans").select("*").eq("user_id", user.id),
+        supabase.from("credit_cards").select("*").eq("user_id", user.id),
+      ]);
+
+      debtData = {
+        loans: loans || [],
+        creditCards: cards || [],
+      };
+
+      // Log any debt data errors
+      if (loanError) {
+        console.error("Error fetching loan data:", loanError);
+      }
+      if (cardsError) {
+        console.error("Error fetching credit card data:", cardsError);
+      }
+      break;
+
+    case "real-estate":
+      const { data: realEstate, error: realEstateError } = await supabase
+        .from("real_estate_properties")
+        .select("*")
+        .eq("user_id", user.id);
+
+      realEstateData = realEstate || [];
+
+      if (realEstateError) {
+        console.error("Error fetching real estate data:", realEstateError);
+      }
+      break;
+
+    case "portfolios":
+      const { data: portfolio, error: portfolioError } = await supabase
+        .from("portfolios")
+        .select("*")
+        .eq("user_id", user.id);
+
+      portfoliosData = portfolio || [];
+
+      if (portfolioError) {
+        console.error("Error fetching portfolio data:", portfolioError);
+      }
+      break;
+
+    case "transactions":
+      const { data: transactions, error: transactionsError } = await supabase
+        .from("transactions")
+        .select("*")
+        .eq("user_id", user.id);
+
+      transactionsData = transactions || [];
+
+      if (transactionsError) {
+        console.error("Error fetching transactions data:", transactionsError);
+      }
+      break;
+
+    case "analytics":
+      // Fetch all required data for analytics
+      const [
+        { data: portfolioAnalytics, error: portfolioAnalyticsError },
+        { data: transactionsAnalytics, error: transactionsAnalyticsError },
+        { data: loansAnalytics, error: loansAnalyticsError },
+        { data: cardsAnalytics, error: cardsAnalyticsError },
+      ] = await Promise.all([
+        supabase.from("portfolios").select("*").eq("user_id", user.id),
+        supabase.from("transactions").select("*").eq("user_id", user.id),
+        supabase.from("loans").select("*").eq("user_id", user.id),
+        supabase.from("credit_cards").select("*").eq("user_id", user.id),
+      ]);
+
+      // Log errors
+      if (portfolioAnalyticsError)
+        console.error(
+          "Error fetching portfolio data for analytics:",
+          portfolioAnalyticsError
+        );
+      if (transactionsAnalyticsError)
+        console.error(
+          "Error fetching transactions data for analytics:",
+          transactionsAnalyticsError
+        );
+      if (loansAnalyticsError)
+        console.error(
+          "Error fetching loans data for analytics:",
+          loansAnalyticsError
+        );
+      if (cardsAnalyticsError)
+        console.error(
+          "Error fetching credit cards data for analytics:",
+          cardsAnalyticsError
+        );
+
+      portfoliosData = portfolioAnalytics || [];
+      transactionsData = transactionsAnalytics || [];
+      debtData = {
+        loans: loansAnalytics || [],
+        creditCards: cardsAnalytics || [],
+      };
+      break;
+  }
+
+  return (
+    <div className="flex-1 w-full flex flex-col min-h-screen">
+      <Header user={user} />
+      <div className="flex-1 container py-8">
+        <TabNavigation currentTab={currentTab} />
+
+        <div className="mt-6">
+          {currentTab === "budget" && (
+            <Budget userId={user.id} budgets={budgetData} />
+          )}
+
+          {currentTab === "markets" && (
+            <Markets userId={user.id} marketData={marketData} />
+          )}
+
+          {currentTab === "debt" && (
+            <Debt userId={user.id} debtData={debtData} />
+          )}
+
+          {currentTab === "real-estate" && (
+            <RealEstate userId={user.id} realEstateData={realEstateData} />
+          )}
+
+          {currentTab === "portfolios" && (
+            <Portfolios userId={user.id} portfolios={portfoliosData} />
+          )}
+
+          {currentTab === "transactions" && (
+            <Transactions userId={user.id} transactions={transactionsData} />
+          )}
+
+          {currentTab === "analytics" && (
+            <Analytics
+              userId={user.id}
+              debtData={debtData}
+              transactions={transactionsData}
+              portfolios={portfoliosData}
+            />
+          )}
+        </div>
+      </div>
+    </div>
+  );
+}
