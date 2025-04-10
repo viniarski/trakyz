@@ -28,15 +28,16 @@ const validTabs = [
   "analytics",
 ];
 
-export default async function ProtectedPage({
-  searchParams,
-}: {
-  searchParams: { tab?: string };
-}) {
+type PageProps = {
+  searchParams: any;
+};
+
+const ProtectedPage = async ({ searchParams }: PageProps) => {
   // Get the current tab from URL, default to 'budget' if not set or invalid
-  const currentTab = validTabs.includes(searchParams.tab || "")
-    ? searchParams.tab
-    : "budget";
+
+  const tabParam = searchParams.tab;
+  const tabValue = Array.isArray(tabParam) ? tabParam[0] : tabParam;
+  const currentTab = validTabs.includes(tabValue || "") ? tabValue : "budget";
 
   const supabase = await createClient();
 
@@ -282,4 +283,5 @@ export default async function ProtectedPage({
       </div>
     </div>
   );
-}
+};
+export default ProtectedPage;
