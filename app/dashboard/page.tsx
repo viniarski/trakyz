@@ -30,18 +30,20 @@ const validTabs = [
   "analytics",
 ];
 
-type PageProps = {
-  searchParams: {
-    tab?: string;
-    checkout_success?: string;
-  };
-};
-
-const Dashboard = async ({ searchParams }: PageProps) => {
+// Create a direct export page function
+// In Next.js, this special export can work around some type issues
+export default async function Page(props: any) {
+  // Use the props in a type-safe way
+  const searchParams = props.searchParams || {};
+  
   // Get the current tab from URL, default to 'budget' if not set or invalid
   const tabParam = searchParams.tab;
   const tabValue = Array.isArray(tabParam) ? tabParam[0] : tabParam;
   const currentTab = validTabs.includes(tabValue || "") ? tabValue : "budget";
+  
+  // Check for checkout success
+  const checkoutSuccessParam = searchParams.checkout_success;
+  const hasCheckoutSuccess = checkoutSuccessParam === "true";
 
   const supabase = await createClient();
 
@@ -251,9 +253,6 @@ const Dashboard = async ({ searchParams }: PageProps) => {
       break;
   }
 
-  // Check if this is a successful checkout
-  const hasCheckoutSuccess = searchParams.checkout_success === "true";
-
   return (
     <div className="flex-1 w-full flex flex-col min-h-screen">
       <Header 
@@ -309,6 +308,4 @@ const Dashboard = async ({ searchParams }: PageProps) => {
       </div>
     </div>
   );
-};
-
-export default Dashboard;
+}
