@@ -242,7 +242,7 @@ const ProtectedPage = async ({ searchParams }: PageProps) => {
 
   return (
     <div className="flex-1 w-full flex flex-col min-h-screen">
-      <Header user={user} />
+      <Header userEmail={user.email} userRole={user.user_metadata?.role || null} />
       <div className="flex-1 container py-8">
         <TabNavigation currentTab={currentTab} />
 

@@ -3,6 +3,7 @@
 import { useState, useRef, useEffect } from 'react'
 import Link from 'next/link'
 import Image from 'next/image'
+import { signOutAction } from "@/app/actions";
 import { 
   Menu, 
   Bell, 
@@ -20,7 +21,6 @@ import {
   TrendingUp, 
   FileText, 
   CreditCard, 
-  Crown, 
   X,
   User,
   Euro,
@@ -39,16 +39,13 @@ const currencies = [
 interface HeaderProps {
   userEmail?: string | null
   userRole?: string | null
-  planType?: string | null
 }
 
-export default function Header({ userEmail, userRole, planType }: HeaderProps) {
+export default function Header({ userEmail, userRole }: HeaderProps) {
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false)
   const [isUserMenuOpen, setIsUserMenuOpen] = useState(false)
   const [isCurrencyOpen, setIsCurrencyOpen] = useState(false)
   const [isDesktopCurrencyOpen, setIsDesktopCurrencyOpen] = useState(false)
-  const [showProModal, setShowProModal] = useState(false)
-  const [proFeature, setProFeature] = useState('')
   const [hideBalances, setHideBalances] = useState(false)
   const [selectedCurrency, setSelectedCurrency] = useState('USD')
   
@@ -79,19 +76,6 @@ export default function Header({ userEmail, userRole, planType }: HeaderProps) {
     document.addEventListener('mousedown', handleClickOutside)
     return () => document.removeEventListener('mousedown', handleClickOutside)
   }, [])
-
-  // Check if user has Pro plan
-  const isPro = planType === 'pro'
-
-  // Handle Pro feature click
-  const handleProFeatureClick = (featureName: string) => {
-    if (!isPro) {
-      setProFeature(featureName)
-      setShowProModal(true)
-      return true
-    }
-    return false
-  }
 
   return (
     <div className="sticky top-0 left-0 right-0 z-50 bg-[var(--bg-primary)] border-b border-[var(--bg-hover)]">
@@ -196,12 +180,6 @@ export default function Header({ userEmail, userRole, planType }: HeaderProps) {
                     <div className="px-3 py-2">
                       <div className="text-sm font-light text-[var(--text-secondary)]">Signed in as</div>
                       <div className="text-sm font-medium text-[var(--text-primary)] truncate">{userEmail}</div>
-                      {planType === 'pro' && (
-                        <div className="flex items-center gap-1 text-xs text-[var(--accent-primary)] mt-1">
-                          <Crown className="w-3 h-3" />
-                          <span>Pro Plan</span>
-                        </div>
-                      )}
                     </div>
 
                     {/* Settings Link */}
@@ -236,16 +214,15 @@ export default function Header({ userEmail, userRole, planType }: HeaderProps) {
                     )}
 
                     <div className="px-1 py-1 border-t border-[var(--bg-hover)]">
-                      <button
-                        onClick={() => {
-                          // Sign out function would go here
-                          console.log('Sign out clicked')
-                        }}
-                        className="w-full flex items-center gap-3 px-3 py-2 text-[var(--text-secondary)] hover:text-[var(--text-primary)] hover:bg-[var(--bg-hover)] rounded-lg transition-colors text-left"
-                      >
-                        <LogOut className="h-4 w-4 flex-shrink-0" />
-                        <span className="text-sm font-medium">Sign Out</span>
-                      </button>
+                      <form action={signOutAction}>
+                        <button
+                          type="submit"
+                          className="w-full flex items-center gap-3 px-3 py-2 text-[var(--text-secondary)] hover:text-[var(--text-primary)] hover:bg-[var(--bg-hover)] rounded-lg transition-colors text-left"
+                        >
+                          <LogOut className="h-4 w-4 flex-shrink-0" />
+                          <span className="text-sm font-medium">Sign Out</span>
+                        </button>
+                      </form>
                     </div>
                   </div>
                 </div>
@@ -297,12 +274,6 @@ export default function Header({ userEmail, userRole, planType }: HeaderProps) {
                   <div className="text-sm font-light text-[var(--text-secondary)]">Signed in as</div>
                   <div className="text-sm font-medium text-[var(--text-primary)] truncate">{userEmail}</div>
                 </div>
-                {planType === 'pro' && (
-                  <div className="flex items-center gap-1 text-xs text-[var(--accent-primary)]">
-                    <Crown className="w-3 h-3" />
-                    <span>Pro Plan</span>
-                  </div>
-                )}
               </div>
             </div>
 
@@ -313,118 +284,74 @@ export default function Header({ userEmail, userRole, planType }: HeaderProps) {
               </div>
 
               {/* Market Link */}
-              <button
+              <Link
+                href="/dashboard?tab=markets"
                 className="w-full flex items-center gap-3 px-4 py-3 rounded-lg text-[var(--text-primary)] hover:bg-[var(--bg-hover)] transition-colors text-left"
-                onClick={() => {
-                  setIsMobileMenuOpen(false);
-                  // You would call your tab switching function here
-                }}
+                onClick={() => setIsMobileMenuOpen(false)}
               >
                 <TrendingUp className="h-5 w-5 text-[var(--accent-primary)]" />
                 <span>Market</span>
-              </button>
+              </Link>
 
               {/* Transactions Link */}
-              <button
+              <Link
+                href="/dashboard?tab=transactions"
                 className="w-full flex items-center gap-3 px-4 py-3 rounded-lg text-[var(--text-primary)] hover:bg-[var(--bg-hover)] transition-colors text-left"
-                onClick={() => {
-                  setIsMobileMenuOpen(false);
-                  // You would call your tab switching function here
-                }}
+                onClick={() => setIsMobileMenuOpen(false)}
               >
                 <FileText className="h-5 w-5 text-[var(--accent-primary)]" />
                 <span>Transactions</span>
-              </button>
+              </Link>
 
               {/* Portfolio Link */}
-              <button
+              <Link
+                href="/dashboard?tab=portfolios"
                 className="w-full flex items-center gap-3 px-4 py-3 rounded-lg text-[var(--text-primary)] hover:bg-[var(--bg-hover)] transition-colors text-left"
-                onClick={() => {
-                  setIsMobileMenuOpen(false);
-                  // You would call your tab switching function here
-                }}
+                onClick={() => setIsMobileMenuOpen(false)}
               >
                 <Wallet className="h-5 w-5 text-[var(--accent-primary)]" />
                 <span>Portfolio</span>
-              </button>
+              </Link>
 
               {/* Debt Link */}
-              <button
+              <Link
+                href="/dashboard?tab=debt"
                 className="w-full flex items-center gap-3 px-4 py-3 rounded-lg text-[var(--text-primary)] hover:bg-[var(--bg-hover)] transition-colors text-left"
-                onClick={() => {
-                  setIsMobileMenuOpen(false);
-                  // You would call your tab switching function here
-                }}
+                onClick={() => setIsMobileMenuOpen(false)}
               >
                 <CreditCard className="h-5 w-5 text-[var(--accent-primary)]" />
                 <span>Debt</span>
-              </button>
+              </Link>
 
-              {/* Analytics Link - Pro Feature */}
-              <button
+              {/* Analytics Link */}
+              <Link
+                href="/dashboard?tab=analytics"
                 className="w-full flex items-center gap-3 px-4 py-3 rounded-lg text-[var(--text-primary)] hover:bg-[var(--bg-hover)] transition-colors text-left"
-                onClick={() => {
-                  if (!handleProFeatureClick("Analytics")) {
-                    setIsMobileMenuOpen(false);
-                    // You would call your tab switching function here
-                  }
-                }}
+                onClick={() => setIsMobileMenuOpen(false)}
               >
                 <PieChart className="h-5 w-5 text-[var(--accent-primary)]" />
-                <div className="flex items-center">
-                  <span>Analytics</span>
-                  {!isPro && (
-                    <div className="flex items-center ml-2">
-                      <Crown className="h-3 w-3 text-[var(--accent-primary)]" />
-                      <span className="text-[10px] font-medium text-[var(--accent-primary)]">PRO</span>
-                    </div>
-                  )}
-                </div>
-              </button>
+                <span>Analytics</span>
+              </Link>
 
-              {/* Real Estate Link - Pro Feature */}
-              <button
+              {/* Real Estate Link */}
+              <Link
+                href="/dashboard?tab=real-estate"
                 className="w-full flex items-center gap-3 px-4 py-3 rounded-lg text-[var(--text-primary)] hover:bg-[var(--bg-hover)] transition-colors text-left"
-                onClick={() => {
-                  if (!handleProFeatureClick("Real Estate Portfolio")) {
-                    setIsMobileMenuOpen(false);
-                    // You would call your tab switching function here
-                  }
-                }}
+                onClick={() => setIsMobileMenuOpen(false)}
               >
                 <Building className="h-5 w-5 text-[var(--accent-primary)]" />
-                <div className="flex items-center">
-                  <span>Real Estate</span>
-                  {!isPro && (
-                    <div className="flex items-center ml-2">
-                      <Crown className="h-3 w-3 text-[var(--accent-primary)]" />
-                      <span className="text-[10px] font-medium text-[var(--accent-primary)]">PRO</span>
-                    </div>
-                  )}
-                </div>
-              </button>
+                <span>Real Estate</span>
+              </Link>
 
-              {/* Budget Link - Pro Feature */}
-              <button
+              {/* Budget Link */}
+              <Link
+                href="/dashboard?tab=budget"
                 className="w-full flex items-center gap-3 px-4 py-3 rounded-lg text-[var(--text-primary)] hover:bg-[var(--bg-hover)] transition-colors text-left"
-                onClick={() => {
-                  if (!handleProFeatureClick("Budget")) {
-                    setIsMobileMenuOpen(false);
-                    // You would call your tab switching function here
-                  }
-                }}
+                onClick={() => setIsMobileMenuOpen(false)}
               >
                 <PiggyBank className="h-5 w-5 text-[var(--accent-primary)]" />
-                <div className="flex items-center">
-                  <span>Budget</span>
-                  {!isPro && (
-                    <div className="flex items-center ml-2">
-                      <Crown className="h-3 w-3 text-[var(--accent-primary)]" />
-                      <span className="text-[10px] font-medium text-[var(--accent-primary)]">PRO</span>
-                    </div>
-                  )}
-                </div>
-              </button>
+                <span>Budget</span>
+              </Link>
 
               {/* Settings and Preferences Section */}
               <div className="mt-6 mb-2 pb-2 border-b border-[var(--bg-hover)]">
@@ -485,46 +412,16 @@ export default function Header({ userEmail, userRole, planType }: HeaderProps) {
 
               {/* Sign Out Button */}
               <div className="mt-8">
-                <button
-                  onClick={() => {
-                    // Sign out function would go here
-                    console.log('Sign out clicked')
-                  }}
-                  className="w-full flex items-center gap-3 px-4 py-3 rounded-lg text-[var(--text-secondary)] hover:text-red-500 hover:bg-red-500/10 transition-colors"
-                >
-                  <LogOut className="h-5 w-5" />
-                  <span>Sign Out</span>
-                </button>
+                <form action={signOutAction}>
+                  <button
+                    type="submit"
+                    className="w-full flex items-center gap-3 px-4 py-3 rounded-lg text-[var(--text-secondary)] hover:text-red-500 hover:bg-red-500/10 transition-colors"
+                  >
+                    <LogOut className="h-5 w-5" />
+                    <span>Sign Out</span>
+                  </button>
+                </form>
               </div>
-            </div>
-          </div>
-        </div>
-      )}
-
-      {/* Pro Feature Modal */}
-      {showProModal && (
-        <div className="fixed inset-0 bg-black/80 flex items-center justify-center z-50 p-6">
-          <div className="bg-[var(--bg-secondary)] rounded-xl p-4 w-full max-w-[320px] relative animate-scale-up mx-auto">
-            <button 
-              onClick={() => setShowProModal(false)} 
-              className="absolute top-3 right-3 text-[var(--text-secondary)] hover:text-[var(--text-primary)]"
-            >
-              <X className="h-5 w-5" />
-            </button>
-            <div className="text-center p-2">
-              <Crown className="h-8 w-8 text-[var(--accent-primary)] mx-auto mb-2" />
-              <h3 className="text-lg font-medium text-[var(--text-primary)] mb-2">Pro Feature: {proFeature}</h3>
-              <p className="text-[var(--text-secondary)] mb-4">
-                This feature is only available to Pro plan subscribers.
-              </p>
-              <Link
-                href="/pricing"
-                className="inline-flex items-center justify-center gap-2 px-4 py-2 bg-[var(--accent-primary)] text-white rounded-lg hover:bg-[var(--accent-primary-80)] transition-colors"
-                onClick={() => setShowProModal(false)}
-              >
-                <Crown className="h-4 w-4" />
-                <span>Upgrade to Pro</span>
-              </Link>
             </div>
           </div>
         </div>
