@@ -1,32 +1,21 @@
 // app/(pages)/pricing/page.tsx
 "use client";
 
-import { useState, useEffect, useCallback, Suspense } from "react";
+import { useState, useEffect, Suspense } from "react";
 import { useRouter } from "next/navigation";
-import { Crown } from "lucide-react";
 import { createClient } from "@/lib/utils/supabase/client";
 import Navigation from "@/components/ui/navigation";
-import PricingCard from "./components/pricing-card";
-import { FAQ } from "./components/faq";
-import { FeatureComparison } from "./components/feature-comparison";
 import { User } from "@supabase/supabase-js";
+import { ChevronRight, Check } from "lucide-react";
+import Link from "next/link";
 
-const SUBSCRIPTION_PRICES = {
-  MONTHLY:
-    process.env.NEXT_PUBLIC_STRIPE_PRICE_MONTHLY || "price_monthly_placeholder",
-  YEARLY:
-    process.env.NEXT_PUBLIC_STRIPE_PRICE_YEARLY || "price_yearly_placeholder",
-};
+const SUBSCRIPTION_PRICE_ID = process.env.NEXT_PUBLIC_STRIPE_PRICE_ID || "price_placeholder";
 
 function PricingPageContent() {
   const [user, setUser] = useState<User | null>(null);
   const [loading, setLoading] = useState(true);
-  const router = useRouter();
-  const [isYearly, setIsYearly] = useState(true);
   const [isLoadingCheckout, setIsLoadingCheckout] = useState(false);
-  const [showHighlight, setShowHighlight] = useState(false);
-  const [highlightedFeature, setHighlightedFeature] = useState("");
-  const discount = 17; // Approximate discount from $9.99/month to $99/year
+  const router = useRouter();
   const supabase = createClient();
 
   useEffect(() => {
@@ -41,107 +30,46 @@ function PricingPageContent() {
     getUser();
   }, []);
 
-  // Get highlighted feature name for display
-  const getHighlightedFeatureName = useCallback(() => {
-    switch (highlightedFeature) {
-      case "analytics":
-        return "Advanced Analytics";
-      case "budget":
-        return "Budget Management";
-      case "theme":
-        return "Custom Themes";
-      default:
-        return highlightedFeature
-          ? `${highlightedFeature.charAt(0).toUpperCase()}${highlightedFeature.slice(1)}`
-          : "";
-    }
-  }, [highlightedFeature]);
-
-  useEffect(() => {
-    // Only run on client-side after mount
-    if (typeof window === "undefined") return;
-
-    const urlParams = new URLSearchParams(window.location.search);
-    const feature = urlParams.get("feature");
-    if (feature) {
-      setHighlightedFeature(feature);
-      setShowHighlight(true);
-
-      // Auto-hide the highlight after 5 seconds
-      const timer = setTimeout(() => {
-        setShowHighlight(false);
-      }, 5000);
-
-      return () => clearTimeout(timer);
+  const handleSubscription = async () => {
+    if (!user) {
+      router.push('/sign-in?returnTo=/pricing');
+      return;
     }
 
-    const priceId = urlParams.get("checkout");
-    const plan = urlParams.get("plan");
-    const hasCheckoutIntent = !!priceId && !!plan && !!user;
+    setIsLoadingCheckout(true);
 
-    if (hasCheckoutIntent && !isLoadingCheckout) {
-      setIsLoadingCheckout(true);
+    try {
+      const response = await fetch("/api/stripe/create-checkout", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          priceId: SUBSCRIPTION_PRICE_ID,
+        }),
+      });
 
-      const initiateCheckout = async () => {
-        try {
-          const response = await fetch("/api/stripe/create-checkout", {
-            method: "POST",
-            headers: { "Content-Type": "application/json" },
-            body: JSON.stringify({
-              priceId,
-              planType: plan,
-            }),
-          });
+      if (!response.ok) {
+        const errorData = await response.json();
+        throw new Error(errorData.error || "Failed to create checkout session");
+      }
 
-          if (!response.ok) {
-            const errorData = await response.json();
-            throw new Error(
-              errorData.error || "Failed to create checkout session"
-            );
-          }
-
-          const { url } = await response.json();
-          window.location.href = url; // Redirect to Stripe checkout
-        } catch (error) {
-          console.error("Error initiating checkout:", error);
-          setIsLoadingCheckout(false); // Reset loading on error
-          router.replace("/pricing"); // Fallback to pricing page
-        }
-      };
-
-      initiateCheckout();
+      const { url } = await response.json();
+      window.location.href = url;
+    } catch (error) {
+      console.error("Error initiating checkout:", error);
+      setIsLoadingCheckout(false);
     }
-  }, [user, router, isLoadingCheckout, highlightedFeature]);
+  };
 
-  // Define pro features with highlighting
-  const proFeatures = [
-    {
-      text: "Unlimited assets tracking",
-      isProFeature: false,
-    },
-    {
-      text: "Advanced Analytics",
-      isProFeature: true,
-      highlight: highlightedFeature === "analytics",
-    },
-    {
-      text: "Budget Management",
-      isProFeature: true,
-      highlight: highlightedFeature === "budget",
-    },
-    {
-      text: "Custom Themes",
-      isProFeature: true,
-      highlight: highlightedFeature === "theme",
-    },
-    {
-      text: "Multiple Portfolios",
-      isProFeature: false,
-    },
-    {
-      text: "CSV / Excel / JSON / PDF import & export",
-      isProFeature: false,
-    },
+  // Features list
+  const features = [
+    "Unlimited asset tracking",
+    "Advanced portfolio analytics",
+    "All asset classes supported",
+    "Budget management tools",
+    "CSV/Excel import & export",
+    "Multiple portfolios",
+    "Real-time market data",
+    "Priority support"
   ];
 
   // Show loading UI if checking session or initiating checkout
@@ -162,79 +90,126 @@ function PricingPageContent() {
     <div className="min-h-screen bg-[var(--bg-primary)] text-[var(--text-primary)]">
       <div className="max-w-5xl mx-auto px-4 py-12">
         <main>
-          <div className="flex flex-col items-center text-center mb-8">
+          <div className="flex flex-col items-center text-center mb-12">
             <h1 className="text-4xl md:text-5xl font-bold mb-4 text-[var(--text-primary)]">
-              Simple, Transparent Pricing
+              Trakyz Subscription
             </h1>
             <p className="text-xl text-[var(--text-secondary)] max-w-2xl">
-              Start for free or upgrade to Pro for premium features
+              Get access to all features with our simple subscription plan
             </p>
+          </div>
 
-            {/* Feature highlight notification */}
-            {showHighlight && (
-              <div className="mt-6 max-w-2xl bg-[var(--accent-primary-10)] text-[var(--accent-primary)] p-4 rounded-lg border border-[var(--accent-primary-20)] flex items-center">
-                <Crown className="h-5 w-5 mr-2 flex-shrink-0" />
-                <p>
-                  <strong>{getHighlightedFeatureName()}</strong> is a Pro
-                  feature. Upgrade to access it and other premium features.
+          {/* Single Pricing Card */}
+          <div className="max-w-md mx-auto bg-[var(--bg-secondary)] rounded-xl overflow-hidden border border-[var(--accent-primary-20)]">
+            <div className="p-8">
+              <div className="flex justify-between items-start mb-4">
+                <div>
+                  <h2 className="text-2xl font-bold text-[var(--text-primary)]">Trakyz</h2>
+                  <p className="text-[var(--text-secondary)] text-sm mt-1">Everything you need</p>
+                </div>
+                <div className="bg-[var(--accent-primary-10)] text-[var(--accent-primary)] text-xs font-medium px-3 py-1 rounded-full">
+                  FULL ACCESS
+                </div>
+              </div>
+
+              <div className="mb-6">
+                <span className="text-4xl font-bold text-[var(--text-primary)]">$9.99</span>
+                <span className="text-[var(--text-secondary)]"> / month</span>
+                <p className="text-[var(--text-secondary)] text-sm mt-1">
+                  Or $99/year (Save 17%)
                 </p>
               </div>
-            )}
 
-            {/* Billing Toggle for Desktop (hidden on mobile) */}
-            <div className="hidden sm:inline-flex items-center p-1 bg-[var(--bg-secondary)] rounded-lg mt-6">
+              <ul className="space-y-3 mb-8">
+                {features.map((feature, index) => (
+                  <li key={index} className="flex items-start gap-2">
+                    <Check className="h-5 w-5 text-[var(--accent-primary)] flex-shrink-0 mt-0.5" />
+                    <span className="text-[var(--text-secondary)]">{feature}</span>
+                  </li>
+                ))}
+              </ul>
+
               <button
-                onClick={() => setIsYearly(false)}
-                className={`px-4 py-2 rounded-md text-sm font-medium transition-colors ${
-                  !isYearly
-                    ? "bg-[var(--accent-primary)] text-white"
-                    : "text-[var(--text-secondary)]"
-                }`}
+                onClick={handleSubscription}
+                disabled={isLoadingCheckout}
+                className="w-full py-3 rounded-lg transition-colors text-center font-medium bg-[var(--accent-primary)] hover:bg-[var(--accent-primary)]/90 text-white flex items-center justify-center gap-2"
               >
-                Monthly
+                {isLoadingCheckout ? (
+                  <>
+                    <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin" />
+                    Processing...
+                  </>
+                ) : (
+                  <>
+                    {user ? "Subscribe Now" : "Sign Up & Subscribe"}
+                    <ChevronRight className="h-4 w-4" />
+                  </>
+                )}
               </button>
-              <button
-                onClick={() => setIsYearly(true)}
-                className={`px-4 py-2 rounded-md text-sm font-medium transition-colors ${
-                  isYearly
-                    ? "bg-[var(--accent-primary)] text-white"
-                    : "text-[var(--text-secondary)]"
-                }`}
-              >
-                Yearly <span className="text-xs ml-1">(Save {discount}%)</span>
-              </button>
+
+              <p className="text-xs text-[var(--text-secondary)] mt-4 text-center">
+                Cancel anytime. No hidden fees.
+              </p>
             </div>
           </div>
 
-          <div className="grid md:grid-cols-2 gap-12 max-w-5xl mx-auto">
-            <PricingCard
-              title="Free Plan"
-              description="Perfect for beginners or those with simple portfolio needs"
-              price="$0"
-              features={[
-                { text: "Portfolio Tracking (up to 5 assets)" },
-                { text: "Basic Transaction History" },
-                { text: "Market Rate Monitoring" },
-              ]}
-              user={user}
-              isYearly={isYearly}
-            />
-            <PricingCard
-              title="Pro Plan"
-              description="For serious investors who want powerful tracking tools"
-              price="$9.99" // Base monthly price
-              features={proFeatures}
-              isPopular={true}
-              user={user}
-              monthlyPriceId={SUBSCRIPTION_PRICES.MONTHLY}
-              yearlyPriceId={SUBSCRIPTION_PRICES.YEARLY}
-              isYearly={isYearly}
-              setIsYearly={setIsYearly}
-              showMobileToggle
-            />
+          {/* FAQ Section */}
+          <div className="mt-20">
+            <h2 className="text-2xl font-bold text-center text-[var(--text-primary)] mb-12">
+              Frequently Asked Questions
+            </h2>
+            
+            <div className="max-w-3xl mx-auto space-y-6">
+              <div className="bg-[var(--bg-secondary)] rounded-lg p-6">
+                <h3 className="text-lg font-semibold text-[var(--text-primary)] mb-2">
+                  What's included in the subscription?
+                </h3>
+                <p className="text-[var(--text-secondary)]">
+                  Your subscription includes all features available in Trakyz: unlimited asset tracking, advanced analytics, real-time market data, budget management, and more. There are no feature restrictions or hidden costs.
+                </p>
+              </div>
+              
+              <div className="bg-[var(--bg-secondary)] rounded-lg p-6">
+                <h3 className="text-lg font-semibold text-[var(--text-primary)] mb-2">
+                  Can I cancel my subscription?
+                </h3>
+                <p className="text-[var(--text-secondary)]">
+                  Yes, you can cancel your subscription at any time. If you cancel, you'll continue to have access until the end of your billing period.
+                </p>
+              </div>
+              
+              <div className="bg-[var(--bg-secondary)] rounded-lg p-6">
+                <h3 className="text-lg font-semibold text-[var(--text-primary)] mb-2">
+                  Is my payment information secure?
+                </h3>
+                <p className="text-[var(--text-secondary)]">
+                  Yes, all payments are processed securely through Stripe. We never store your credit card information on our servers.
+                </p>
+              </div>
+              
+              <div className="bg-[var(--bg-secondary)] rounded-lg p-6">
+                <h3 className="text-lg font-semibold text-[var(--text-primary)] mb-2">
+                  Do you offer a free trial?
+                </h3>
+                <p className="text-[var(--text-secondary)]">
+                  Yes, we offer a 30-day free trial with full access to all features. No credit card required to try it out.
+                </p>
+              </div>
+            </div>
           </div>
-          <FeatureComparison />
-          <FAQ />
+
+          {/* Contact Section */}
+          <div className="mt-20 text-center">
+            <p className="text-[var(--text-secondary)] mb-4">
+              Have more questions? We're here to help.
+            </p>
+            <Link 
+              href="/contact" 
+              className="inline-flex items-center gap-2 px-6 py-2 bg-[var(--bg-secondary)] text-[var(--text-primary)] rounded-lg hover:bg-[var(--bg-hover)] transition-colors"
+            >
+              Contact Support
+            </Link>
+          </div>
         </main>
       </div>
     </div>

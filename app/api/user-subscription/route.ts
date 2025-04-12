@@ -1,20 +1,18 @@
+// app/api/user-subscription/route.ts
+
 import { NextRequest, NextResponse } from "next/server";
 import { createClient } from "@/lib/utils/supabase/server";
 import { validateInsertFields } from "@/lib/validateInsertFields";
 
 const allowedFields = [
-  "plan_type",
-  "plan_start_date",
-  "plan_end_date",
+  "subscription_start_date",
+  "subscription_end_date",
   "stripe_customer_id",
   "stripe_subscription_id",
   "subscription_status",
-  "is_early_adopter",
-  "early_adopter_ending_notified",
-  "early_adopter_until",
-  "is_free_trial",
-  "free_trial_ending_notified",
-  "free_trial_until",
+  "is_trial",
+  "trial_ending_notified",
+  "trial_until"
 ];
 
 export async function POST(req: NextRequest) {
@@ -34,7 +32,7 @@ export async function POST(req: NextRequest) {
 
   // Check if a row already exists for this user
   const { data: existing, error: fetchError } = await supabase
-    .from("user_plans")
+    .from("user_subscriptions")
     .select("id")
     .eq("id", userId)
     .single();
@@ -47,13 +45,16 @@ export async function POST(req: NextRequest) {
   if (existing) {
     // Update existing
     result = await supabase
-      .from("user_plans")
+      .from("user_subscriptions")
       .update(filteredData)
       .eq("id", userId)
       .select();
   } else {
     // Insert new
-    result = await supabase.from("user_plans").insert(dataWithUserId).select();
+    result = await supabase
+      .from("user_subscriptions")
+      .insert(dataWithUserId)
+      .select();
   }
 
   const { data, error } = result;

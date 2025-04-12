@@ -1,3 +1,5 @@
+// app/dashboard/page.tsx
+
 import { createClient } from "@/lib/utils/supabase/server";
 import { redirect } from "next/navigation";
 import Header from "@/components/Header";
@@ -29,12 +31,14 @@ const validTabs = [
 ];
 
 type PageProps = {
-  searchParams: any;
+  searchParams: {
+    tab?: string;
+    checkout_success?: string;
+  };
 };
 
-const ProtectedPage = async ({ searchParams }: PageProps) => {
+const Dashboard = async ({ searchParams }: PageProps) => {
   // Get the current tab from URL, default to 'budget' if not set or invalid
-
   const tabParam = searchParams.tab;
   const tabValue = Array.isArray(tabParam) ? tabParam[0] : tabParam;
   const currentTab = validTabs.includes(tabValue || "") ? tabValue : "budget";
@@ -42,17 +46,24 @@ const ProtectedPage = async ({ searchParams }: PageProps) => {
   const supabase = await createClient();
 
   // Fetch the authenticated user
-  const { data } = await supabase.auth.getUser();
-
-  const user: User | null = data?.user ?? null;
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
 
   // redirect users to sign in if not authenticated
   if (!user) {
     return redirect("/sign-in");
   }
 
-  // Login debug log (can remove later)
-  console.log("User is logged in:", user);
+  // Fetch user subscription status
+  const { data: subscriptionData } = await supabase
+    .from("user_subscriptions")
+    .select("subscription_status")
+    .eq("id", user.id)
+    .single();
+
+  const isSubscribed = subscriptionData?.subscription_status === "active" || 
+                       subscriptionData?.subscription_status === "trialing";
 
   // Only fetch the data needed for the current tab
   let budgetData: BudgetData[] = [];
@@ -240,9 +251,24 @@ const ProtectedPage = async ({ searchParams }: PageProps) => {
       break;
   }
 
+  // Check if this is a successful checkout
+  const hasCheckoutSuccess = searchParams.checkout_success === "true";
+
   return (
     <div className="flex-1 w-full flex flex-col min-h-screen">
-      <Header userEmail={user.email} userRole={user.user_metadata?.role || null} />
+      <Header 
+        userEmail={user.email} 
+        userRole={user.user_metadata?.role || null} 
+        isSubscribed={isSubscribed} 
+      />
+      
+      {hasCheckoutSuccess && (
+        <div className="bg-green-100 border-l-4 border-green-500 text-green-700 p-4 mx-4 my-2">
+          <p className="font-bold">Success!</p>
+          <p>Your subscription has been activated. Thank you for subscribing to Trakyz!</p>
+        </div>
+      )}
+
       <div className="flex-1 container py-8">
         <TabNavigation currentTab={currentTab} />
 
@@ -284,4 +310,5 @@ const ProtectedPage = async ({ searchParams }: PageProps) => {
     </div>
   );
 };
-export default ProtectedPage;
+
+export default Dashboard;

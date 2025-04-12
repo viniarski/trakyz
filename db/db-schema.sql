@@ -1,3 +1,5 @@
+-- Complete Trakyz Database Schema
+
 -- Enable extensions
 CREATE EXTENSION IF NOT EXISTS "uuid-ossp";
 CREATE EXTENSION IF NOT EXISTS "pgcrypto";
@@ -21,25 +23,17 @@ CREATE TABLE public.user_profiles (
     updated_at TIMESTAMPTZ DEFAULT NOW()
 );
 
--- REMOVED THESE BELOW ENTRIES FROM THE ABOVE TABLE, WILL ADD THEM AGAIN LATER.
--- watchlist JSONB DEFAULT '[]'::jsonb,
--- expanded_portfolio_categories JSONB DEFAULT '[]'::jsonb,
-
--- User plan table
-CREATE TABLE public.user_plans (
+-- User subscription table (replacing user_plans)
+CREATE TABLE public.user_subscriptions (
     id UUID PRIMARY KEY REFERENCES auth.users(id) ON DELETE CASCADE,
-    plan_type TEXT NOT NULL DEFAULT 'free' CHECK (plan_type IN ('free', 'pro')),
-    plan_start_date TIMESTAMPTZ,
-    plan_end_date TIMESTAMPTZ,
     stripe_customer_id TEXT,
     stripe_subscription_id TEXT,
-    subscription_status TEXT,
-    is_early_adopter BOOLEAN DEFAULT false,
-    early_adopter_ending_notified BOOLEAN DEFAULT false,
-    early_adopter_until TIMESTAMPTZ,
-    is_free_trial BOOLEAN DEFAULT false,
-    free_trial_ending_notified BOOLEAN DEFAULT false,
-    free_trial_until TIMESTAMPTZ,
+    subscription_status TEXT DEFAULT 'inactive',
+    subscription_start_date TIMESTAMPTZ,
+    subscription_end_date TIMESTAMPTZ,
+    is_trial BOOLEAN DEFAULT false,
+    trial_ending_notified BOOLEAN DEFAULT false,
+    trial_until TIMESTAMPTZ,
     created_at TIMESTAMPTZ DEFAULT NOW(),
     updated_at TIMESTAMPTZ DEFAULT NOW()
 );
@@ -168,6 +162,16 @@ CREATE TABLE public.expense_options (
     name TEXT NOT NULL UNIQUE
 );
 
+-- budgets table 
+CREATE TABLE public.budgets (
+    month DATE NOT NULL,
+    user_id UUID NOT NULL REFERENCES auth.users(id) ON DELETE CASCADE,
+    planned_income NUMERIC NOT NULL DEFAULT 0,
+    planned_expenses NUMERIC NOT NULL DEFAULT 0,
+    updated_at TIMESTAMP WITH TIME ZONE DEFAULT now(),
+    PRIMARY KEY (month, user_id)
+);
+
 -- User-selected incomes in budgets
 CREATE TABLE public.budget_income (
     budget_month DATE NOT NULL,
@@ -188,16 +192,6 @@ CREATE TABLE public.budget_expenses (
     PRIMARY KEY (budget_month, user_id, expense_option_id),
     FOREIGN KEY (budget_month, user_id) REFERENCES public.budgets (month, user_id) ON DELETE CASCADE,
     FOREIGN KEY (expense_option_id) REFERENCES public.expense_options (id) ON DELETE CASCADE
-);
-
--- budgets table 
-CREATE TABLE public.budgets (
-    month DATE NOT NULL,
-    user_id UUID NOT NULL,
-    planned_income NUMERIC NOT NULL DEFAULT 0,
-    planned_expenses NUMERIC NOT NULL DEFAULT 0,
-    updated_at TIMESTAMP WITH TIME ZONE DEFAULT now(),
-    PRIMARY KEY (month, user_id)
 );
 
 ------------------ MARKET DATA TABLES ------------------
@@ -260,13 +254,12 @@ CREATE TABLE public.stocks (
 CREATE TABLE public.system_settings (
     id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
     key TEXT NOT NULL UNIQUE,
-    free_trial_enabled BOOLEAN DEFAULT true,
-    early_adopter_enabled BOOLEAN DEFAULT true,
+    trial_enabled BOOLEAN DEFAULT true,
     created_at TIMESTAMPTZ DEFAULT NOW(),
     updated_at TIMESTAMPTZ DEFAULT NOW()
 );
 
--- Notifications table (new addition)
+-- Notifications table
 CREATE TABLE public.notifications (
     id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
     user_id UUID NOT NULL REFERENCES auth.users(id) ON DELETE CASCADE,
@@ -277,20 +270,116 @@ CREATE TABLE public.notifications (
     created_at TIMESTAMPTZ DEFAULT NOW()
 );
 
--- Create RLS policies
+--------------------- FUNCTIONS -------------------------
+
+-- Create a new user profile when a user signs up
+CREATE OR REPLACE FUNCTION create_user_profile()
+RETURNS TRIGGER AS $$
+BEGIN
+  INSERT INTO public.user_profiles (id, name, avatar_url, created_at)
+  VALUES (
+    NEW.id,
+    NEW.raw_user_meta_data->>'full_name',
+    NEW.raw_user_meta_data->>'avatar_url',
+    NOW()
+  );
+  
+  -- Also create an entry in user_subscriptions
+  INSERT INTO public.user_subscriptions (id, subscription_status, created_at)
+  VALUES (
+    NEW.id,
+    'inactive',
+    NOW()
+  );
+  
+  RETURN NEW;
+END;
+$$ LANGUAGE plpgsql;
+
+-- Update updated_at timestamp automatically
+CREATE OR REPLACE FUNCTION update_updated_at_column()
+RETURNS TRIGGER AS $$
+BEGIN
+  NEW.updated_at = NOW();
+  RETURN NEW;
+END;
+$$ LANGUAGE plpgsql;
+
+-- Create default portfolio for new users
+CREATE OR REPLACE FUNCTION create_default_portfolio()
+RETURNS TRIGGER AS $$
+BEGIN
+  INSERT INTO public.portfolios (user_id, name, is_default, created_at)
+  VALUES (
+    NEW.id,
+    'Default Portfolio',
+    true,
+    NOW()
+  );
+  RETURN NEW;
+END;
+$$ LANGUAGE plpgsql;
+
+---------------------- TRIGGERS -------------------------
+
+-- Create user profile when a new user is created
+CREATE TRIGGER on_auth_user_created
+AFTER INSERT ON auth.users
+FOR EACH ROW EXECUTE FUNCTION create_user_profile();
+
+-- Create default portfolio when a new user is created
+CREATE TRIGGER on_auth_user_created_portfolio
+AFTER INSERT ON public.user_profiles
+FOR EACH ROW EXECUTE FUNCTION create_default_portfolio();
+
+-- Update timestamps automatically
+CREATE TRIGGER update_user_profiles_updated_at
+BEFORE UPDATE ON public.user_profiles
+FOR EACH ROW EXECUTE FUNCTION update_updated_at_column();
+
+CREATE TRIGGER update_user_subscriptions_updated_at
+BEFORE UPDATE ON public.user_subscriptions
+FOR EACH ROW EXECUTE FUNCTION update_updated_at_column();
+
+CREATE TRIGGER update_portfolios_updated_at
+BEFORE UPDATE ON public.portfolios
+FOR EACH ROW EXECUTE FUNCTION update_updated_at_column();
+
+CREATE TRIGGER update_transactions_updated_at
+BEFORE UPDATE ON public.transactions
+FOR EACH ROW EXECUTE FUNCTION update_updated_at_column();
+
+CREATE TRIGGER update_loans_updated_at
+BEFORE UPDATE ON public.loans
+FOR EACH ROW EXECUTE FUNCTION update_updated_at_column();
+
+CREATE TRIGGER update_credit_cards_updated_at
+BEFORE UPDATE ON public.credit_cards
+FOR EACH ROW EXECUTE FUNCTION update_updated_at_column();
+
+CREATE TRIGGER update_real_estate_updated_at
+BEFORE UPDATE ON public.real_estate_properties
+FOR EACH ROW EXECUTE FUNCTION update_updated_at_column();
+
+CREATE TRIGGER update_system_settings_updated_at
+BEFORE UPDATE ON public.system_settings
+FOR EACH ROW EXECUTE FUNCTION update_updated_at_column();
+
 -- Enable Row Level Security
 ALTER TABLE public.user_profiles ENABLE ROW LEVEL SECURITY;
-ALTER TABLE public.user_plans ENABLE ROW LEVEL SECURITY;
+ALTER TABLE public.user_subscriptions ENABLE ROW LEVEL SECURITY;
 ALTER TABLE public.portfolios ENABLE ROW LEVEL SECURITY;
 ALTER TABLE public.transactions ENABLE ROW LEVEL SECURITY;
 ALTER TABLE public.loans ENABLE ROW LEVEL SECURITY;
 ALTER TABLE public.credit_cards ENABLE ROW LEVEL SECURITY;
 ALTER TABLE public.real_estate_properties ENABLE ROW LEVEL SECURITY;
 ALTER TABLE public.budgets ENABLE ROW LEVEL SECURITY;
+ALTER TABLE public.budget_income ENABLE ROW LEVEL SECURITY;
+ALTER TABLE public.budget_expenses ENABLE ROW LEVEL SECURITY;
 ALTER TABLE public.notifications ENABLE ROW LEVEL SECURITY;
 
 -- Create RLS policies
--- Example for user_profiles
+-- User Profiles policies
 CREATE POLICY "Users can view their own profile"
   ON public.user_profiles
   FOR SELECT
@@ -301,5 +390,249 @@ CREATE POLICY "Users can update their own profile"
   FOR UPDATE
   USING (auth.uid() = id);
 
--- Similar policies for other tables
--- ...
+-- User Subscriptions policies
+CREATE POLICY "Users can view their own subscription"
+  ON public.user_subscriptions
+  FOR SELECT
+  USING (auth.uid() = id);
+
+-- Service roles can update subscriptions (for webhooks)
+CREATE POLICY "Service role can update subscriptions"
+  ON public.user_subscriptions
+  FOR UPDATE
+  USING (true)
+  WITH CHECK (true);
+
+-- Portfolios policies
+CREATE POLICY "Users can view their own portfolios"
+  ON public.portfolios
+  FOR SELECT
+  USING (auth.uid() = user_id);
+
+CREATE POLICY "Users can insert their own portfolios"
+  ON public.portfolios
+  FOR INSERT
+  WITH CHECK (auth.uid() = user_id);
+
+CREATE POLICY "Users can update their own portfolios"
+  ON public.portfolios
+  FOR UPDATE
+  USING (auth.uid() = user_id);
+
+CREATE POLICY "Users can delete their own portfolios"
+  ON public.portfolios
+  FOR DELETE
+  USING (auth.uid() = user_id);
+
+-- Transactions policies
+CREATE POLICY "Users can view their own transactions"
+  ON public.transactions
+  FOR SELECT
+  USING (auth.uid() = user_id);
+
+CREATE POLICY "Users can insert their own transactions"
+  ON public.transactions
+  FOR INSERT
+  WITH CHECK (auth.uid() = user_id);
+
+CREATE POLICY "Users can update their own transactions"
+  ON public.transactions
+  FOR UPDATE
+  USING (auth.uid() = user_id);
+
+CREATE POLICY "Users can delete their own transactions"
+  ON public.transactions
+  FOR DELETE
+  USING (auth.uid() = user_id);
+
+-- Loans policies
+CREATE POLICY "Users can view their own loans"
+  ON public.loans
+  FOR SELECT
+  USING (auth.uid() = user_id);
+
+CREATE POLICY "Users can insert their own loans"
+  ON public.loans
+  FOR INSERT
+  WITH CHECK (auth.uid() = user_id);
+
+CREATE POLICY "Users can update their own loans"
+  ON public.loans
+  FOR UPDATE
+  USING (auth.uid() = user_id);
+
+CREATE POLICY "Users can delete their own loans"
+  ON public.loans
+  FOR DELETE
+  USING (auth.uid() = user_id);
+
+-- Credit cards policies
+CREATE POLICY "Users can view their own credit cards"
+  ON public.credit_cards
+  FOR SELECT
+  USING (auth.uid() = user_id);
+
+CREATE POLICY "Users can insert their own credit cards"
+  ON public.credit_cards
+  FOR INSERT
+  WITH CHECK (auth.uid() = user_id);
+
+CREATE POLICY "Users can update their own credit cards"
+  ON public.credit_cards
+  FOR UPDATE
+  USING (auth.uid() = user_id);
+
+CREATE POLICY "Users can delete their own credit cards"
+  ON public.credit_cards
+  FOR DELETE
+  USING (auth.uid() = user_id);
+
+-- Real estate properties policies
+CREATE POLICY "Users can view their own real estate properties"
+  ON public.real_estate_properties
+  FOR SELECT
+  USING (auth.uid() = user_id);
+
+CREATE POLICY "Users can insert their own real estate properties"
+  ON public.real_estate_properties
+  FOR INSERT
+  WITH CHECK (auth.uid() = user_id);
+
+CREATE POLICY "Users can update their own real estate properties"
+  ON public.real_estate_properties
+  FOR UPDATE
+  USING (auth.uid() = user_id);
+
+CREATE POLICY "Users can delete their own real estate properties"
+  ON public.real_estate_properties
+  FOR DELETE
+  USING (auth.uid() = user_id);
+
+-- Budgets policies
+CREATE POLICY "Users can view their own budgets"
+  ON public.budgets
+  FOR SELECT
+  USING (auth.uid() = user_id);
+
+CREATE POLICY "Users can insert their own budgets"
+  ON public.budgets
+  FOR INSERT
+  WITH CHECK (auth.uid() = user_id);
+
+CREATE POLICY "Users can update their own budgets"
+  ON public.budgets
+  FOR UPDATE
+  USING (auth.uid() = user_id);
+
+CREATE POLICY "Users can delete their own budgets"
+  ON public.budgets
+  FOR DELETE
+  USING (auth.uid() = user_id);
+
+-- Budget incomes policies
+CREATE POLICY "Users can view their own budget incomes"
+  ON public.budget_income
+  FOR SELECT
+  USING (auth.uid() = user_id);
+
+CREATE POLICY "Users can insert their own budget incomes"
+  ON public.budget_income
+  FOR INSERT
+  WITH CHECK (auth.uid() = user_id);
+
+CREATE POLICY "Users can update their own budget incomes"
+  ON public.budget_income
+  FOR UPDATE
+  USING (auth.uid() = user_id);
+
+CREATE POLICY "Users can delete their own budget incomes"
+  ON public.budget_income
+  FOR DELETE
+  USING (auth.uid() = user_id);
+
+-- Budget expenses policies
+CREATE POLICY "Users can view their own budget expenses"
+  ON public.budget_expenses
+  FOR SELECT
+  USING (auth.uid() = user_id);
+
+CREATE POLICY "Users can insert their own budget expenses"
+  ON public.budget_expenses
+  FOR INSERT
+  WITH CHECK (auth.uid() = user_id);
+
+CREATE POLICY "Users can update their own budget expenses"
+  ON public.budget_expenses
+  FOR UPDATE
+  USING (auth.uid() = user_id);
+
+CREATE POLICY "Users can delete their own budget expenses"
+  ON public.budget_expenses
+  FOR DELETE
+  USING (auth.uid() = user_id);
+
+-- Notifications policies
+CREATE POLICY "Users can view their own notifications"
+  ON public.notifications
+  FOR SELECT
+  USING (auth.uid() = user_id);
+
+CREATE POLICY "Users can update their own notifications"
+  ON public.notifications
+  FOR UPDATE
+  USING (auth.uid() = user_id);
+
+-- Market data is accessible to all authenticated users
+CREATE POLICY "All users can view market data"
+  ON public.metals
+  FOR SELECT
+  USING (auth.role() = 'authenticated');
+
+CREATE POLICY "All users can view crypto data"
+  ON public.crypto
+  FOR SELECT
+  USING (auth.role() = 'authenticated');
+
+CREATE POLICY "All users can view currency data"
+  ON public.currencies
+  FOR SELECT
+  USING (auth.role() = 'authenticated');
+
+CREATE POLICY "All users can view stock data"
+  ON public.stocks
+  FOR SELECT
+  USING (auth.role() = 'authenticated');
+
+-- Insert default predefined income and expense options
+INSERT INTO public.income_options (name) VALUES 
+  ('Salary'), 
+  ('Freelance'), 
+  ('Investments'), 
+  ('Rental Income'), 
+  ('Side Business'),
+  ('Dividends'),
+  ('Interest'),
+  ('Royalties'),
+  ('Pension'),
+  ('Social Security'),
+  ('Gifts'),
+  ('Other');
+
+INSERT INTO public.expense_options (name) VALUES 
+  ('Housing'), 
+  ('Utilities'), 
+  ('Groceries'), 
+  ('Transportation'), 
+  ('Insurance'),
+  ('Healthcare'),
+  ('Debt Payments'),
+  ('Entertainment'),
+  ('Dining Out'),
+  ('Shopping'),
+  ('Education'),
+  ('Travel'),
+  ('Subscriptions'),
+  ('Savings'),
+  ('Investments'),
+  ('Charity'),
+  ('Other');

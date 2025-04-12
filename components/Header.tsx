@@ -39,9 +39,10 @@ const currencies = [
 interface HeaderProps {
   userEmail?: string | null
   userRole?: string | null
+  isSubscribed?: boolean
 }
 
-export default function Header({ userEmail, userRole }: HeaderProps) {
+export default function Header({ userEmail, userRole, isSubscribed = false }: HeaderProps) {
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false)
   const [isUserMenuOpen, setIsUserMenuOpen] = useState(false)
   const [isCurrencyOpen, setIsCurrencyOpen] = useState(false)
@@ -53,7 +54,7 @@ export default function Header({ userEmail, userRole }: HeaderProps) {
   const userMenuRef = useRef<HTMLDivElement>(null)
   const currencyMenuRef = useRef<HTMLDivElement>(null)
   
-  // Toggle balance visibility (dummy function)
+  // Toggle balance visibility
   const toggleBalances = () => setHideBalances(!hideBalances)
   
   // Get selected currency data
@@ -249,6 +250,7 @@ export default function Header({ userEmail, userRole }: HeaderProps) {
             >
               <Bell className="w-4 h-4" />
             </button>
+            
             <button
               onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
               className="p-1.5 text-[var(--text-secondary)] hover:text-[var(--text-primary)] rounded-lg transition-colors hover:bg-[var(--bg-hover)]"
