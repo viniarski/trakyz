@@ -1,3 +1,5 @@
+// components/GenericForm.tsx
+
 'use client';
 
 import { useState } from "react";

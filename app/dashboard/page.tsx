@@ -2,7 +2,7 @@
 
 import { createClient } from "@/lib/utils/supabase/server";
 import { redirect } from "next/navigation";
-import Header from "@/components/Header";
+import Header from "@/components/Header/index";
 import Budget from "@/app/dashboard/components/budget/Budget";
 import { BudgetData } from "@/lib/types/budgetTypes";
 import { UserResponse } from "@supabase/supabase-js";
