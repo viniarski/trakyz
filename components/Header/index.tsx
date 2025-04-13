@@ -55,7 +55,7 @@ export default function Header({ userEmail, userRole, isSubscribed = false }: He
         <header className="h-16 flex items-center justify-between">
           {/* Logo */}
           <Link 
-            href="/" 
+            href="/dashboard" 
             className="flex items-center gap-1 sm:gap-2 font-medium text-xl sm:text-2xl text-[var(--text-primary)] tracking-tight no-underline font-mono"
           >
             <div className="relative h-5 w-5">
