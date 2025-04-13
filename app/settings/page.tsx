@@ -1,4 +1,3 @@
-// app/settings/page.tsx
 "use client";
 
 import { useEffect, useState } from 'react';
@@ -8,35 +7,18 @@ import Navigation from '@/components/ui/navigation';
 import PageHeader from '@/components/ui/page-header';
 import AccountSection from './components/account-section';
 import CustomizationSection from './components/customization-section';
-import BillingSection from './components/billing-section';
 import SecuritySection from './components/security-section';
 import SystemSection from './components/system-section';
-
-interface SubscriptionData {
-  subscription_status?: string;
-  stripe_customer_id?: string;
-  stripe_subscription_id?: string;
-  current_period_end?: string | null;
-  cancel_at_period_end?: boolean;
-  payment_method?: {
-    brand?: string;
-    last4?: string;
-    exp_month?: number;
-    exp_year?: number;
-  };
-}
 
 export default function Settings() {
   const [user, setUser] = useState<any>(null);
   const [loading, setLoading] = useState(true);
-  const [subscription, setSubscription] = useState<SubscriptionData | null>(null);
-  const [isCreatingPortal, setIsCreatingPortal] = useState(false);
   const [error, setError] = useState<string | null>(null);
   
   const supabase = createClient();
 
   useEffect(() => {
-    const fetchUserAndSubscription = async () => {
+    const fetchUserData = async () => {
       try {
         setLoading(true);
         setError(null);
@@ -53,31 +35,6 @@ export default function Settings() {
         }
         
         setUser(user);
-        
-        // Get user profile data
-        const { data: profile, error: profileError } = await supabase
-          .from('user_profiles')
-          .select('*')
-          .eq('id', user.id)
-          .single();
-          
-        if (profileError && profileError.code !== 'PGRST116') {
-          console.error('Error fetching profile:', profileError);
-        }
-        
-        // Get subscription data
-        const { data: subscriptionData, error: subscriptionError } = await supabase
-          .from('user_subscriptions')
-          .select('*')
-          .eq('id', user.id)
-          .single();
-          
-        if (subscriptionError && subscriptionError.code !== 'PGRST116') {
-          console.error('Error fetching subscription:', subscriptionError);
-        }
-        
-        setSubscription(subscriptionData || null);
-        
       } catch (error) {
         console.error('Error in settings page:', error);
         setError('Failed to load user data. Please try again.');
@@ -86,38 +43,9 @@ export default function Settings() {
       }
     };
     
-    fetchUserAndSubscription();
+    fetchUserData();
   }, []);
   
-  const handleManageSubscription = async () => {
-    try {
-      setIsCreatingPortal(true);
-      setError(null);
-      
-      const response = await fetch('/api/stripe/create-portal', { 
-        method: 'POST',
-      });
-      
-      if (!response.ok) {
-        const errorData = await response.json();
-        throw new Error(errorData.error || 'Failed to create portal session');
-      }
-      
-      const data = await response.json();
-      
-      if (data.redirect) {
-        window.location.href = data.redirect; // Redirect to pricing if no customer ID
-      } else {
-        window.location.href = data.url; // Portal URL
-      }
-    } catch (err) {
-      console.error('Error opening customer portal:', err);
-      setError(err instanceof Error ? err.message : 'Could not open billing portal');
-    } finally {
-      setIsCreatingPortal(false);
-    }
-  };
-
   if (loading) {
     return (
       <div className="min-h-screen bg-[var(--bg-primary)] text-[var(--text-primary)] flex items-center justify-center">
@@ -139,7 +67,7 @@ export default function Settings() {
         <Navigation />
         <PageHeader 
           title="Settings" 
-          description="Manage your account, subscription, and preferences"
+          description="Manage your account, appearance, and preferences"
         />
         
         {error && (
@@ -151,11 +79,6 @@ export default function Settings() {
         <div className="space-y-8 mt-8">
           <AccountSection user={user} />
           <CustomizationSection />
-          <BillingSection 
-            subscription={subscription}
-            isCreatingPortal={isCreatingPortal}
-            handleManageSubscription={handleManageSubscription}
-          />
           <SecuritySection />
           <SystemSection />
         </div>
