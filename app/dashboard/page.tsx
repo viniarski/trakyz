@@ -5,7 +5,7 @@ import { redirect } from "next/navigation";
 import Header from "@/components/Header";
 import Budget from "@/app/dashboard/components/budget/Budget";
 import { BudgetData } from "@/lib/types/budgetTypes";
-import { User } from "@supabase/supabase-js";
+import { UserResponse } from "@supabase/supabase-js";
 import Markets from "./components/market/Market";
 import { MarketData } from "@/lib/types/marketTypes";
 import Debt from "./components/debt/Debt";
@@ -50,7 +50,7 @@ export default async function Page(props: any) {
   // Fetch the authenticated user
   const {
     data: { user },
-  } = await supabase.auth.getUser();
+  }: UserResponse = await supabase.auth.getUser();
 
   // redirect users to sign in if not authenticated
   if (!user) {
