@@ -34,13 +34,13 @@ const validTabs = [
 // In Next.js, this special export can work around some type issues
 export default async function Page(props: any) {
   // Use the props in a type-safe way
-  const searchParams = props.searchParams || {};
-  
+  const searchParams = (await props.searchParams) || {};
+
   // Get the current tab from URL, default to 'budget' if not set or invalid
   const tabParam = searchParams.tab;
   const tabValue = Array.isArray(tabParam) ? tabParam[0] : tabParam;
   const currentTab = validTabs.includes(tabValue || "") ? tabValue : "budget";
-  
+
   // Check for checkout success
   const checkoutSuccessParam = searchParams.checkout_success;
   const hasCheckoutSuccess = checkoutSuccessParam === "true";
@@ -64,8 +64,9 @@ export default async function Page(props: any) {
     .eq("id", user.id)
     .single();
 
-  const isSubscribed = subscriptionData?.subscription_status === "active" || 
-                       subscriptionData?.subscription_status === "trialing";
+  const isSubscribed =
+    subscriptionData?.subscription_status === "active" ||
+    subscriptionData?.subscription_status === "trialing";
 
   // Only fetch the data needed for the current tab
   let budgetData: BudgetData[] = [];
@@ -255,16 +256,19 @@ export default async function Page(props: any) {
 
   return (
     <div className="flex-1 w-full flex flex-col min-h-screen">
-      <Header 
-        userEmail={user.email} 
-        userRole={user.user_metadata?.role || null} 
-        isSubscribed={isSubscribed} 
+      <Header
+        userEmail={user.email}
+        userRole={user.user_metadata?.role || null}
+        isSubscribed={isSubscribed}
       />
-      
+
       {hasCheckoutSuccess && (
         <div className="bg-green-100 border-l-4 border-green-500 text-green-700 p-4 mx-4 my-2">
           <p className="font-bold">Success!</p>
-          <p>Your subscription has been activated. Thank you for subscribing to Trakyz!</p>
+          <p>
+            Your subscription has been activated. Thank you for subscribing to
+            Trakyz!
+          </p>
         </div>
       )}
 

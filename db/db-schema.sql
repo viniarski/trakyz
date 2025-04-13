@@ -274,27 +274,51 @@ CREATE TABLE public.notifications (
 
 -- Create a new user profile when a user signs up
 CREATE OR REPLACE FUNCTION create_user_profile()
-RETURNS TRIGGER AS $$
-BEGIN
-  INSERT INTO public.user_profiles (id, name, avatar_url, created_at)
+RETURNS TRIGGER
+LANGUAGE plpgsql
+SECURITY DEFINER
+SET search_path = public
+AS $$
+  INSERT INTO public.user_profiles (
+    id, 
+    name, 
+    role,
+    avatar_url, 
+    selected_currency,
+    selected_period,
+    theme_preference,
+    created_at,
+    updated_at
+  )
   VALUES (
     NEW.id,
-    NEW.raw_user_meta_data->>'full_name',
+    COALESCE(NEW.raw_user_meta_data->>'full_name', split_part(NEW.email, '@', 1)),
+    'user',
     NEW.raw_user_meta_data->>'avatar_url',
+    'USD',
+    '24H',
+    'blue',
+    NOW(),
     NOW()
   );
   
   -- Also create an entry in user_subscriptions
-  INSERT INTO public.user_subscriptions (id, subscription_status, created_at)
+ INSERT INTO public.user_subscriptions (
+    id, 
+    subscription_status, 
+    created_at,
+    updated_at
+  )
   VALUES (
     NEW.id,
     'inactive',
+    NOW(),
     NOW()
   );
   
   RETURN NEW;
 END;
-$$ LANGUAGE plpgsql;
+$$;
 
 -- Update updated_at timestamp automatically
 CREATE OR REPLACE FUNCTION update_updated_at_column()
@@ -303,22 +327,53 @@ BEGIN
   NEW.updated_at = NOW();
   RETURN NEW;
 END;
-$$ LANGUAGE plpgsql;
+$$;
 
 -- Create default portfolio for new users
 CREATE OR REPLACE FUNCTION create_default_portfolio()
-RETURNS TRIGGER AS $$
-BEGIN
-  INSERT INTO public.portfolios (user_id, name, is_default, created_at)
+RETURNS TRIGGER
+LANGUAGE plpgsql
+SECURITY DEFINER
+SET search_path = public
+AS $$
+  INSERT INTO public.portfolios (
+    user_id, 
+    name, 
+    is_default, 
+    total_value,
+    total_cost,
+    total_profit_loss,
+    total_profit_loss_percentage,
+    asset_count,
+    created_at,
+    updated_at
+  )
   VALUES (
     NEW.id,
     'Default Portfolio',
     true,
+    0,
+    0,
+    0,
+    0,
+    0,
+    NOW(),
     NOW()
   );
   RETURN NEW;
 END;
-$$ LANGUAGE plpgsql;
+$$;
+
+-- Ensure functions have elevated permission to access RLS tables
+-- Revoke default public access
+REVOKE ALL ON FUNCTION create_user_profile() FROM public;
+REVOKE ALL ON FUNCTION update_updated_at_column() FROM public;
+REVOKE ALL ON FUNCTION create_default_portfolio() FROM public;
+
+-- Allow Supabase roles
+GRANT EXECUTE ON FUNCTION create_user_profile() TO service_role;
+GRANT EXECUTE ON FUNCTION update_updated_at_column() TO service_role;
+GRANT EXECUTE ON FUNCTION create_default_portfolio() TO service_role;
 
 ---------------------- TRIGGERS -------------------------
 
