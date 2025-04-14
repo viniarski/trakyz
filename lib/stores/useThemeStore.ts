@@ -1,5 +1,3 @@
-// lib/stores/useThemeStore.ts
-
 import { create } from 'zustand'
 import { createJSONStorage, persist } from 'zustand/middleware'
 import { createClient } from '@/lib/utils/supabase/client'
@@ -90,11 +88,14 @@ export const useThemeStore = create<ThemeState>()(
           if (data?.theme_preference) {
             const dbTheme = data.theme_preference as Theme
             
-            // Update state
-            set({ theme: dbTheme })
-            
-            // Apply theme to document
-            applyThemeToDocument(dbTheme)
+            // Only update if the theme from DB is different from current localStorage theme
+            if (dbTheme !== get().theme) {
+              // Update state (which will also sync back to localStorage)
+              set({ theme: dbTheme })
+              
+              // Apply theme to document
+              applyThemeToDocument(dbTheme)
+            }
           }
         } catch (error: any) {
           console.error('Error initializing theme from database:', error.message || error)
@@ -104,6 +105,8 @@ export const useThemeStore = create<ThemeState>()(
     {
       name: 'theme-storage',
       storage: createJSONStorage(() => localStorage),
+      // Important: We DON'T skip hydration since we want the localStorage theme to load ASAP
+      skipHydration: false,
     }
   )
 )

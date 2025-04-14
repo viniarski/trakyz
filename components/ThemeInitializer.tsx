@@ -1,23 +1,17 @@
-// components/ThemeInitializer.tsx
-
 'use client'
 
-import { useEffect, useRef } from 'react'
+import { useEffect } from 'react'
 import { useThemeStore } from '@/lib/stores/useThemeStore'
 
 export default function ThemeInitializer() {
   const { theme, initializeFromDatabase } = useThemeStore();
-  const initialized = useRef(false);
-
+  
   // This effect runs once on client-side mount
   useEffect(() => {
-    // Apply theme from store immediately (this is from localStorage)
-    if (!initialized.current) {
-      document.documentElement.setAttribute('data-theme', theme);
-      initialized.current = true;
-    }
+    // First apply the theme from localStorage (which zustand has already loaded)
+    document.documentElement.setAttribute('data-theme', theme);
     
-    // Then try to load from database
+    // Then try to load from database and update if different
     let isMounted = true;
     
     const loadThemeFromDB = async () => {
