@@ -1,28 +1,29 @@
-'use client'
+// app/components/ThemeInitializer.tsx
+'use client';
 
-import { useEffect } from 'react'
-import { useThemeStore } from '@/lib/stores/useThemeStore'
+import { useEffect } from 'react';
+import { useThemeStore } from '@/lib/stores/useThemeStore';
 
 interface ThemeInitializerProps {
   onThemeInitialized?: () => void;
 }
 
 export default function ThemeInitializer({ onThemeInitialized }: ThemeInitializerProps) {
-  const { theme } = useThemeStore();
-  
-  // This effect runs once on client-side mount
-  useEffect(() => {
-    // Apply theme from localStorage (Zustand has already loaded it)
-    if (theme) {
-      document.documentElement.setAttribute('data-theme', theme);
-      
-      // Notify parent component that theme is initialized
-      if (onThemeInitialized) {
-        onThemeInitialized();
-      }
-    }
-  }, [theme, onThemeInitialized]);
+  const { theme, setTheme } = useThemeStore();
 
-  // This component doesn't render anything visible
+  useEffect(() => {
+    const currentTheme = document.documentElement.getAttribute('data-theme') || 'blue';
+    
+    // Only update if themes differ to prevent infinite loop
+    if (theme !== currentTheme) {
+      setTheme(currentTheme as 'blue' | 'dark' | 'light');
+    }
+
+    // Notify parent component (run regardless to ensure loading screen progresses)
+    if (onThemeInitialized) {
+      onThemeInitialized();
+    }
+  }, []); // Empty deps to run once on mount
+
   return null;
 }
