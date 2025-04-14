@@ -1,3 +1,5 @@
+// lib/stores/useThemeStore.ts
+
 import { create } from 'zustand'
 import { createJSONStorage, persist } from 'zustand/middleware'
 import { createClient } from '@/lib/utils/supabase/client'
@@ -11,6 +13,13 @@ interface ThemeState {
   initializeFromDatabase: () => Promise<void>
 }
 
+// Helper function to update document theme
+const applyThemeToDocument = (theme: Theme) => {
+  if (typeof document !== 'undefined') {
+    document.documentElement.setAttribute('data-theme', theme)
+  }
+}
+
 export const useThemeStore = create<ThemeState>()(
   persist(
     (set, get) => ({
@@ -21,9 +30,7 @@ export const useThemeStore = create<ThemeState>()(
         set({ theme })
         
         // Apply theme to document
-        if (typeof document !== 'undefined') {
-          document.documentElement.setAttribute('data-theme', theme)
-        }
+        applyThemeToDocument(theme)
         
         // Sync with DB (fire and forget)
         get().syncWithDatabase(theme).catch(err => {
@@ -37,14 +44,11 @@ export const useThemeStore = create<ThemeState>()(
           const { data: { user } } = await supabase.auth.getUser()
           
           if (!user) {
-            console.log('No user logged in, skipping database sync')
             return
           }
           
-          console.log('Syncing theme to database:', theme, 'for user:', user.id)
-          
           // Update database directly using Supabase
-          const { data, error } = await supabase
+          const { error } = await supabase
             .from('user_profiles')
             .update({ 
               theme_preference: theme,
@@ -53,10 +57,8 @@ export const useThemeStore = create<ThemeState>()(
             .eq('id', user.id)
           
           if (error) {
-            throw new Error(`Direct DB update failed: ${error.message}`)
+            throw error
           }
-          
-          console.log('Theme synced successfully through direct DB update')
         } catch (error: any) {
           console.error('Error syncing theme with database:', error.message || 'Unknown error')
           // Don't rethrow to prevent cascading errors
@@ -69,11 +71,9 @@ export const useThemeStore = create<ThemeState>()(
           const { data: { user } } = await supabase.auth.getUser()
           
           if (!user) {
-            console.log('No user logged in, skipping database initialization')
             return
           }
           
-          console.log('Fetching theme preference for user:', user.id)
           const { data, error } = await supabase
             .from('user_profiles')
             .select('theme_preference')
@@ -89,17 +89,12 @@ export const useThemeStore = create<ThemeState>()(
           
           if (data?.theme_preference) {
             const dbTheme = data.theme_preference as Theme
-            console.log('Found theme preference in database:', dbTheme)
             
             // Update state
             set({ theme: dbTheme })
             
             // Apply theme to document
-            if (typeof document !== 'undefined') {
-              document.documentElement.setAttribute('data-theme', dbTheme)
-            }
-            
-            console.log('Theme initialized from database')
+            applyThemeToDocument(dbTheme)
           }
         } catch (error: any) {
           console.error('Error initializing theme from database:', error.message || error)

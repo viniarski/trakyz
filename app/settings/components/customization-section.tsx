@@ -1,6 +1,8 @@
+// app/settings/components/customization-section.tsx
+
 'use client'
 
-import { useState } from 'react'
+import { useState, useCallback, useMemo } from 'react'
 import { Palette, ChevronDown } from 'lucide-react'
 import { useThemeStore } from '@/lib/stores/useThemeStore'
 
@@ -9,7 +11,20 @@ export default function CustomizationSection() {
   const [message, setMessage] = useState<{ type: 'success' | 'error', text: string } | null>(null)
   const [isOpen, setIsOpen] = useState(false)
 
-  const handleThemeChange = async (newTheme: 'blue' | 'dark' | 'light') => {
+  // Memoized theme information to prevent recalculation
+  const themes = useMemo(() => [
+    { value: 'blue', name: 'Blue (Default)', color: 'rgb(59, 130, 246)' },
+    { value: 'dark', name: 'Dark', color: '#222' },
+    { value: 'light', name: 'Light', color: '#f5f5f5' }
+  ], []);
+
+  // Get current theme info
+  const currentTheme = useMemo(() => 
+    themes.find(t => t.value === theme) || themes[0], 
+  [theme, themes]);
+
+  // Memoize handler functions
+  const handleThemeChange = useCallback(async (newTheme: 'blue' | 'dark' | 'light') => {
     try {
       setTheme(newTheme)
       setMessage({ type: 'success', text: 'Theme updated successfully' })
@@ -23,25 +38,9 @@ export default function CustomizationSection() {
       console.error('Error updating theme:', error)
       setMessage({ type: 'error', text: 'Failed to update theme' })
     }
-  }
+  }, [setTheme]);
 
-  const getThemeColor = (themeValue: string) => {
-    switch(themeValue) {
-      case 'blue': return 'rgb(59, 130, 246)' // Blue theme color
-      case 'dark': return '#222' // Dark theme color
-      case 'light': return '#f5f5f5' // Light theme color
-      default: return 'rgb(59, 130, 246)'
-    }
-  }
-
-  const getThemeName = (themeValue: string) => {
-    switch(themeValue) {
-      case 'blue': return 'Blue (Default)'
-      case 'dark': return 'Dark'
-      case 'light': return 'Light'
-      default: return 'Blue (Default)'
-    }
-  }
+  const toggleDropdown = useCallback(() => setIsOpen(prev => !prev), []);
 
   return (
     <div className="bg-[var(--bg-secondary)] rounded-xl p-6">
@@ -58,62 +57,37 @@ export default function CustomizationSection() {
           <button
             type="button"
             className="w-full bg-[var(--bg-hover)] text-[var(--text-primary)] border border-[var(--bg-hover)] focus:border-[var(--accent-primary)] rounded-lg py-2 px-3 outline-none transition-colors flex items-center justify-between"
-            onClick={() => setIsOpen(!isOpen)}
+            onClick={toggleDropdown}
           >
             <div className="flex items-center">
               <div 
                 className="w-4 h-4 rounded-full mr-2" 
-                style={{ background: getThemeColor(theme) }}
+                style={{ background: currentTheme.color }}
               ></div>
-              {getThemeName(theme)}
+              {currentTheme.name}
             </div>
             <ChevronDown className={`h-4 w-4 text-[var(--text-secondary)] transition-transform ${isOpen ? 'rotate-180' : ''}`} />
           </button>
           
           {isOpen && (
             <div className="absolute z-10 mt-1 w-full bg-[var(--bg-primary)] border border-[var(--bg-hover)] rounded-lg shadow-lg overflow-hidden">
-              <button
-                type="button"
-                className="w-full px-3 py-2 text-left flex items-center hover:bg-[var(--bg-hover)] transition-colors"
-                onClick={() => handleThemeChange('blue')}
-              >
-                <div 
-                  className="w-4 h-4 rounded-full mr-2 flex-shrink-0" 
-                  style={{ background: getThemeColor('blue') }}
-                ></div>
-                <span className="flex-grow">Blue (Default)</span>
-                {theme === 'blue' && (
-                  <div className="w-1.5 h-1.5 rounded-full bg-[var(--accent-primary)]"></div>
-                )}
-              </button>
-              <button
-                type="button"
-                className="w-full px-3 py-2 text-left flex items-center hover:bg-[var(--bg-hover)] transition-colors"
-                onClick={() => handleThemeChange('dark')}
-              >
-                <div 
-                  className="w-4 h-4 rounded-full mr-2 flex-shrink-0" 
-                  style={{ background: getThemeColor('dark') }}
-                ></div>
-                <span className="flex-grow">Dark</span>
-                {theme === 'dark' && (
-                  <div className="w-1.5 h-1.5 rounded-full bg-[var(--accent-primary)]"></div>
-                )}
-              </button>
-              <button
-                type="button"
-                className="w-full px-3 py-2 text-left flex items-center hover:bg-[var(--bg-hover)] transition-colors"
-                onClick={() => handleThemeChange('light')}
-              >
-                <div 
-                  className="w-4 h-4 rounded-full mr-2 flex-shrink-0" 
-                  style={{ background: getThemeColor('light') }}
-                ></div>
-                <span className="flex-grow">Light</span>
-                {theme === 'light' && (
-                  <div className="w-1.5 h-1.5 rounded-full bg-[var(--accent-primary)]"></div>
-                )}
-              </button>
+              {themes.map((themeOption) => (
+                <button
+                  key={themeOption.value}
+                  type="button"
+                  className="w-full px-3 py-2 text-left flex items-center hover:bg-[var(--bg-hover)] transition-colors"
+                  onClick={() => handleThemeChange(themeOption.value as 'blue' | 'dark' | 'light')}
+                >
+                  <div 
+                    className="w-4 h-4 rounded-full mr-2 flex-shrink-0" 
+                    style={{ background: themeOption.color }}
+                  ></div>
+                  <span className="flex-grow">{themeOption.name}</span>
+                  {theme === themeOption.value && (
+                    <div className="w-1.5 h-1.5 rounded-full bg-[var(--accent-primary)]"></div>
+                  )}
+                </button>
+              ))}
             </div>
           )}
         </div>
