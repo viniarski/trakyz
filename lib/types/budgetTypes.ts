@@ -1,3 +1,5 @@
+// lib/types/budgetTypes.ts
+
 export interface BudgetData {
   month: string; // YYYY-MM-DD format
   planned_income: number;

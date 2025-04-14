@@ -1,3 +1,5 @@
+// app/dashboard/components/market/Market.tsx
+
 "use client";
 
 import { MarketData } from "@/lib/types/marketTypes";

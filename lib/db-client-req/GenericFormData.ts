@@ -1,3 +1,5 @@
+// lib/db-client-req/GenericFormData.ts
+
 export const portfolioFields = {
   user_id: { label: "User ID", type: "text", required: true },
   name: { label: "Portfolio Name", type: "text", required: true },

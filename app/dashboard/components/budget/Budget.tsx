@@ -1,3 +1,5 @@
+// app/dashboard/components/budget/Budget.tsx
+
 "use client";
 
 import { BudgetData } from "@/lib/types/budgetTypes";

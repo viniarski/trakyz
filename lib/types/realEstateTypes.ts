@@ -1,3 +1,5 @@
+// lib/types/realEstateTypes.ts
+
 export interface RealEstateProperty {
   id: string; // UUID for the property
   user_id: string; // UUID for the user owning the property

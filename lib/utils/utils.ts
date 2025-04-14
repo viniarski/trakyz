@@ -1,4 +1,4 @@
-// utils/utils.ts
+// lib/utils/utils.ts
 
 import { redirect } from "next/navigation";
 

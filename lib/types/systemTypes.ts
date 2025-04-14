@@ -1,3 +1,5 @@
+// lib/types/systemTypes.ts
+
 export type SystemSetting = {
   id: string;
   key: string;

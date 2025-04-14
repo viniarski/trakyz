@@ -1,3 +1,5 @@
+// lib/types/supabase.ts
+
 // this is the type format that the {User} import outputs from @supabase/supabase-js
 // leaving it here for future reference (can be deleted later)
 

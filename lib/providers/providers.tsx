@@ -1,7 +1,10 @@
+// lib/providers/providers.tsx
+
 'use client'
 
 import { useState, useEffect } from 'react'
 import ThemeInitializer from '@/components/ThemeInitializer'
+import CurrencyInitializer from '@/components/CurrencyInitializer'
 import { LoadingScreen } from '@/components/ui/loading-screen'
 import { useThemeStore } from '@/lib/stores/useThemeStore'
 
@@ -36,6 +39,7 @@ export function Providers({ children }: { children: React.ReactNode }) {
   return (
     <>
       <ThemeInitializer />
+      <CurrencyInitializer />
       <LoadingScreen 
         isLoading={isLoading} 
         onComplete={() => {

@@ -1,3 +1,5 @@
+// app/settings/components/system-section.tsx
+
 'use client'
 
 import { useState } from 'react'

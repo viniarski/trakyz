@@ -1,4 +1,5 @@
 // components/ui/loading-screen.tsx
+
 'use client';
 
 import { useState, useEffect } from 'react';

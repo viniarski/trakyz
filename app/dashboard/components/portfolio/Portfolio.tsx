@@ -1,3 +1,5 @@
+// app/dashboard/components/portfolio/Portfolio.tsx
+
 import GenericForm from "@/components/GenericForm";
 import { portfolioFields } from "@/lib/db-client-req/GenericFormData";
 import { Portfolio } from "@/lib/types/portfolioTypes";

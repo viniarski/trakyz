@@ -1,3 +1,5 @@
+// lib/types/transactionTypes.ts
+
 export interface Transaction {
   id: string;
   user_id: string;

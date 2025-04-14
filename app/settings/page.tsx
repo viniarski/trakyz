@@ -1,3 +1,5 @@
+// app/settings/page.tsx
+
 import { UserResponse } from "@supabase/supabase-js";
 import { redirect } from "next/navigation";
 import { createClient } from "@/lib/utils/supabase/server";

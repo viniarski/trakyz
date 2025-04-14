@@ -1,4 +1,5 @@
 // app/layout.tsx
+
 import './globals.css';
 import type { Metadata } from 'next';
 import { Inter } from 'next/font/google';
@@ -20,29 +21,37 @@ export default async function RootLayout({
 }: {
   children: React.ReactNode;
 }) {
-  // Get theme from cookie
-  const cookieStore = await cookies(); // Await cookies()
+  // Get theme and currency from cookies
+  const cookieStore = await cookies();
   const themeCookie = cookieStore.get('theme');
+  const currencyCookie = cookieStore.get('currency');
+  
   let theme: string = themeCookie?.value || 'blue';
+  let currency: string = currencyCookie?.value || 'USD';
 
-  // For authenticated users, try to get theme from database
+  // For authenticated users, try to get preferences from database
   const supabase = await createClient();
   const { data: { user } } = await supabase.auth.getUser();
 
   if (user) {
     const { data, error } = await supabase
       .from('user_profiles')
-      .select('theme_preference')
+      .select('theme_preference, selected_currency')
       .eq('id', user.id)
       .single();
 
-    if (!error && data?.theme_preference) {
-      theme = data.theme_preference;
+    if (!error && data) {
+      if (data.theme_preference) {
+        theme = data.theme_preference;
+      }
+      if (data.selected_currency) {
+        currency = data.selected_currency;
+      }
     }
   }
 
   return (
-    <html lang="en" data-theme={theme}>
+    <html lang="en" data-theme={theme} data-currency={currency}>
       <body className={inter.className}>
         <Providers>
           {children}

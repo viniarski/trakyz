@@ -1,3 +1,5 @@
+// lib/types/portfolioTypes.ts
+
 export interface Portfolio {
   id: string;
   user_id: string;

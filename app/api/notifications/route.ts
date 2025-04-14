@@ -1,3 +1,5 @@
+// app/api/notifications/route.ts
+
 import { createClient } from "@/lib/utils/supabase/server";
 import { validateInsertFields } from "@/lib/validateInsertFields";
 import { NextRequest, NextResponse } from "next/server";

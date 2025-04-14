@@ -1,3 +1,5 @@
+// app/dashboard/components/transactions/Transactions.tsx
+
 import GenericForm from "@/components/GenericForm";
 import { transactionFields } from "@/lib/db-client-req/GenericFormData";
 import { Transaction } from "@/lib/types/transactionTypes";

@@ -1,3 +1,5 @@
+// lib/utils/validateInsertFields.ts
+
 export function validateInsertFields<T extends object>(
   body: Record<string, any>,
   allowedFields: readonly (keyof T)[]

@@ -1,3 +1,5 @@
+// lib/types/debtTypes.ts
+
 export type Loan = {
   id: string;
   user_id: string;

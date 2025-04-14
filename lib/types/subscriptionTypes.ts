@@ -1,3 +1,5 @@
+// lib/types/subscriptionTypes.ts
+
 export type UserSubscription = {
   id: string; // UUID
   stripe_customer_id: string | null;

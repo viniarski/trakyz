@@ -1,4 +1,5 @@
 // app/welcome/components/call-to-action.tsx
+
 'use client'
 
 import Link from 'next/link'

@@ -17,15 +17,22 @@ import {
   HelpCircle, 
   LogOut 
 } from 'lucide-react'
-import { MobileMenuProps } from '@/lib/types/headerTypes'
 import CurrencySwitcher from './CurrencySwitcher'
+
+interface MobileMenuProps {
+  userEmail?: string | null;
+  userRole?: string | null;
+  onClose: () => void;
+  isMobile?: boolean;
+  onSelectCallback?: () => void;
+}
 
 export default function MobileMenu({ 
   userEmail, 
   userRole, 
   onClose,
-  selectedCurrency,
-  setSelectedCurrency
+  isMobile = true,
+  onSelectCallback
 }: MobileMenuProps) {
   const menuRef = useRef<HTMLDivElement>(null)
 
@@ -140,10 +147,8 @@ export default function MobileMenu({
 
           {/* Currency Switcher */}
           <CurrencySwitcher 
-            selectedCurrency={selectedCurrency}
-            setSelectedCurrency={setSelectedCurrency}
             isMobile={true}
-            onSelectCallback={onClose}
+            onSelectCallback={onSelectCallback}
           />
 
           {/* Settings Link */}

@@ -1,3 +1,5 @@
+// app/dashboard/components/debt/Debt.tsx
+
 "use client";
 
 import { DebtData } from "@/lib/types/debtTypes";

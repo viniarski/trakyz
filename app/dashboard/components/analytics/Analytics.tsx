@@ -1,3 +1,5 @@
+// app/dashboard/components/analytics/Analytics.tsx
+
 import { DebtData } from "@/lib/types/debtTypes";
 import { Portfolio } from "@/lib/types/portfolioTypes";
 import { Transaction } from "@/lib/types/transactionTypes";

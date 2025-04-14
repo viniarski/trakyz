@@ -1,4 +1,7 @@
+// app/dashboard/components/real-estate/RealEstate.tsx
+
 "use client";
+
 import GenericForm from "@/components/GenericForm";
 import { realEstateFields } from "@/lib/db-client-req/GenericFormData";
 import { RealEstateProperty } from "@/lib/types/realEstateTypes";

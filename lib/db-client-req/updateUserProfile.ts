@@ -1,3 +1,5 @@
+// lib/db-client-req/updateUserProfile.ts
+
 interface UpdateUserProfileHeaders {
   name?: string;
   role?: string;

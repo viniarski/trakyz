@@ -6,7 +6,6 @@ import { useState, useEffect, useCallback } from 'react'
 import Link from 'next/link'
 import Image from 'next/image'
 import { Menu } from 'lucide-react'
-import { createClient } from '@/lib/utils/supabase/client'
 import { HeaderProps } from '@/lib/types/headerTypes'
 
 // Import subcomponents
@@ -15,82 +14,28 @@ import UserMenu from './UserMenu'
 import MobileMenu from './MobileMenu'
 import BalanceToggle, { MobileBalanceToggle } from './BalanceToggle'
 import NotificationsButton, { MobileNotificationsButton } from './NotificationsButton'
+import { useCurrencyStore } from '@/lib/stores/useCurrencyStore'
 
 export default function Header({ userEmail, userRole, isSubscribed = false }: HeaderProps) {
-  // Combined UI state for better management
-  const [uiState, setUiState] = useState({
-    isMobileMenuOpen: false,
-    hideBalances: false,
-    selectedCurrency: 'USD'
-  })
+  // Use hide balances state
+  const [hideBalances, setHideBalances] = useState(false)
+  const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false)
   
-  const supabase = createClient()
+  // Use currency from Zustand store
+  const { currency } = useCurrencyStore()
   
   // Memoized handlers to prevent recreation on each render
   const toggleMobileMenu = useCallback(() => {
-    setUiState(prev => ({
-      ...prev,
-      isMobileMenuOpen: !prev.isMobileMenuOpen
-    }))
+    setIsMobileMenuOpen(prev => !prev)
   }, [])
   
   const toggleBalances = useCallback(() => {
-    setUiState(prev => ({
-      ...prev,
-      hideBalances: !prev.hideBalances
-    }))
-  }, [])
-  
-  const setSelectedCurrency = useCallback((currency: string) => {
-    setUiState(prev => ({
-      ...prev,
-      selectedCurrency: currency
-    }))
+    setHideBalances(prev => !prev)
   }, [])
   
   const closeMobileMenu = useCallback(() => {
-    setUiState(prev => ({
-      ...prev,
-      isMobileMenuOpen: false
-    }))
+    setIsMobileMenuOpen(false)
   }, [])
-  
-  // Load user's currency preference from database on component mount
-  useEffect(() => {
-    let isMounted = true
-    
-    async function loadUserPreferences() {
-      try {
-        // Get the current user
-        const { data: { user } } = await supabase.auth.getUser()
-        
-        if (user && isMounted) {
-          // Get the user profile
-          const { data: userProfile } = await supabase
-            .from('user_profiles')
-            .select('selected_currency')
-            .eq('id', user.id)
-            .single()
-          
-          // Set the selected currency if it exists
-          if (userProfile?.selected_currency && isMounted) {
-            setSelectedCurrency(userProfile.selected_currency)
-          }
-        }
-      } catch (error) {
-        console.error('Failed to load user preferences:', error)
-      }
-    }
-    
-    loadUserPreferences()
-    
-    // Cleanup function for unmount
-    return () => {
-      isMounted = false
-    }
-  }, [supabase, setSelectedCurrency])
-  
-  const { isMobileMenuOpen, hideBalances, selectedCurrency } = uiState
 
   return (
     <div className="sticky top-0 left-0 right-0 z-50 bg-[var(--bg-primary)] border-b border-[var(--bg-hover)]">
@@ -116,10 +61,7 @@ export default function Header({ userEmail, userRole, isSubscribed = false }: He
 
           {/* Desktop Actions */}
           <div className="hidden md:flex items-center gap-2">
-            <CurrencySwitcher 
-              selectedCurrency={selectedCurrency} 
-              setSelectedCurrency={setSelectedCurrency} 
-            />
+            <CurrencySwitcher />
             <BalanceToggle hideBalances={hideBalances} toggleBalances={toggleBalances} />
             <NotificationsButton />
             <UserMenu userEmail={userEmail} userRole={userRole} />
@@ -146,8 +88,8 @@ export default function Header({ userEmail, userRole, isSubscribed = false }: He
           userEmail={userEmail}
           userRole={userRole}
           onClose={closeMobileMenu}
-          selectedCurrency={selectedCurrency}
-          setSelectedCurrency={setSelectedCurrency}
+          isMobile={true}
+          onSelectCallback={closeMobileMenu}
         />
       )}
     </div>

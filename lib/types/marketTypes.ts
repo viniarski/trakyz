@@ -1,3 +1,5 @@
+// lib/types/marketTypes.ts
+
 export interface Metal {
   id: string;
   metal: string;

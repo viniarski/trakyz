@@ -1,3 +1,5 @@
+// lib/utils/updateUserProfile.ts
+
 import { createClient } from '@/lib/utils/supabase/client'
 
 export const updateUserProfile = async (userId: string, updates: Record<string, any>) => {
