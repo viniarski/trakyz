@@ -21,7 +21,7 @@ export const signUpAction = async (formData: FormData) => {
     );
   }
 
-  const { error } = await supabase.auth.signUp({
+  const { data, error } = await supabase.auth.signUp({
     email,
     password,
     options: {
@@ -33,6 +33,23 @@ export const signUpAction = async (formData: FormData) => {
     console.error(error.code + " " + error.message);
     return encodedRedirect("error", "/sign-up", error.message);
   } else {
+    // Check if user should be admin
+    if (data?.user) {
+      try {
+        // Call the check-admin API to update role if needed
+        await fetch(`${origin}/api/auth/check-admin`, {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify({ userId: data.user.id }),
+        });
+      } catch (checkError) {
+        console.error('Error checking admin status:', checkError);
+        // Continue even if admin check fails
+      }
+    }
+    
     return encodedRedirect(
       "success",
       "/sign-up",
