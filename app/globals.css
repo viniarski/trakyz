@@ -1,7 +1,32 @@
-/* app/styles/globals.css */
+/* app/globals.css */
 @import 'tailwindcss/base';
 @import 'tailwindcss/components';
 @import 'tailwindcss/utilities';
+
+/* Default theme variables (blue theme) - applied when no data-theme is present */
+:root {
+  --bg-primary: rgb(17, 24, 39); /* gray-900 */
+  --bg-secondary: rgb(31, 41, 55); /* gray-800 */
+  --bg-hover: rgb(55, 65, 81); /* gray-700 */
+  --text-primary: rgb(255, 255, 255);
+  --text-secondary: rgb(156, 163, 175); /* gray-400 */
+  --accent-primary: rgb(59, 130, 246); /* blue-500 */
+  --accent-secondary: rgb(96, 165, 250); /* blue-400 */
+
+  /* Opacity variants for accent-primary */
+  --accent-primary-10: rgba(59, 130, 246, 0.1);
+  --accent-primary-20: rgba(59, 130, 246, 0.2);
+  --accent-primary-80: rgba(59, 130, 246, 0.8);
+
+  /* Semantic colors with opacity */
+  --success-10: rgba(34, 197, 94, 0.1);
+  --success-20: rgba(34, 197, 94, 0.2);
+  --success-80: rgba(34, 197, 94, 0.8);
+
+  --error-10: rgba(239, 68, 68, 0.1);
+  --error-20: rgba(239, 68, 68, 0.2);
+  --error-80: rgba(239, 68, 68, 0.8);
+}
 
 [data-theme='blue'] {
   --bg-primary: rgb(17, 24, 39); /* gray-900 */

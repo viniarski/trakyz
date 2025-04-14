@@ -17,8 +17,10 @@ export default function RootLayout({
 }: {
   children: React.ReactNode
 }) {
+  // Set a default theme to prevent the flash of unstyled content
+  // The ThemeInitializer will update this if needed based on localStorage
   return (
-    <html lang="en">
+    <html lang="en" data-theme="blue">
       <body className={inter.className}>
         <Providers>
           {children}

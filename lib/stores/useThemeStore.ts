@@ -105,7 +105,7 @@ export const useThemeStore = create<ThemeState>()(
     {
       name: 'theme-storage',
       storage: createJSONStorage(() => localStorage),
-      // Important: We DON'T skip hydration since we want the localStorage theme to load ASAP
+      // Don't skip hydration since we want the localStorage theme to load ASAP
       skipHydration: false,
     }
   )
