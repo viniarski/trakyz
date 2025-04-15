@@ -39,7 +39,7 @@ export default function Header({ userEmail, userRole, isSubscribed = false }: He
 
   return (
     <div className="sticky top-0 left-0 right-0 z-50 bg-[var(--bg-primary)] border-b border-[var(--bg-hover)]">
-      <div className="max-w-6xl mx-auto px-4">
+      <div className="w-[90%] mx-auto">
         <header className="h-16 flex items-center justify-between">
           {/* Logo */}
           <Link 

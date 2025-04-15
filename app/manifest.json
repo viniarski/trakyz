@@ -1,0 +1,43 @@
+{
+    "name": "Trakyz - Track Your Investments",
+    "short_name": "Trakyz",
+    "description": "Track and manage your investment portfolio across multiple asset classes with powerful analytics and real-time market data.",
+    "start_url": "/",
+    "display": "standalone",
+    "background_color": "#111827",
+    "theme_color": "#3B82F6",
+    "icons": [
+      {
+        "src": "/assets/icon-192x192.png",
+        "sizes": "192x192",
+        "type": "image/png"
+      },
+      {
+        "src": "/assets/icon-512x512.png",
+        "sizes": "512x512",
+        "type": "image/png"
+      },
+      {
+        "src": "/assets/maskable-icon.png",
+        "sizes": "512x512",
+        "type": "image/png",
+        "purpose": "maskable"
+      }
+    ],
+    "orientation": "portrait",
+    "categories": ["finance", "productivity", "utilities"],
+    "screenshots": [
+      {
+        "src": "/assets/screenshot-dashboard.jpg",
+        "sizes": "1280x720",
+        "type": "image/jpeg"
+      },
+      {
+        "src": "/assets/screenshot-portfolio.jpg",
+        "sizes": "1280x720",
+        "type": "image/jpeg"
+      }
+    ],
+    "related_applications": [],
+    "prefer_related_applications": false
+  }

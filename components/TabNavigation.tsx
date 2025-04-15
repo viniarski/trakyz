@@ -11,6 +11,7 @@ import {
   CreditCard,
   Building,
   FileText,
+  BarChart2
 } from "lucide-react";
 
 interface TabNavigationProps {
@@ -42,6 +43,11 @@ export default function TabNavigation({ currentTab }: TabNavigationProps) {
       icon: <CreditCard className="h-4 w-4 xs:h-5 xs:w-5" />,
     },
     {
+      id: "analytics",
+      label: "Analytics",
+      icon: <BarChart2 className="h-4 w-4 xs:h-5 xs:w-5" />,
+    },
+    {
       id: "real-estate",
       label: "Real Estate",
       icon: <Building className="h-4 w-4 xs:h-5 xs:w-5" />,
@@ -54,8 +60,8 @@ export default function TabNavigation({ currentTab }: TabNavigationProps) {
   ];
 
   return (
-    <div className="bg-[var(--bg-secondary)] rounded-xl shadow-md overflow-hidden max-w-[90%] mx-auto">
-      <div className="flex flex-wrap lg:flex-nowrap overflow-x-auto border-b border-gray-700 scrollbar-hide">
+    <div className="bg-[var(--bg-secondary)] rounded-t-xl shadow-md w-full overflow-hidden">
+      <div className="flex flex-wrap lg:flex-nowrap overflow-x-auto border-b border-[var(--bg-hover)]">
         {tabs.map((tab) => (
           <Link
             key={tab.id}

@@ -263,7 +263,7 @@ export default async function Page(props: any) {
       />
 
       {hasCheckoutSuccess && (
-        <div className="bg-green-100 border-l-4 border-green-500 text-green-700 p-4 mx-4 my-2">
+        <div className="bg-green-100 border-l-4 border-green-500 text-green-700 p-4 mx-auto w-[90%] my-2">
           <p className="font-bold">Success!</p>
           <p>
             Your subscription has been activated. Thank you for subscribing to
@@ -272,10 +272,10 @@ export default async function Page(props: any) {
         </div>
       )}
 
-      <div className="flex-1 container py-8">
+      <div className="flex-1 w-[90%] mx-auto py-8">
         <TabNavigation currentTab={currentTab} />
 
-        <div className="mt-6">
+        <div className="bg-[var(--bg-secondary)] rounded-b-xl p-6 shadow-md">
           {currentTab === "budget" && (
             <Budget userId={user.id} budgets={budgetData} />
           )}
