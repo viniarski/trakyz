@@ -6,8 +6,7 @@ import { useState, useRef, useEffect } from 'react'
 import Link from 'next/link'
 import { signOutAction } from "@/app/actions"
 import { User, Settings, HelpCircle, LogOut, Shield } from 'lucide-react'
-import { UserMenuProps } from '@/lib/types/headerTypes'
-
+import { UserMenuProps } from '@/types'
 export default function UserMenu({ userEmail, userRole }: UserMenuProps) {
   const [isOpen, setIsOpen] = useState(false)
   const menuRef = useRef<HTMLDivElement>(null)

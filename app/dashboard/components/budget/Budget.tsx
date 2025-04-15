@@ -2,7 +2,7 @@
 
 "use client";
 
-import { BudgetData } from "@/lib/types/budgetTypes";
+import { BudgetData } from "@/types";
 import { useState } from "react";
 
 interface BudgetProps {

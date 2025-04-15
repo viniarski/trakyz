@@ -4,7 +4,7 @@
 
 import GenericForm from "@/components/GenericForm";
 import { realEstateFields } from "@/lib/db-client-req/GenericFormData";
-import { RealEstateProperty } from "@/lib/types/realEstateTypes";
+import { RealEstateProperty } from "@/types";
 import React from "react";
 
 interface RealEstateProps {

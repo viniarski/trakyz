@@ -2,7 +2,7 @@
 
 "use client";
 
-import { MarketData } from "@/lib/types/marketTypes";
+import { MarketData } from "@/types";
 
 // This is an example usage of marketdata
 // Replace with real mapping later

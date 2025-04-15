@@ -1,47 +1,69 @@
 // app/dashboard/components/portfolio/Portfolio.tsx
+// This is a server component that fetches data and passes to client components
 
-import GenericForm from "@/components/GenericForm";
-import { portfolioFields } from "@/lib/db-client-req/GenericFormData";
-import { Portfolio } from "@/lib/types/portfolioTypes";
+import { createClient } from "@/lib/utils/supabase/server";
+import { PortfolioClient } from "./PortfolioClient";
+import { getDefaultPortfolio } from "@/lib/portfolio-utils";
 
-interface PortfoliosProps {
-  portfolios: Portfolio[];
-  userId: string;
+import type {
+  AssetCategory,
+  CurrencyCode,
+  Metal,
+  Crypto,
+  Stock,
+  Currency,
+} from '@/types';
+
+interface PortfolioProps {
+  selectedCurrency: CurrencyCode;
+  hideBalances: boolean;
+  marketData: {
+    metals: Metal[] | null;
+    crypto: Crypto[] | null;
+    stocks: Stock[] | null;
+    currencies: Currency[] | null;
+  };
 }
 
-const Portfolios: React.FC<PortfoliosProps> = ({ portfolios, userId }) => {
-  // logging portfolios output for easier mapping later
-  console.log(portfolios);
-
-  // logging userid for usage later
-  console.log(userId);
+export async function Portfolio({
+  selectedCurrency,
+  hideBalances,
+  marketData,
+}: PortfolioProps) {
+  const supabase = await createClient();
+  
+  // Fetch portfolios from database
+  const { data: portfolios, error: portfoliosError } = await supabase
+    .from('portfolios')
+    .select('*')
+    .order('name', { ascending: true });
+  
+  // Get the default or first portfolio
+  const defaultPortfolio = getDefaultPortfolio(portfolios || []);
+  
+  // If a portfolio exists, fetch its transactions
+  let portfolioTransactions = [];
+  if (defaultPortfolio) {
+    const { data: transactions, error: transactionsError } = await supabase
+      .from('transactions')
+      .select('*')
+      .eq('portfolio_id', defaultPortfolio.id)
+      .order('date', { ascending: false });
+    
+    if (!transactionsError) {
+      portfolioTransactions = transactions || [];
+    }
+  }
+  
+  // Pass data to client component
   return (
-    <div>
-      <h2 className="text-2xl font-bold mb-4">Portfolios</h2>
-      {portfolios.length === 0 ? (
-        <p>No portfolios found.</p>
-      ) : (
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-          {portfolios.map((portfolio) => (
-            <div key={portfolio.id} className="p-4 border rounded-lg shadow-sm">
-              <h3 className="text-lg font-semibold">{portfolio.name}</h3>
-              <p>Total Value: ${portfolio.total_value}</p>
-              <p>Assets: {portfolio.asset_count}</p>
-              <p>
-                P/L: ${portfolio.total_profit_loss} (
-                {portfolio.total_profit_loss_percentage}%)
-              </p>
-            </div>
-          ))}
-        </div>
-      )}
-      <GenericForm
-        apiRoute="/api/portfolios"
-        userId={userId}
-        fields={portfolioFields}
-      />
-    </div>
+    <PortfolioClient
+      selectedCurrency={selectedCurrency}
+      hideBalances={hideBalances}
+      marketData={marketData}
+      initialPortfolios={portfolios || []}
+      initialDefaultPortfolio={defaultPortfolio}
+      initialTransactions={portfolioTransactions}
+    />
   );
-};
-
-export default Portfolios;
+}

@@ -3,7 +3,7 @@
 'use client'
 
 import { Eye, EyeOff } from 'lucide-react'
-import { BalanceToggleProps } from '@/lib/types/headerTypes'
+import { BalanceToggleProps } from '@/types'
 
 export default function BalanceToggle({ hideBalances, toggleBalances }: BalanceToggleProps) {
   return (

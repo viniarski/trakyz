@@ -3,7 +3,7 @@
 'use client'
 
 import { Bell } from 'lucide-react'
-import { NotificationsButtonProps } from '@/lib/types/headerTypes'
+import { NotificationsButtonProps } from '@/types'
 
 export default function NotificationsButton({}: NotificationsButtonProps) {
   return (

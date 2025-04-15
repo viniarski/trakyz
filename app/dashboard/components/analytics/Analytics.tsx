@@ -1,8 +1,6 @@
 // app/dashboard/components/analytics/Analytics.tsx
 
-import { DebtData } from "@/lib/types/debtTypes";
-import { Portfolio } from "@/lib/types/portfolioTypes";
-import { Transaction } from "@/lib/types/transactionTypes";
+import { DebtData, Portfolio, Transaction } from "@/types";
 
 interface AnalyticsProps {
   portfolios: Portfolio[];

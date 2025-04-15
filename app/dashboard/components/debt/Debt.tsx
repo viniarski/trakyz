@@ -2,7 +2,7 @@
 
 "use client";
 
-import { DebtData } from "@/lib/types/debtTypes";
+import { DebtData } from "@/types";
 import { useState } from "react";
 import GenericForm from "@/components/GenericForm";
 import {

@@ -6,7 +6,7 @@ import { useState, useEffect, useCallback } from 'react'
 import Link from 'next/link'
 import Image from 'next/image'
 import { Menu } from 'lucide-react'
-import { HeaderProps } from '@/lib/types/headerTypes'
+import { HeaderProps } from '@/types'
 
 // Import subcomponents
 import CurrencySwitcher from './CurrencySwitcher'
