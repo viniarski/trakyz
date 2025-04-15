@@ -5,9 +5,9 @@
 import { useState, useEffect, useCallback, useRef } from 'react'
 import { Loader2 } from 'lucide-react'
 
-import { PortfolioHeader } from './portfolio-header'
-import { PortfolioSummary } from './portfolio-summary'
-import { CategoryList } from './category-list'
+import { PortfolioHeader } from './components/portfolio-header'
+import { PortfolioSummary } from './components/portfolio-summary'
+import { CategoryList } from './components/category-list'
 import { BuySellModal } from './portfolio-modals/buy-sell-modal'
 import { AddAssetModal } from './portfolio-modals/add-asset-modal'
 import { CreatePortfolioModal } from './portfolio-modals/create-portfolio-modal'
