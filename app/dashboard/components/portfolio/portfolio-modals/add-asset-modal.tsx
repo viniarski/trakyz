@@ -35,7 +35,7 @@ interface AddAssetModalProps {
     stocks: Stock[] | null
     currencies: Currency[] | null
   }
-  portfolioName: string // Add portfolio name prop
+  portfolioName: string
 }
 
 export function AddAssetModal({ 
@@ -96,20 +96,6 @@ export function AddAssetModal({
     const currentPrice = getCurrentPrice(symbol)
     if (currentPrice > 0) {
       setPrice(currentPrice.toString())
-    }
-  }
-
-  const handleQuantityChange = (value: string) => {
-    const number = value.replace(/[^0-9.]/g, '')
-    if (number === '' || /^\d*\.?\d*$/.test(number)) {
-      setQuantity(number)
-    }
-  }
-
-  const handlePriceChange = (value: string) => {
-    const number = value.replace(/[^0-9.]/g, '')
-    if (number === '' || /^\d*\.?\d*$/.test(number)) {
-      setPrice(number)
     }
   }
 
@@ -217,10 +203,11 @@ export function AddAssetModal({
               Quantity
             </label>
             <input
-              type="text"
+              type="number"
               value={quantity}
-              onChange={(e) => handleQuantityChange(e.target.value)}
+              onChange={(e) => setQuantity(e.target.value)}
               step="any"
+              min="0"
               className="w-full p-2 rounded-lg bg-[var(--bg-hover)] text-[var(--text-primary)] border-0 focus:ring-2 focus:ring-[var(--accent-primary)]"
               placeholder="Enter quantity"
             />
@@ -232,10 +219,11 @@ export function AddAssetModal({
               Purchase Price
             </label>
             <input
-              type="text"
+              type="number"
               value={price}
-              onChange={(e) => handlePriceChange(e.target.value)}
+              onChange={(e) => setPrice(e.target.value)}
               step="any"
+              min="0"
               className="w-full p-2 rounded-lg bg-[var(--bg-hover)] text-[var(--text-primary)] border-0 focus:ring-2 focus:ring-[var(--accent-primary)]"
               placeholder="Enter price per unit"
             />
