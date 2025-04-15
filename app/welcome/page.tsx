@@ -8,6 +8,7 @@ import EarlyAdopterOffer from './components/early-adopter-offer'
 import FeaturesGrid from './components/features-grid'
 import AssetClasses from './components/asset-classes'
 import HowItWorks from './components/how-it-works'
+import PricingSection from './components/pricing-section'
 import CallToAction from './components/call-to-action'
 import Footer from './components/footer'
 
@@ -26,6 +27,7 @@ export default function WelcomePage() {
           <FeaturesGrid />
           <AssetClasses />
           <HowItWorks />
+          <PricingSection />
           <CallToAction />
         </main>
         <Footer />

@@ -3,7 +3,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { User, Mail, Key, CreditCard, Info } from "lucide-react";
+import { User, Mail, Key } from "lucide-react";
 import { createClient } from "@/lib/utils/supabase/client";
 import Link from "next/link";
 import { User as ClientUser } from "@supabase/supabase-js";
@@ -194,101 +194,6 @@ export default function AccountSection({
             )}
           </div>
         </form>
-
-        {/* Subscription section */}
-        <div className="pt-5 border-t border-[var(--bg-hover)]">
-          <div className="flex items-center gap-2 mb-4">
-            <CreditCard className="h-5 w-5 text-[var(--accent-primary)]" />
-            <h3 className="text-lg font-semibold text-[var(--text-primary)]">
-              Subscription
-            </h3>
-          </div>
-
-          {isLoadingSubscription ? (
-            <div className="py-2 text-[var(--text-secondary)]">
-              Loading subscription details...
-            </div>
-          ) : (
-            <div className="space-y-4">
-              <div className="bg-[var(--bg-hover)]/30 p-4 rounded-lg">
-                <div className="flex justify-between items-center mb-2">
-                  <span className="text-[var(--text-primary)] font-medium">
-                    Status
-                  </span>
-                  <span
-                    className={`px-2 py-1 rounded-full text-xs font-medium ${
-                      subscriptionData?.status === "active"
-                        ? "bg-green-500/10 text-green-500"
-                        : subscriptionData?.status === "trialing"
-                          ? "bg-blue-500/10 text-blue-500"
-                          : "bg-gray-500/10 text-gray-500"
-                    }`}
-                  >
-                    {subscriptionData?.status === "active"
-                      ? "Active"
-                      : subscriptionData?.status === "trialing"
-                        ? "Trial"
-                        : "Inactive"}
-                  </span>
-                </div>
-
-                {subscriptionData?.currentPeriodEnd && (
-                  <div className="flex justify-between items-center text-sm">
-                    <span className="text-[var(--text-secondary)]">
-                      Current period ends
-                    </span>
-                    <span className="text-[var(--text-primary)]">
-                      {new Date(
-                        subscriptionData.currentPeriodEnd
-                      ).toLocaleDateString()}
-                    </span>
-                  </div>
-                )}
-
-                {subscriptionData?.cancelAtPeriodEnd && (
-                  <div className="mt-2 text-sm text-yellow-500 flex items-center gap-1.5">
-                    <Info className="h-4 w-4" />
-                    <span>Your subscription will not renew automatically</span>
-                  </div>
-                )}
-              </div>
-
-              {(subscriptionData?.status === "active" ||
-                subscriptionData?.status === "trialing") && (
-                <div className="flex flex-wrap gap-3">
-                  <button
-                    onClick={handleManageSubscription}
-                    className="px-4 py-2 bg-[var(--bg-hover)] text-[var(--text-primary)] rounded-lg hover:bg-[var(--bg-hover)]/80 transition-colors"
-                  >
-                    Manage Billing
-                  </button>
-
-                  {!subscriptionData.cancelAtPeriodEnd && (
-                    <button
-                      onClick={handleCancelSubscription}
-                      disabled={isCancelling}
-                      className="px-4 py-2 bg-red-500/10 text-red-500 rounded-lg hover:bg-red-500/20 transition-colors disabled:opacity-50"
-                    >
-                      {isCancelling ? "Processing..." : "Cancel Subscription"}
-                    </button>
-                  )}
-                </div>
-              )}
-
-              {subscriptionData?.status !== "active" &&
-                subscriptionData?.status !== "trialing" && (
-                  <div>
-                    <Link
-                      href="/pricing"
-                      className="inline-block px-4 py-2 bg-[var(--accent-primary)] text-white rounded-lg hover:bg-[var(--accent-primary-80)] transition-colors"
-                    >
-                      View Plans
-                    </Link>
-                  </div>
-                )}
-            </div>
-          )}
-        </div>
 
         {/* Password change link */}
         <div className="pt-4 border-t border-[var(--bg-hover)]">

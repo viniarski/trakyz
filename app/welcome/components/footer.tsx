@@ -13,7 +13,7 @@ export default function Footer() {
             <div>
               <h3 className="text-white font-semibold mb-4 text-center md:text-left">Product</h3>
               <ul className="space-y-2 text-center md:text-left">
-                <li><Link href="/pricing" className="text-gray-400 hover:text-white transition-colors">Pricing</Link></li>
+                <li><Link href="#pricing" className="text-gray-400 hover:text-white transition-colors">Subscription</Link></li>
                 <li><Link href="/security" className="text-gray-400 hover:text-white transition-colors">Security</Link></li>
                 <li><Link href="/roadmap" className="text-gray-400 hover:text-white transition-colors">Roadmap</Link></li>
               </ul>

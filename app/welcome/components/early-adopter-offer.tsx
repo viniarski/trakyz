@@ -18,15 +18,15 @@ export default function EarlyAdopterOffer() {
             <h2 className="text-xl md:text-xl text-white mt-6 mb-3">
               Early Adopters Special
             </h2>
-            <p className="text-3xl md:text-4xl text-white mb-3">Pro Plan 6 months - FREE!</p>
+            <p className="text-3xl md:text-4xl text-white mb-3">6 Months - FREE!</p>
             <div className="space-y-3 text-gray-400">
               <p className="flex items-center gap-2">
                 <span className="text-blue-500">•</span>
-                Unlimited assets & portfolios
+                Full access to all features
               </p>
               <p className="flex items-center gap-2">
                 <span className="text-blue-500">•</span>
-                Early access to new features
+                Easy-to-use investment tracking
               </p>
               <p className="flex items-center gap-2">
                 <span className="text-blue-500">•</span>

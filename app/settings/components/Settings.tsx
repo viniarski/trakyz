@@ -9,12 +9,19 @@ import AccountSection from "./account-section";
 import CustomizationSection from "./customization-section";
 import SecuritySection from "./security-section";
 import SystemSection from "./system-section";
+import SubscriptionSection from "./subscription-section";
 import { User } from "@supabase/supabase-js";
 
 export type SubscriptionPreview = {
   status: string;
   currentPeriodEnd: string | null;
   cancelAtPeriodEnd: boolean;
+  paymentMethod?: {
+    brand?: string;
+    last4?: string;
+    expMonth?: number;
+    expYear?: number;
+  } | null;
 };
 
 type SettingsProps = {
@@ -51,7 +58,7 @@ export default function Settings({ user, subscriptionData }: SettingsProps) {
         <Navigation />
         <PageHeader
           title="Settings"
-          description="Manage your account, appearance, and preferences"
+          description="Manage your account, subscription, and preferences"
         />
 
         {error && (
@@ -61,6 +68,8 @@ export default function Settings({ user, subscriptionData }: SettingsProps) {
         )}
 
         <div className="space-y-8 mt-8">
+          {/* Moved subscription section to the top for better visibility */}
+          <SubscriptionSection user={user} subscription={subscriptionData} />
           <AccountSection user={user} subscription={subscriptionData} />
           <CustomizationSection />
           <SecuritySection />

@@ -13,7 +13,7 @@ export default function CallToAction() {
         Ready to Transform Your Investment Strategy?
       </h2>
       <p className="text-xl text-gray-400 mb-8 max-w-2xl mx-auto">
-        Join thousands of successful investors who are already using Trakyz to optimize their portfolios
+        Join thousands of successful investors who are already optimizing their portfolios with Trakyz
       </p>
       <div className="flex flex-col sm:flex-row items-center justify-center gap-4">
         <Button 
@@ -23,18 +23,8 @@ export default function CallToAction() {
           className="w-full sm:w-auto inline-flex items-center justify-center gap-2 bg-blue-500/20 text-blue-500 rounded-xl hover:bg-blue-500/30 transition-all group"
         >
           <Link href="/sign-in">
-            Start Free Trial
+            Start 6-Month Free Trial
             <ArrowRight className="h-5 w-5 group-hover:translate-x-1 transition-transform" />
-          </Link>
-        </Button>
-        <Button 
-          asChild 
-          variant="secondary" 
-          size="xxl"  // h-14 = 56px, matches original py-4
-          className="w-full sm:w-auto inline-flex items-center justify-center gap-2 bg-gray-800 text-white rounded-xl hover:bg-gray-700 transition-all"
-        >
-          <Link href="/pricing">
-            View Pricing
           </Link>
         </Button>
       </div>
