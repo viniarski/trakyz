@@ -8,9 +8,9 @@ import { Loader2 } from 'lucide-react'
 import { PortfolioHeader } from './components/portfolio-header'
 import { PortfolioSummary } from './components/portfolio-summary'
 import { CategoryList } from './components/category-list'
-import { BuySellModal } from './portfolio-modals/buy-sell-modal'
-import { AddAssetModal } from './portfolio-modals/add-asset-modal'
-import { CreatePortfolioModal } from './portfolio-modals/create-portfolio-modal'
+import { BuySellModal } from './modals/buy-sell-modal'
+import { AddAssetModal } from './modals/add-asset-modal'
+import { CreatePortfolioModal } from './modals/create-portfolio-modal'
 
 import type {
   AssetCategory,

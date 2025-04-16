@@ -8,7 +8,7 @@ import { BudgetData, MarketData, RealEstateProperty, Transaction, DebtData, Port
 import { UserResponse } from "@supabase/supabase-js";
 import Markets from "./components/market/Market";
 import RealEstate from "./components/real-estate/RealEstate";
-import Portfolios from "./components/portfolio/Portfolio";
+import Portfolios from "./components/portfolio";
 import Transactions from "./components/transactions/Transactions";
 import TabNavigation from "@/components/TabNavigation";
 import Analytics from "./components/analytics/Analytics";

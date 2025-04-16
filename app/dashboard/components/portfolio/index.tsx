@@ -8,8 +8,8 @@ import { formatCurrency } from "@/lib/utils";
 import { useCurrencyStore } from "@/lib/stores/useCurrencyStore";
 import { Plus, ChevronDown } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import { CreatePortfolioModal } from "./portfolio-modals/create-portfolio-modal";
-import { AddAssetModal } from "./portfolio-modals/add-asset-modal";
+import { CreatePortfolioModal } from "./modals/create-portfolio-modal";
+import { AddAssetModal } from "./modals/add-asset-modal";
 
 interface PortfoliosProps {
   portfolios: Portfolio[];
