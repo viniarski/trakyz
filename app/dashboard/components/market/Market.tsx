@@ -27,9 +27,7 @@ export default function Market({ marketData, userId }: MarketProps) {
   }, [marketData.currencies, marketData.crypto])
 
   return (
-    <div className="space-y-6">
-      <h2 className="text-2xl font-bold mb-4">Markets</h2>
-      
+    <div className="space-y-6">      
       <MarketRates
         metals={marketData.metals}
         crypto={marketData.crypto}

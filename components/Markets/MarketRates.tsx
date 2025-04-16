@@ -3,7 +3,7 @@
 import { useState, useEffect, useMemo, useCallback } from "react";
 import { MarketHeader } from "./MarketHeader";
 import { LoadingState } from "./LoadingState";
-import { Watchlist } from "./watchlist";
+import { Watchlist } from "./Watchlist";
 import { MarketAssets } from "./MarketModular";
 import { useUserSettings } from "@/hooks/use-user-settings";
 import type { Metal, Stock, Currency, Crypto, CurrencyCode, AssetCategory } from "@/types";
