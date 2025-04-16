@@ -1,7 +1,7 @@
 // app/api/portfolios/route.ts
 
-import { createClient } from "@/lib/utils/supabase/server";
-import { validateInsertFields } from "@/lib/validateInsertFields";
+import { createClient } from "@/lib/supabase/server";
+import { validateInsertFields } from "@/lib/utils/navigation";
 import { NextRequest, NextResponse } from "next/server";
 
 export async function POST(req: NextRequest) {

@@ -2,7 +2,7 @@
 
 import { UserResponse } from "@supabase/supabase-js";
 import { redirect } from "next/navigation";
-import { createClient } from "@/lib/utils/supabase/server";
+import { createClient } from "@/lib/supabase/server";
 import Settings from "./components/Settings";
 //import { Notifications, SystemSetting } from "@/lib/types/systemTypes";
 

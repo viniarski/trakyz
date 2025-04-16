@@ -3,7 +3,7 @@
 import { NextResponse } from 'next/server'
 import { headers } from 'next/headers'
 import { stripe } from '@/lib/stripe'
-import { supabaseAdmin } from '@/lib/utils/supabase/admin'
+import { supabaseAdmin } from '@/lib/supabase/admin'
 import Stripe from 'stripe'
 
 export async function POST(request: Request) {

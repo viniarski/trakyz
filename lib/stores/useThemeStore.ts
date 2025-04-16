@@ -2,7 +2,7 @@
 
 import { create } from 'zustand';
 import { createJSONStorage, persist } from 'zustand/middleware';
-import { createClient } from '@/lib/utils/supabase/client';
+import { createClient } from '@/lib/supabase/client';
 
 type Theme = 'blue' | 'dark' | 'light';
 

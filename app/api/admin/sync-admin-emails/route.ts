@@ -1,8 +1,8 @@
 // app/api/admin/sync-admin-emails/route.ts
 
 import { NextResponse } from 'next/server';
-import { supabaseAdmin } from '@/lib/utils/supabase/admin';
-import { createClient } from '@/lib/utils/supabase/server';
+import { supabaseAdmin } from "@/lib/supabase/admin";
+import { createClient } from '@/lib/supabase/server';
 
 export async function POST(request: Request) {
   try {

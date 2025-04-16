@@ -5,7 +5,7 @@
 import { useState } from 'react'
 import { Shield, Lock, AlertCircle, Check } from 'lucide-react'
 import Link from 'next/link'
-import { createClient } from '@/lib/utils/supabase/client'
+import { createClient } from '@/lib/supabase/client'
 
 export default function SecuritySection() {
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);

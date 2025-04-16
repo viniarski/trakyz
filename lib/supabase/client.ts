@@ -1,7 +1,11 @@
-// lib/utils/supabase/client.ts
+// lib/supabase/client.ts
 
 import { createBrowserClient } from "@supabase/ssr";
 
+/**
+ * Create a Supabase client for client-side usage
+ * @returns Supabase browser client
+ */
 export const createClient = () =>
   createBrowserClient(
     process.env.NEXT_PUBLIC_SUPABASE_URL!,

@@ -1,6 +1,6 @@
 // app/dashboard/page.tsx
 
-import { createClient } from "@/lib/utils/supabase/server";
+import { createClient } from "@/lib/supabase/server";
 import { redirect } from "next/navigation";
 import Header from "@/components/Header/index";
 import Budget from "@/app/dashboard/components/budget/Budget";

@@ -1,7 +1,7 @@
 // /app/api/stripe/verify-session/route.ts
 
 import { NextResponse } from 'next/server';
-import { createClient } from "@/lib/utils/supabase/server";
+import { createClient } from "@/lib/supabase/server";
 import { stripe } from '@/lib/stripe';
 
 export async function GET(request: Request) {

@@ -1,8 +1,8 @@
 // middleware.ts
 
 import { type NextRequest } from "next/server";
-import { updateSession } from "@/lib/utils/supabase/middleware";
-import { supabaseAdmin } from "@/lib/utils/supabase/admin";
+import { updateSession } from "@/lib/supabase/middleware";
+import { supabaseAdmin } from "@/lib/supabase/admin";
 
 export async function middleware(request: NextRequest) {
   const authResponse = await updateSession(request);

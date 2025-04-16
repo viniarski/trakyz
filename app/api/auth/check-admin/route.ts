@@ -1,7 +1,7 @@
 // app/api/auth/check-admin/route.ts
 
 import { NextResponse } from 'next/server';
-import { supabaseAdmin } from '@/lib/utils/supabase/admin';
+import { supabaseAdmin } from "@/lib/supabase/admin";
 
 export async function POST(request: Request) {
   try {

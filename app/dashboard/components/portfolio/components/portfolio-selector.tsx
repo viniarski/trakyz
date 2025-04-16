@@ -4,7 +4,7 @@
 
 import { useState, useRef, useEffect } from 'react'
 import { ChevronDown, Plus, Edit, X, Check, Trash2 } from 'lucide-react'
-import { createClient } from '@/lib/utils/supabase/client'
+import { createClient } from '@/lib/supabase/client'
 import type { Portfolio } from '@/types'
 
 interface PortfolioSelectorProps {

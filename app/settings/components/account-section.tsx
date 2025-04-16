@@ -4,7 +4,7 @@
 
 import { useEffect, useState } from "react";
 import { User, Mail, Key } from "lucide-react";
-import { createClient } from "@/lib/utils/supabase/client";
+import { createClient } from "@/lib/supabase/client";
 import Link from "next/link";
 import { User as ClientUser } from "@supabase/supabase-js";
 import { SubscriptionPreview } from "./Settings";

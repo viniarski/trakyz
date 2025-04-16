@@ -1,17 +1,6 @@
-// lib/utils.ts
+// lib/utils/format.ts
 
-import { type ClassValue, clsx } from "clsx";
-import { twMerge } from "tailwind-merge";
 import { CurrencyCode } from "@/types";
-
-/**
- * Combine Tailwind CSS classes conditionally
- * @param inputs ClassValue array
- * @returns Merged class string
- */
-export function cn(...inputs: ClassValue[]) {
-  return twMerge(clsx(inputs));
-}
 
 /**
  * Format a number as currency

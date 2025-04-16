@@ -1,8 +1,8 @@
 // app/api/user-subscription/route.ts
 
 import { NextRequest, NextResponse } from "next/server";
-import { createClient } from "@/lib/utils/supabase/server";
-import { validateInsertFields } from "@/lib/validateInsertFields";
+import { createClient } from "@/lib/supabase/server";
+import { validateInsertFields } from "@/lib/utils/navigation";
 
 const allowedFields = [
   "subscription_start_date",

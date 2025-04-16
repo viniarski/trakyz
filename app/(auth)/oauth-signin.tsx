@@ -3,7 +3,7 @@
 "use client";
 
 import { useState } from "react";
-import { createClient } from "@/lib/utils/supabase/client";
+import { createClient } from "@/lib/supabase/client";
 
 interface OAuthProviderProps {
   provider: "google" | "github" | "twitter" | "linkedin";

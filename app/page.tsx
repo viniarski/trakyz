@@ -1,6 +1,6 @@
 // app/page.tsx
 
-import { createClient } from "@/lib/utils/supabase/server";
+import { createClient } from "@/lib/supabase/server";
 import { redirect } from "next/navigation";
 
 // This prevents static optimization during build
