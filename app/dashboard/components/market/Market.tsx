@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from 'react'
 import { MarketData, CurrencyCode } from '@/types'
-import { MarketRates } from '@/components/market-rates/market-rates'
+import { MarketRates } from '@/components/Markets/MarketRates'
 import { useCurrencyStore } from '@/lib/stores/useCurrencyStore'
 
 interface MarketProps {

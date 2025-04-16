@@ -195,58 +195,64 @@ CREATE TABLE public.budget_expenses (
 );
 
 ------------------ MARKET DATA TABLES ------------------
+-- Enable the uuid-ossp extension for uuid_generate_v4()
+CREATE EXTENSION IF NOT EXISTS "uuid-ossp";
 
--- Metals table
-CREATE TABLE public.metals (
-    id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
-    metal TEXT NOT NULL,
-    date DATE NOT NULL,
-    price NUMERIC NOT NULL,
-    created_at TIMESTAMPTZ DEFAULT NOW(),
-    updated_at TIMESTAMPTZ DEFAULT NOW(),
-    UNIQUE(metal, date)
+-- Table: stocks
+CREATE TABLE stocks (
+    id uuid PRIMARY KEY DEFAULT gen_random_uuid(),
+    symbol varchar,
+    name varchar,
+    date timestamp,
+    price numeric,
+    volume numeric,
+    created_at timestamp DEFAULT now(),
+    date_day text
 );
 
--- Crypto table
-CREATE TABLE public.crypto (
-    id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
-    symbol TEXT NOT NULL,
-    name TEXT NOT NULL,
-    date DATE NOT NULL,
-    price NUMERIC NOT NULL,
-    market_cap NUMERIC,
-    volume_24h NUMERIC,
-    date_day TEXT,
-    created_at TIMESTAMPTZ DEFAULT NOW(),
-    updated_at TIMESTAMPTZ DEFAULT NOW(),
-    UNIQUE(symbol, date)
+-- Enable Row-Level Security for stocks
+ALTER TABLE stocks ENABLE ROW LEVEL SECURITY;
+
+-- Table: crypto
+CREATE TABLE crypto (
+    id uuid PRIMARY KEY DEFAULT uuid_generate_v4(),
+    symbol varchar,
+    name varchar,
+    date timestamp,
+    price numeric,
+    market_cap numeric,
+    volume_24h numeric,
+    created_at timestamp DEFAULT now(),
+    date_day text
 );
 
--- Currencies table
-CREATE TABLE public.currencies (
-    id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
-    symbol TEXT NOT NULL,
-    name TEXT NOT NULL,
-    date DATE NOT NULL,
-    price NUMERIC NOT NULL,
-    created_at TIMESTAMPTZ DEFAULT NOW(),
-    updated_at TIMESTAMPTZ DEFAULT NOW(),
-    UNIQUE(symbol, date)
+-- Enable Row-Level Security for crypto
+ALTER TABLE crypto ENABLE ROW LEVEL SECURITY;
+
+-- Table: metals
+CREATE TABLE metals (
+    id uuid PRIMARY KEY DEFAULT uuid_generate_v4(),
+    metal varchar,
+    date timestamp,
+    price numeric,
+    created_at timestamp DEFAULT now()
 );
 
--- Stocks table
-CREATE TABLE public.stocks (
-    id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
-    symbol TEXT NOT NULL,
-    name TEXT NOT NULL,
-    date DATE NOT NULL,
-    price NUMERIC NOT NULL,
-    volume NUMERIC,
-    date_day TEXT,
-    created_at TIMESTAMPTZ DEFAULT NOW(),
-    updated_at TIMESTAMPTZ DEFAULT NOW(),
-    UNIQUE(symbol, date)
+-- Enable Row-Level Security for metals
+ALTER TABLE metals ENABLE ROW LEVEL SECURITY;
+
+-- Table: currencies
+CREATE TABLE currencies (
+    id uuid PRIMARY KEY DEFAULT uuid_generate_v4(),
+    symbol varchar,
+    name varchar,
+    date timestamp,
+    price numeric,
+    created_at timestamp DEFAULT now()
 );
+
+-- Enable Row-Level Security for currencies
+ALTER TABLE currencies ENABLE ROW LEVEL SECURITY;
 
 ------------------- SYSTEM TABLES ----------------------
 

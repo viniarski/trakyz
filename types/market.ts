@@ -7,7 +7,6 @@ export interface Metal {
   date: string;
   price: number;
   created_at: string;
-  updated_at: string;
 }
 
 export interface Crypto {
@@ -42,7 +41,6 @@ export interface Currency {
   date: string;
   price: number;
   created_at: string;
-  updated_at: string;
 }
 
 export interface MarketData {

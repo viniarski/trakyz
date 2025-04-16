@@ -1,10 +1,10 @@
 "use client";
 
 import { useState, useEffect, useMemo, useCallback } from "react";
-import { MarketHeader } from "./market-header";
-import { LoadingState } from "./loading-state";
+import { MarketHeader } from "./MarketHeader";
+import { LoadingState } from "./LoadingState";
 import { Watchlist } from "./watchlist";
-import { MarketAssets } from "./market-modular";
+import { MarketAssets } from "./MarketModular";
 import { useUserSettings } from "@/hooks/use-user-settings";
 import type { Metal, Stock, Currency, Crypto, CurrencyCode, AssetCategory } from "@/types";
 
