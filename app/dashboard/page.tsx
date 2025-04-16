@@ -6,7 +6,7 @@ import Header from "@/components/Header/index";
 import Budget from "@/app/dashboard/components/budget/Budget";
 import { BudgetData, MarketData, RealEstateProperty, Transaction, DebtData, Portfolio } from "@/types";
 import { UserResponse } from "@supabase/supabase-js";
-import Markets from "./components/market/Market";
+import Market from "./components/market/Market";
 import RealEstate from "./components/real-estate/RealEstate";
 import Portfolios from "./components/portfolio";
 import Transactions from "./components/transactions/Transactions";
@@ -85,11 +85,19 @@ export default async function Page(props: any) {
       supabase.from("stocks").select("*").order("date", { ascending: false }),
     ]);
 
+    // Also fetch the user's selected currency from their profile
+    const { data: userProfile } = await supabase
+      .from("user_profiles")
+      .select("selected_currency")
+      .eq("id", user.id)
+      .single();
+
     marketData = {
       metals: metals || [],
       crypto: crypto || [],
       currencies: currencies || [],
       stocks: stocks || [],
+      selectedCurrency: userProfile?.selected_currency || 'USD'
     };
 
     // Log any market data errors
@@ -278,7 +286,7 @@ export default async function Page(props: any) {
           )}
 
           {currentTab === "markets" && (
-            <Markets userId={user.id} marketData={marketData} />
+            <Market userId={user.id} marketData={marketData} />
           )}
 
           {currentTab === "debt" && (

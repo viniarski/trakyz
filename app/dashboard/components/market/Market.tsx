@@ -1,50 +1,44 @@
-// app/dashboard/components/market/Market.tsx
+'use client'
 
-"use client";
+import { useState, useEffect } from 'react'
+import { MarketData, CurrencyCode } from '@/types'
+import { MarketRates } from '@/components/market-rates/market-rates'
+import { useCurrencyStore } from '@/lib/stores/useCurrencyStore'
 
-import { MarketData } from "@/types";
+interface MarketProps {
+  marketData: MarketData
+  userId: string
+}
 
-// This is an example usage of marketdata
-// Replace with real mapping later
+export default function Market({ marketData, userId }: MarketProps) {
+  const [loading, setLoading] = useState(false)
+  const { currency } = useCurrencyStore()
+  const [currencyRates, setCurrencyRates] = useState({
+    currencies: marketData.currencies,
+    crypto: marketData.crypto
+  })
 
-export default function Markets({
-  marketData,
-  userId,
-}: {
-  marketData: MarketData;
-  userId: string;
-}) {
-  // Logging market data for easier mapping later
-  console.log(marketData);
-
-  // Logging user to ensure its avaliable to the component
-  console.log(userId);
+  // Initialize currency rates from market data
+  useEffect(() => {
+    setCurrencyRates({
+      currencies: marketData.currencies,
+      crypto: marketData.crypto
+    })
+  }, [marketData.currencies, marketData.crypto])
 
   return (
-    <div>
+    <div className="space-y-6">
       <h2 className="text-2xl font-bold mb-4">Markets</h2>
-      <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-        {marketData.metals.map((metal) => (
-          <div key={metal.id} className="border p-2 rounded">
-            <strong>{metal.metal}</strong>: ${metal.price}
-          </div>
-        ))}
-        {marketData.crypto.map((crypto) => (
-          <div key={crypto.id} className="border p-2 rounded">
-            <strong>{crypto.name}</strong>: ${crypto.price}
-          </div>
-        ))}
-        {marketData.currencies.map((currency) => (
-          <div key={currency.id} className="border p-2 rounded">
-            <strong>{currency.name}</strong>: ${currency.price}
-          </div>
-        ))}
-        {marketData.stocks.map((stock) => (
-          <div key={stock.id} className="border p-2 rounded">
-            <strong>{stock.name}</strong>: ${stock.price}
-          </div>
-        ))}
-      </div>
+      
+      <MarketRates
+        metals={marketData.metals}
+        crypto={marketData.crypto}
+        stocks={marketData.stocks}
+        currencies={marketData.currencies}
+        loading={loading}
+        selectedCurrency={currency as CurrencyCode}
+        currencyRates={currencyRates}
+      />
     </div>
-  );
+  )
 }
