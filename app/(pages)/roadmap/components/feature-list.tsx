@@ -2,16 +2,10 @@
 
 'use client'
 
-import { PiggyBank, BarChart2, Smartphone, Zap, FileText, Share2 } from 'lucide-react'
+import { BarChart2, Smartphone, Zap, FileText, Share2, Building, Wallet, Link, BookOpen } from 'lucide-react'
 
 export default function FeatureList() {
   const roadmapFeatures = [
-    {
-      title: 'Budgeting',
-      description: 'Track your spending, set financial goals, and integrate budgeting tools with your investment portfolio for a holistic financial view.',
-      icon: PiggyBank,
-      status: 'In Progress'
-    },
     {
       title: 'Enhanced Analytics',
       description: 'New chart customization options, detailed headers, and risk/volatility metrics like Sharpe Ratio and standard deviation.',
@@ -19,16 +13,16 @@ export default function FeatureList() {
       status: 'In Progress'
     },
     {
-      title: 'iOS / Android App',
-      description: 'Manage your investments on the go with native mobile apps for iOS and Android, featuring full functionality and real-time updates.',
-      icon: Smartphone,
-      status: 'Planned'
-    },
-    {
       title: 'Smart Insights & AI Predictions',
       description: 'Automated portfolio rebalancing, risk assessment, and personalized investment suggestions powered by advanced AI.',
       icon: Zap,
-      status: 'Planned'
+      status: 'In Progress'
+    },
+    {
+      title: 'Financial Education Hub',
+      description: 'Access a comprehensive library of investment guides, tutorials, market insights, and educational resources tailored to your portfolio and investment goals.',
+      icon: BookOpen,
+      status: 'In Progress'
     },
     {
       title: 'Tax Optimization & Reporting',
@@ -40,6 +34,30 @@ export default function FeatureList() {
       title: 'Portfolio Sharing',
       description: 'Securely share your portfolio with advisors, family, or friends, with customizable permissions and export options.',
       icon: Share2,
+      status: 'Planned'
+    },
+    {
+      title: 'iOS / Android App',
+      description: 'Manage your investments on the go with native mobile apps for iOS and Android, featuring full functionality and real-time updates.',
+      icon: Smartphone,
+      status: 'Planned'
+    },
+    {
+      title: 'Bank Integration',
+      description: 'Connect directly to your bank accounts to automatically track transactions and update your financial data in real-time.',
+      icon: Building,
+      status: 'Planned'
+    },
+    {
+      title: 'Crypto Wallet Integration',
+      description: 'Link your cryptocurrency wallets for automatic portfolio updates and seamless tracking of your digital assets.',
+      icon: Wallet,
+      status: 'Planned'
+    },
+    {
+      title: 'API Integrations',
+      description: 'Connect Trakyz with third-party financial services and tools through our comprehensive API ecosystem.',
+      icon: Link,
       status: 'Planned'
     }
   ]
