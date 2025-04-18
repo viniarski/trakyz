@@ -6,7 +6,7 @@ import { SubmitButton } from "@/components/SubmitButton";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import Link from "next/link";
-import { GoogleSignIn, GithubSignIn } from "../oauth-signin";
+import { GoogleSignIn, GithubSignIn, TwitterSignIn, LinkedInSignIn } from "../oauth-signin";
 
 export default async function Signup(props: {
   searchParams: Promise<Message>;
@@ -83,9 +83,11 @@ export default async function Signup(props: {
           </div>
         </div>
 
-        <div className="grid grid-cols-2 gap-4">
+        <div className="grid grid-cols-4 gap-4">
           <GoogleSignIn />
           <GithubSignIn />
+          <TwitterSignIn />
+          <LinkedInSignIn />
         </div>
 
         <p className="text-xxs text-gray-400 text-center mt-4">

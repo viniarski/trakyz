@@ -12,6 +12,8 @@ interface PageHeaderProps {
   className?: string;
   titleClassName?: string;
   descriptionClassName?: string;
+  showDecorativeLine?: boolean;
+  decorativeLineClassName?: string;
 }
 
 export default function PageHeader({
@@ -19,11 +21,16 @@ export default function PageHeader({
   description,
   className = "mb-12",
   titleClassName = "text-4xl font-bold text-[var(--text-primary)] mb-4",
-  descriptionClassName = "text-lg text-[var(--text-secondary)]"
+  descriptionClassName = "text-lg text-[var(--text-secondary)]",
+  showDecorativeLine = true,
+  decorativeLineClassName = "h-0.5 w-24 bg-[var(--accent-primary)] mt-2 mb-4 rounded-full opacity-80"
 }: PageHeaderProps) {
   return (
     <div className={className}>
       <h1 className={titleClassName}>{title}</h1>
+      {showDecorativeLine && (
+        <div className={decorativeLineClassName}></div>
+      )}
       {description && (
         typeof description === 'string' 
           ? <p className={descriptionClassName}>{description}</p>

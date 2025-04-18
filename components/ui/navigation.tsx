@@ -9,7 +9,7 @@ export default function Navigation() {
   return (
     <div className="mb-8 px-4">
       <Link
-        href="/dashboard"
+        href="/"
         className="inline-flex items-center gap-2 text-[var(--text-secondary)] hover:text-[var(--text-primary)] transition-colors"
       >
         <ArrowLeft className="h-5 w-5" />

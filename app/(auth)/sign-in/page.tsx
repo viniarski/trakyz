@@ -6,7 +6,7 @@ import { SubmitButton } from "@/components/SubmitButton";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import Link from "next/link";
-import { GoogleSignIn, GithubSignIn } from "../oauth-signin";
+import { GoogleSignIn, GithubSignIn, TwitterSignIn, LinkedInSignIn } from "../oauth-signin";
 
 export default async function Login(props: { searchParams: Promise<Message> }) {
   const searchParams = await props.searchParams;
@@ -80,9 +80,11 @@ export default async function Login(props: { searchParams: Promise<Message> }) {
           </div>
         </div>
 
-        <div className="grid grid-cols-2 gap-4">
+        <div className="grid grid-cols-4 gap-4">
           <GoogleSignIn />
           <GithubSignIn />
+          <TwitterSignIn />
+          <LinkedInSignIn />
         </div>
       </form>
     </>
