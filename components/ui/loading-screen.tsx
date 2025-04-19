@@ -4,6 +4,7 @@
 
 import { useState, useEffect } from 'react';
 import Image from 'next/image';
+import { usePathname } from 'next/navigation';
 
 interface LoadingScreenProps {
   isLoading: boolean;
@@ -11,20 +12,40 @@ interface LoadingScreenProps {
 }
 
 export function LoadingScreen({ isLoading, onComplete }: LoadingScreenProps) {
-  console.log('LoadingScreen rendered with isLoading:', isLoading);
   const [progress, setProgress] = useState(0);
   const [isVisible, setIsVisible] = useState(true);
   const [hasStartedLoading, setHasStartedLoading] = useState(false);
+  const pathname = usePathname();
+  
+  // Skip loading for welcome page and public routes
+  const shouldSkipLoading = pathname === '/welcome' || 
+                           pathname === '/' || 
+                           pathname.startsWith('/sign-in') || 
+                           pathname.startsWith('/sign-up');
   
   useEffect(() => {
+    // If we should skip loading or it's already not loading, hide immediately
+    if (shouldSkipLoading || !isLoading) {
+      setIsVisible(false);
+      if (onComplete) onComplete();
+      return;
+    }
+    
     if (!isLoading && isVisible) {
       console.log('isLoading prop changed to false, hiding loading screen');
       setIsVisible(false);
       if (onComplete) onComplete();
     }
-  }, [isLoading, isVisible, onComplete]);
+  }, [isLoading, isVisible, onComplete, shouldSkipLoading]);
 
   useEffect(() => {
+    // Skip the animation for public pages
+    if (shouldSkipLoading) {
+      setIsVisible(false);
+      if (onComplete) onComplete();
+      return;
+    }
+    
     if (hasStartedLoading || !isLoading) return;
     setHasStartedLoading(true);
     
@@ -48,7 +69,7 @@ export function LoadingScreen({ isLoading, onComplete }: LoadingScreenProps) {
     }, 600);
     
     return () => clearTimeout(completeTimer);
-  }, [onComplete, hasStartedLoading, isLoading]);
+  }, [onComplete, hasStartedLoading, isLoading, shouldSkipLoading]);
 
   if (!isVisible) {
     console.log('Loading screen is not visible, returning null');

@@ -7,10 +7,18 @@ import ThemeInitializer from '@/components/ThemeInitializer'
 import CurrencyInitializer from '@/components/CurrencyInitializer'
 import { LoadingScreen } from '@/components/ui/loading-screen'
 import { useThemeStore } from '@/lib/stores/useThemeStore'
+import { usePathname } from 'next/navigation'
 
 export function Providers({ children }: { children: React.ReactNode }) {
   const [isLoading, setIsLoading] = useState(true)
   const { theme } = useThemeStore()
+  const pathname = usePathname()
+  
+  // Skip loading screen for welcome page and other public pages
+  const skipLoadingScreen = pathname === '/welcome' || 
+                           pathname === '/' || 
+                           pathname.startsWith('/sign-in') || 
+                           pathname.startsWith('/sign-up')
 
   // Effect to apply theme quickly from localStorage and handle loading
   useEffect(() => {
@@ -18,14 +26,22 @@ export function Providers({ children }: { children: React.ReactNode }) {
       // Apply theme from localStorage immediately
       document.documentElement.setAttribute('data-theme', theme)
       
-      // The LoadingScreen component already has its own internal duration
-      // We don't need additional delays here - just let it run its course
-      console.log('Theme applied:', theme)
+      // If we're on the welcome page, skip the loading screen
+      if (skipLoadingScreen) {
+        console.log('Skipping loading screen for public page:', pathname)
+        setIsLoading(false)
+      }
     }
-  }, [theme])
+  }, [theme, skipLoadingScreen, pathname])
 
   // Force complete loading after a maximum timeout as a fallback
   useEffect(() => {
+    // Skip loading entirely for public pages
+    if (skipLoadingScreen) {
+      setIsLoading(false)
+      return
+    }
+    
     const timer = setTimeout(() => {
       if (isLoading) {
         console.log('Force completing loading after timeout')
@@ -34,19 +50,21 @@ export function Providers({ children }: { children: React.ReactNode }) {
     }, 2000) // 2 second maximum loading time
     
     return () => clearTimeout(timer)
-  }, [isLoading])
+  }, [isLoading, skipLoadingScreen])
 
   return (
     <>
       <ThemeInitializer />
       <CurrencyInitializer />
-      <LoadingScreen 
-        isLoading={isLoading} 
-        onComplete={() => {
-          console.log('Loading screen complete callback')
-          setIsLoading(false)
-        }} 
-      />
+      {!skipLoadingScreen && (
+        <LoadingScreen 
+          isLoading={isLoading} 
+          onComplete={() => {
+            console.log('Loading screen complete callback')
+            setIsLoading(false)
+          }} 
+        />
+      )}
       {children}
     </>
   )
