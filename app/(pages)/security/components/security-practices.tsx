@@ -1,4 +1,4 @@
-// app/security/components/security-practices.tsx
+// app/(pages)/security/components/security-practices.tsx
 
 'use client'
 

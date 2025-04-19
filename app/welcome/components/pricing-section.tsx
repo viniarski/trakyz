@@ -3,9 +3,8 @@
 'use client'
 
 import { useState } from 'react'
-import Link from 'next/link'
-import { ArrowRight, Check } from 'lucide-react'
-import { Button } from '@/components/ui/button'
+import { Check } from 'lucide-react'
+import { CtaButton } from '@/components/ui/cta'
 
 export default function PricingSection() {
   const [isYearly, setIsYearly] = useState(false) // Changed to false for monthly default
@@ -87,17 +86,13 @@ export default function PricingSection() {
             ))}
           </ul>
           
-          <Button 
-            asChild 
-            variant="ghost" 
-            size="xl"
-            className="w-full inline-flex items-center justify-center gap-2 bg-blue-500/20 text-blue-500 rounded-xl hover:bg-blue-500/30 transition-all group"
+          <CtaButton
+            href="/sign-in"
+            variant="primary"
+            className="w-full py-3"
           >
-            <Link href="/sign-in">
-              <span>Start Your Free Trial</span>
-              <ArrowRight className="h-5 w-5 group-hover:translate-x-1 transition-transform" />
-            </Link>
-          </Button>
+            Subscribe
+          </CtaButton>
           
           <p className="text-xs text-gray-400 mt-4 text-center">
             Cancel anytime. No hidden fees.

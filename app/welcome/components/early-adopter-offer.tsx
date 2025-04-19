@@ -2,13 +2,11 @@
 
 'use client'
 
-import Link from 'next/link'
-import { ArrowRight } from 'lucide-react'
-import { Button } from '@/components/ui/button'
+import { CtaButtonWithArrow } from '@/components/ui/cta'
 
 export default function EarlyAdopterOffer() {
   return (
-    <div className="mb-24 relative">
+    <div className="mb-24 relative max-w-4xl mx-auto">
       <div className="rounded-2xl p-8 border border-blue-500/20">
         <div className="absolute -top-2 right-4 px-2 py-px bg-blue-400 text-black text-sm font-semibold uppercase tracking-wider border border-blue-400/30 rounded-md">
           Limited Time Offer
@@ -34,18 +32,10 @@ export default function EarlyAdopterOffer() {
               </p>
             </div>
           </div>
-          <div className="flex flex-col sm:flex-row gap-4 md:min-w-[300px]">
-            <Button 
-              asChild 
-              variant="ghost" 
-              size="xl"  // h-12 = 48px, matches original py-3
-              className="inline-flex items-center justify-between gap-2 bg-blue-500/20 text-blue-500 rounded-xl hover:bg-blue-500/30 w-[9.375rem] hover:w-[12.8125rem] active:w-[16.25rem] transition-all duration-300 ease-out group whitespace-nowrap"
-            >
-              <Link href="/sign-in">
-                <span>Join Now</span>
-                <ArrowRight className="h-5 w-5 group-hover:translate-x-4 transition-transform duration-300 ease-out" />
-              </Link>
-            </Button>
+          <div className="flex flex-col sm:flex-row gap-4">
+            <CtaButtonWithArrow href="/sign-in" className="whitespace-nowrap">
+              Join Now
+            </CtaButtonWithArrow>
           </div>
         </div>
       </div>

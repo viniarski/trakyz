@@ -1,4 +1,4 @@
-// app/security/components/security-features.tsx
+// app/(pages)/security/components/security-features.tsx
 
 'use client'
 
@@ -13,7 +13,7 @@ export default function SecurityFeatures() {
           <Lock className="h-8 w-8 text-[var(--accent-primary)] mb-4" />
           <h3 className="text-xl font-semibold text-[var(--text-primary)] mb-2">Authentication Security</h3>
           <p className="text-[var(--text-secondary)] text-sm">
-            Trakyz uses Google and X for login securely managed by these providers. We support 2FA via their services.
+            Trakyz supports secure authentication via Email, Google, GitHub, X, and LinkedIn, all securely managed by Supabase's enterprise-grade auth system. We support 2FA and recommend using YubiKey for physical security keys.
           </p>
         </div>
         <div className="bg-[var(--bg-secondary)] rounded-xl p-6 flex flex-col items-start">

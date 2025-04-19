@@ -1,4 +1,4 @@
-// app/security/components/security-compliance.tsx
+// app/(pages)/security/components/security-compliance.tsx
 
 'use client'
 
@@ -17,6 +17,9 @@ export default function SecurityCompliance() {
         </li>
         <li>
           <strong>SOC 2:</strong> Vercel, Supabase, and Stripe are SOC 2 certified, ensuring high security standards.
+        </li>
+        <li>
+          <strong>Authentication Security:</strong> Our authentication system powered by Supabase Auth supports Email, Google, GitHub, X, and LinkedIn authentication with industry-standard security practices.
         </li>
       </ul>
       <p className="text-[var(--text-secondary)] mt-4">

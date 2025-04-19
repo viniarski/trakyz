@@ -2,8 +2,8 @@
 
 'use client'
 
-import Link from 'next/link'
 import { Mail } from 'lucide-react'
+import { CtaButton } from '@/components/ui/cta'
 
 export default function ContactSupport() {
   return (
@@ -13,13 +13,13 @@ export default function ContactSupport() {
         Our support team is here to assist you. Reach out with any questions or issues.
       </p>
       <div className="flex flex-col sm:flex-row justify-center gap-4">
-        <Link
-          href="/contact"
-          className="inline-flex items-center justify-center gap-2 px-6 py-3 bg-blue-500/20 text-blue-500 rounded-xl hover:bg-blue-500/30 transition-all w-full sm:w-auto"
+        <CtaButton 
+          href="/contact" 
+          variant="primary"
+          iconRight={<Mail className="h-5 w-5" />}
         >
-          <Mail className="h-5 w-5" />
           Contact Us
-        </Link>
+        </CtaButton>
       </div>
     </section>
   )

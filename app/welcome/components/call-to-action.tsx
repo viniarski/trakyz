@@ -2,9 +2,7 @@
 
 'use client'
 
-import Link from 'next/link'
-import { ArrowRight } from 'lucide-react'
-import { Button } from '@/components/ui/button'
+import { CtaButtonWithArrow } from '@/components/ui/cta'
 
 export default function CallToAction() {
   return (
@@ -16,17 +14,9 @@ export default function CallToAction() {
         Join thousands of successful investors who are already optimizing their portfolios with Trakyz
       </p>
       <div className="flex flex-col sm:flex-row items-center justify-center gap-4">
-        <Button 
-          asChild 
-          variant="ghost" 
-          size="xxl"  // h-14 = 56px, matches original py-4
-          className="w-full sm:w-auto inline-flex items-center justify-center gap-2 bg-blue-500/20 text-blue-500 rounded-xl hover:bg-blue-500/30 transition-all group"
-        >
-          <Link href="/sign-in">
-            Start 6-Month Free Trial
-            <ArrowRight className="h-5 w-5 group-hover:translate-x-1 transition-transform" />
-          </Link>
-        </Button>
+        <CtaButtonWithArrow href="/sign-in">
+          Start 6-Month Free Trial
+        </CtaButtonWithArrow>
       </div>
     </div>
   )

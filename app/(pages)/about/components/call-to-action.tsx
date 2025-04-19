@@ -2,7 +2,7 @@
 
 'use client'
 
-import Link from 'next/link'
+import { CtaButton } from '@/components/ui/cta'
 
 export default function CallToAction() {
   return (
@@ -12,18 +12,12 @@ export default function CallToAction() {
         Curious about our features, security, or future plans? Explore more about Trakyz or get in touch with us.
       </p>
       <div className="flex flex-col sm:flex-row justify-center gap-4">
-        <Link
-          href="/roadmap"
-          className="inline-flex items-center justify-center gap-2 px-6 py-3 bg-[var(--accent-primary-20)] text-[var(--accent-primary)] rounded-xl hover:bg-[var(--accent-primary-30)] transition-all w-full sm:w-auto"
-        >
+        <CtaButton href="/roadmap" variant="primary">
           View Roadmap
-        </Link>
-        <Link
-          href="/contact"
-          className="inline-flex items-center justify-center gap-2 px-6 py-3 bg-[var(--bg-secondary)] text-[var(--text-primary)] rounded-xl hover:bg-[var(--bg-hover)] transition-all w-full sm:w-auto"
-        >
+        </CtaButton>
+        <CtaButton href="/contact" variant="secondary">
           Contact Us
-        </Link>
+        </CtaButton>
       </div>
     </section>
   )

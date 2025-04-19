@@ -1,4 +1,4 @@
-// app/security/components/security-user-role.tsx
+// app/(pages)/security/components/security-user-role.tsx
 
 'use client'
 
@@ -11,15 +11,15 @@ export default function SecurityUserRole() {
       </p>
       <div className="space-y-4">
         <div className="bg-[var(--bg-secondary)] rounded-xl p-4">
-          <h3 className="text-lg font-semibold text-[var(--text-primary)] mb-2">Secure Your Google/X Account</h3>
+          <h3 className="text-lg font-semibold text-[var(--text-primary)] mb-2">Secure Your Authentication</h3>
           <p className="text-[var(--text-secondary)] text-sm">
-            Enable 2FA on your Google or X account and use a strong, unique password, as Trakyz relies on these for login security.
+            Enable 2FA on your account method (Email, Google, GitHub, X, or LinkedIn) that you use to access Trakyz and use a strong, unique password for maximum protection.
           </p>
         </div>
         <div className="bg-[var(--bg-secondary)] rounded-xl p-4">
-          <h3 className="text-lg font-semibold text-[var(--text-primary)] mb-2">Use UbiKey (Optional)</h3>
+          <h3 className="text-lg font-semibold text-[var(--text-primary)] mb-2">Use YubiKey (Optional)</h3>
           <p className="text-[var(--text-secondary)] text-sm">
-            Add a physical UbiKey as an extra MFA layer in your Google or X settings for maximum protection.
+            Add a physical YubiKey as an extra MFA layer in your authentication provider settings for maximum protection.
           </p>
         </div>
         <div className="bg-[var(--bg-secondary)] rounded-xl p-4">

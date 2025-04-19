@@ -9,6 +9,7 @@ import SecurityFeatures from './components/security-features'
 import SecurityPractices from './components/security-practices'
 import SecurityUserRole from './components/security-user-role'
 import SecurityCompliance from './components/security-compliance'
+import SecurityContact from './components/security-contact'
 
 export default function Security() {
   return (
@@ -25,6 +26,7 @@ export default function Security() {
           <SecurityPractices />
           <SecurityUserRole />
           <SecurityCompliance />
+          <SecurityContact />
         </div>
       </div>
     </div>

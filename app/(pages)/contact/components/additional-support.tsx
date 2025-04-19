@@ -1,8 +1,8 @@
-// app/contact/components/additional-support.tsx
+// app/(pages)/contact/components/additional-support.tsx
 
 'use client'
 
-import Link from 'next/link'
+import { CtaButton } from '@/components/ui/cta'
 
 export default function AdditionalSupport() {
   return (
@@ -11,12 +11,9 @@ export default function AdditionalSupport() {
       <p className="text-[var(--text-secondary)] mb-6">
         Visit our Help Center for FAQs, guides, and additional resources.
       </p>
-      <Link
-        href="/help"
-        className="inline-flex items-center justify-center gap-2 px-6 py-3 bg-[var(--bg-secondary)] text-[var(--text-primary)] rounded-xl hover:bg-[var(--bg-hover)] transition-all w-full sm:w-auto"
-      >
+      <CtaButton href="/help" variant="secondary">
         Visit Help Center
-      </Link>
+      </CtaButton>
     </section>
   )
 }
