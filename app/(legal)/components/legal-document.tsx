@@ -1,7 +1,6 @@
 // app/(legal)/components/legal-document/legal-document.tsx
-'use client'
 
-import Link from 'next/link'
+'use client'
 
 export interface LegalSection {
   id: string;
