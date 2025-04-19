@@ -1,4 +1,4 @@
-// components/market-rates/loading-state.tsx
+// app/components/Markets/LoadingState.tsx
 
 export function LoadingState() {
     return (

@@ -1,9 +1,12 @@
+// components/Markets/Watchlist.tsx
+
 'use client'
 
 import { useState, useMemo } from 'react'
 import { Star, TrendingUp, TrendingDown } from 'lucide-react'
 import { CategoryIcon } from '@/components/ui/category-icon'
 import { formatCurrency, convertCurrency } from '@/lib/utils'
+import { useMarketSettingsStore } from '@/lib/stores/useMarketSettingsStore'
 import type { 
   Metal, 
   Stock, 
@@ -13,14 +16,10 @@ import type {
   Crypto
 } from '@/types'
 import { AssetContextMenu } from '../ui/context-menu'
+import { WatchlistItem } from '@/lib/stores/useWatchlistStore'
 
 interface WatchlistProps {
-  watchlist: {
-    id: string;
-    category: AssetCategory;
-    symbol: string;
-    order: number;
-  }[];
+  watchlist: WatchlistItem[];
   onToggleWatchlist: (category: AssetCategory, symbol: string) => void;
   marketData: {
     metals: Metal[] | null;
@@ -33,7 +32,6 @@ interface WatchlistProps {
     currencies: Currency[] | null;
     crypto: Crypto[] | null;
   };
-  selectedPeriod: '24H' | '7D';
   updatedItems?: Record<string, Set<string>>;
 }
 
@@ -48,7 +46,6 @@ export function Watchlist({
   marketData,
   selectedCurrency,
   currencyRates,
-  selectedPeriod,
   updatedItems = {
     crypto: new Set(),
     stocks: new Set(),
@@ -57,10 +54,11 @@ export function Watchlist({
   }
 }: WatchlistProps) {
   const [isHovering, setIsHovering] = useState<string | null>(null)
+  const { selectedPeriod } = useMarketSettingsStore();
 
   // Group watchlist items by category
   const categorizedWatchlist = useMemo(() => {
-    const grouped: Record<string, Array<typeof watchlist[number]>> = {};
+    const grouped: Record<string, Array<WatchlistItem>> = {};
     
     // Group items by category
     watchlist.forEach(item => {

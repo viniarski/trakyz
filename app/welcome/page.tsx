@@ -1,7 +1,7 @@
 // app/welcome/page.tsx
-
 'use client'
 
+import Image from 'next/image'
 import Navigation from './components/navigation'
 import HeroSection from './components/hero-section'
 import EarlyAdopterOffer from './components/early-adopter-offer'
@@ -15,8 +15,18 @@ import Footer from './components/footer'
 export default function WelcomePage() {
   return (
     <div className="min-h-screen relative">
-      {/* Background image with different image for small screens */}
-      <div className="absolute inset-0 bg-[url('/blue_bg_sm.avif')] sm:bg-[url('/blue_bg.avif')] bg-no-repeat bg-cover sm:rotate-180"></div>
+      {/* Background Image with Next.js Image Component */}
+      <Image
+        src="/blue_bg.avif"
+        alt="Background"
+        fill
+        sizes="100vw"
+        quality={100}
+        priority={false}
+        className="object-cover sm:rotate-180"
+        placeholder="blur"
+        blurDataURL="/blue_bg_sm.avif" // Optional: low-res placeholder
+      />
       
       {/* Content */}
       <div className="relative z-10">

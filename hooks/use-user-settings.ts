@@ -1,3 +1,5 @@
+// hooks/use-user-settings.ts
+
 'use client';
 
 import { useState, useEffect } from 'react';

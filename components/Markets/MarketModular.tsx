@@ -1,3 +1,5 @@
+// components/Markets/MarketModular.tsx
+
 "use client";
 
 import { useMemo, memo } from "react";
@@ -11,26 +13,22 @@ import {
 } from "lucide-react";
 import type { Metal, Stock, Currency, CurrencyCode, AssetCategory, Crypto } from "@/types";
 import { formatCurrency, convertCurrency } from "@/lib/utils";
+import { useMarketSettingsStore } from "@/lib/stores/useMarketSettingsStore";
 import { AssetContextMenu } from "../ui/context-menu";
+import { WatchlistItem } from "@/lib/stores/useWatchlistStore";
 
 type Asset = Currency | Crypto | Metal | Stock;
 
 type MarketAssetsProps = {
   assets: Asset[] | null;
   limit: number;
-  watchlist: {
-    id: string;
-    category: AssetCategory;
-    symbol: string;
-    order: number;
-  }[];
+  watchlist: WatchlistItem[];
   onToggleWatchlist: (category: AssetCategory, symbol: string) => void;
   selectedCurrency: CurrencyCode;
   currencyRates: {
     currencies: Currency[] | null;
     crypto: Crypto[] | null;
   };
-  selectedPeriod: "24H" | "7D";
   updatedItems?: Set<string>;
   assetType: AssetCategory;
 };
@@ -43,10 +41,12 @@ export const MarketAssets = memo(
     onToggleWatchlist,
     selectedCurrency,
     currencyRates,
-    selectedPeriod,
     updatedItems = new Set(),
     assetType,
   }: MarketAssetsProps) {
+    // Get selected period from store
+    const { selectedPeriod } = useMarketSettingsStore();
+    
     const calculatePriceChange = useMemo(
       () =>
         (symbol: string): { changePercent: number; isPositive: boolean } => {
@@ -279,7 +279,6 @@ export const MarketAssets = memo(
       prevProps.watchlist === nextProps.watchlist &&
       prevProps.selectedCurrency === nextProps.selectedCurrency &&
       prevProps.currencyRates === nextProps.currencyRates &&
-      prevProps.selectedPeriod === nextProps.selectedPeriod &&
       prevProps.updatedItems === nextProps.updatedItems &&
       prevProps.assetType === nextProps.assetType
     );
