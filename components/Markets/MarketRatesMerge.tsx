@@ -1,4 +1,4 @@
-// app/components/marker-rates/market-rates-marge.tsx
+// components/Markets/MarketRatesMerge.tsx
 
 "use client";
 

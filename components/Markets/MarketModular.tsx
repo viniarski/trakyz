@@ -11,13 +11,14 @@ import {
   TrendingUp,
   TrendingDown,
 } from "lucide-react";
-import type {
+import {
   Metal,
   Stock,
   Currency,
   CurrencyCode,
   AssetCategory,
   Crypto as CryptoType,
+  WatchlistItem
 } from "@/types";
 import { formatCurrency, convertCurrency } from "@/lib/utils";
 import { AssetContextMenu } from "../ui/context-menu";
@@ -27,12 +28,7 @@ type Asset = Currency | CryptoType | Metal | Stock;
 type MarketAssetsProps = {
   assets: Asset[] | null;
   limit: number;
-  watchlist: {
-    id: string;
-    category: AssetCategory;
-    symbol: string;
-    order: number;
-  }[];
+  watchlist: WatchlistItem[];
   onToggleWatchlist: (category: AssetCategory, symbol: string) => void;
   selectedCurrency: CurrencyCode;
   currencyRates: {

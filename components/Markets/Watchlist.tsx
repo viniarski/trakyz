@@ -6,17 +6,16 @@ import { useState, useMemo } from 'react'
 import { Star, TrendingUp, TrendingDown } from 'lucide-react'
 import { CategoryIcon } from '@/components/ui/category-icon'
 import { formatCurrency, convertCurrency } from '@/lib/utils'
-import { useMarketSettingsStore } from '@/lib/stores/useMarketSettingsStore'
-import type { 
+import { 
   Metal, 
   Stock, 
   Currency, 
   CurrencyCode, 
   AssetCategory,
-  Crypto
+  Crypto,
+  WatchlistItem
 } from '@/types'
 import { AssetContextMenu } from '../ui/context-menu'
-import { WatchlistItem } from '@/lib/stores/useWatchlistStore'
 
 interface WatchlistProps {
   watchlist: WatchlistItem[];
@@ -32,6 +31,7 @@ interface WatchlistProps {
     currencies: Currency[] | null;
     crypto: Crypto[] | null;
   };
+  selectedPeriod: '24H' | '7D';
   updatedItems?: Record<string, Set<string>>;
 }
 
@@ -46,6 +46,7 @@ export function Watchlist({
   marketData,
   selectedCurrency,
   currencyRates,
+  selectedPeriod,
   updatedItems = {
     crypto: new Set(),
     stocks: new Set(),
@@ -54,7 +55,6 @@ export function Watchlist({
   }
 }: WatchlistProps) {
   const [isHovering, setIsHovering] = useState<string | null>(null)
-  const { selectedPeriod } = useMarketSettingsStore();
 
   // Group watchlist items by category
   const categorizedWatchlist = useMemo(() => {

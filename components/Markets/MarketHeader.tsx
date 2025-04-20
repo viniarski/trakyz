@@ -3,19 +3,21 @@
 'use client'
 
 import { Star } from 'lucide-react'
-import { useMarketSettingsStore } from '@/lib/stores/useMarketSettingsStore'
+import { SelectedPeriod } from '@/types'
 
 interface MarketHeaderProps {
   view: 'market' | 'watchlist';
   setView: (view: 'market' | 'watchlist') => void;
+  selectedPeriod: SelectedPeriod;
+  setSelectedPeriod: (period: SelectedPeriod) => void;
 }
 
 export function MarketHeader({
   view,
-  setView
+  setView,
+  selectedPeriod,
+  setSelectedPeriod
 }: MarketHeaderProps) {
-  const { selectedPeriod, setSelectedPeriod } = useMarketSettingsStore();
-  
   return (
     <div className="p-4 flex justify-center items-center">
       <div className="flex flex-wrap items-center gap-2 justify-center">
