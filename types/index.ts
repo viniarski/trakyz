@@ -12,4 +12,4 @@ export * from './user';
 // Common types used across multiple modules
 export type CurrencyCode = 'USD' | 'EUR' | 'GBP' | 'CHF' | 'BTC' | 'ETH' | 'GOLD';
 
-export type AssetCategory = 'Crypto' | 'Stocks & Indexes' | 'Precious Metals' | 'Cash' | 'Real Estate' | 'Bonds' | 'Commodities';
+export type AssetCategory = 'Crypto' | 'Stocks & Indexes' | 'Precious Metals' | 'Cash' | 'Real Estate' | 'Bonds' | 'Commodities' | 'REIT';
