@@ -12,13 +12,7 @@ if (!supabaseUrl || !supabaseKey) {
 
 let supabase: ReturnType<typeof createClient>;
 try {
-  supabase = createClient(supabaseUrl, supabaseKey, {
-    realtime: {
-      params: {
-        eventsPerSecond: 10
-      }
-    }
-  });
+  supabase = createClient(supabaseUrl, supabaseKey);
 } catch (error) {
   const errorMessage = error instanceof Error ? error.message : String(error);
   throw new Error(`Failed to initialize Supabase client: ${errorMessage}`);
@@ -57,14 +51,6 @@ const pendingChannels: Record<Category, boolean> = {
   currencies: false
 }
 
-const subscriptionStatus: Record<Category, string> = {
-  metals: 'CLOSED',
-  crypto: 'CLOSED',
-  stocks: 'CLOSED',
-  currencies: 'CLOSED'
-}
-
-// Back-off retry for subscriptions
 function subscribeWithRetry(channel: RealtimeChannel, category: Category) {
   let retryCount = 0
   const MAX_RETRIES = 5
@@ -72,8 +58,6 @@ function subscribeWithRetry(channel: RealtimeChannel, category: Category) {
 
   const attemptSubscribe = () => {
     channel.subscribe((status) => {
-      subscriptionStatus[category] = status;
-      
       if (status === 'SUBSCRIBED') {
         console.log(`${category} successfully subscribed`)
         retryCount = 0
@@ -111,35 +95,17 @@ export function registerHandler<T>(category: Category, handler: ChangeHandler<T>
   }
 
   pendingChannels[category] = true
-  const channel = supabase.channel(`${category}-changes`)
+  const channel = supabase.channel(category)
   handlers[category] = [handler as ChangeHandler<unknown>] // Safe cast to unknown
 
-  // Get today's date for filtering
-  const today = new Date().toISOString().split('T')[0];
-
   channel
-    .on('postgres_changes', { 
-      event: 'INSERT', 
-      schema: 'public', 
-      table: category,
-      filter: `date_day=eq.${today}` // Only get realtime updates for today's data
-    }, payload => {
+    .on('postgres_changes', { event: 'INSERT', schema: 'public', table: category }, payload => {
       handlers[category]?.forEach(h => h(payload))
     })
-    .on('postgres_changes', { 
-      event: 'UPDATE', 
-      schema: 'public', 
-      table: category,
-      filter: `date_day=eq.${today}` // Only get realtime updates for today's data
-    }, payload => {
+    .on('postgres_changes', { event: 'UPDATE', schema: 'public', table: category }, payload => {
       handlers[category]?.forEach(h => h(payload))
     })
-    .on('postgres_changes', { 
-      event: 'DELETE', 
-      schema: 'public', 
-      table: category,
-      filter: `date_day=eq.${today}` // Only get realtime updates for today's data
-    }, payload => {
+    .on('postgres_changes', { event: 'DELETE', schema: 'public', table: category }, payload => {
       handlers[category]?.forEach(h => h(payload))
     })
 
@@ -158,7 +124,6 @@ export function unregisterHandler<T>(category: Category, handler: ChangeHandler<
     channels[category]!.unsubscribe()
     delete channels[category]
     delete handlers[category]
-    subscriptionStatus[category] = 'CLOSED'
     console.log(`${category} unsubscribed`)
   }
 }
@@ -169,72 +134,11 @@ export function cleanupChannels() {
       channels[category]!.unsubscribe()
       delete channels[category]
       delete handlers[category]
-      subscriptionStatus[category] = 'CLOSED'
       console.log(`${category} channel cleaned up`)
     }
   })
 }
 
 export function getSubscriptionStatus(category: Category): string {
-  return subscriptionStatus[category];
-}
-
-// Types for database response
-interface DataItem {
-  date: string; // Ensure date is a string
-  id?: string;
-  [key: string]: any;
-}
-
-// Function to make the frontend request refresh when needed
-export async function checkDataFreshness(category: Category): Promise<boolean> {
-  try {
-    const today = new Date().toISOString().split('T')[0];
-    const { data, error } = await supabase
-      .from(category)
-      .select('date')
-      .eq('date_day', today)
-      .order('date', { ascending: false })
-      .limit(1);
-      
-    if (error) {
-      console.error(`Error checking ${category} freshness:`, error);
-      return false;
-    }
-    
-    if (!data || data.length === 0) {
-      console.log(`No ${category} data for today, refresh needed`);
-      return true; // No data for today, refresh needed
-    }
-    
-    // Type check the date before using it
-    const dateValue = data[0]?.date;
-    if (!dateValue || typeof dateValue !== 'string') {
-      console.error(`Invalid date value for ${category}:`, dateValue);
-      return true; // Invalid date, refresh needed
-    }
-    
-    const latestTimestamp = new Date(dateValue);
-    const now = new Date();
-    const timeDiff = (now.getTime() - latestTimestamp.getTime()) / 1000; // seconds
-    
-    // Different freshness thresholds per category
-    const thresholds: Record<Category, number> = {
-      'crypto': 600, // 10 minutes
-      'stocks': 3800, // ~1 hour
-      'metals': 86400, // 24 hours
-      'currencies': 86400 // 24 hours
-    };
-    
-    if (timeDiff > thresholds[category]) {
-      console.log(`${category} data is stale (${Math.round(timeDiff/60)} minutes old), refresh needed`);
-      return true;
-    }
-    
-    console.log(`${category} data is fresh (${Math.round(timeDiff/60)} minutes old)`);
-    return false;
-  } catch (err) {
-    console.error(`Error checking ${category} freshness:`, err);
-    return true; // On error, assume refresh is needed
-  }
+  return channels[category]?.state ?? 'CLOSED'
 }

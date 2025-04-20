@@ -3,11 +3,9 @@
 'use client'
 
 import { useState, useEffect } from 'react'
-import { MarketData, CurrencyCode } from '@/types'
+import { MarketData } from '@/types'
 import { MarketRates } from '@/components/Markets/MarketRates'
-import { useCurrencyStore } from '@/lib/stores/useCurrencyStore'
-import { useMarketSettingsStore } from '@/lib/stores/useMarketSettingsStore'
-import { useWatchlistStore } from '@/lib/stores/useWatchlistStore'
+import { useUserSettings } from '@/hooks/use-user-settings'
 
 interface MarketProps {
   marketData: MarketData
@@ -16,9 +14,7 @@ interface MarketProps {
 
 export default function Market({ marketData, userId }: MarketProps) {
   const [loading, setLoading] = useState(false)
-  const { currency } = useCurrencyStore()
-  const { initializeFromDatabase: initializeMarketSettings } = useMarketSettingsStore()
-  const { initializeFromDatabase: initializeWatchlist } = useWatchlistStore()
+  const { settings, initializeFromDatabase } = useUserSettings()
   const [currencyRates, setCurrencyRates] = useState({
     currencies: marketData.currencies,
     crypto: marketData.crypto
@@ -26,9 +22,8 @@ export default function Market({ marketData, userId }: MarketProps) {
 
   // Initialize settings from database on first load
   useEffect(() => {
-    initializeMarketSettings();
-    initializeWatchlist();
-  }, [initializeMarketSettings, initializeWatchlist]);
+    initializeFromDatabase();
+  }, [initializeFromDatabase]);
 
   // Initialize currency rates from market data
   useEffect(() => {
@@ -46,8 +41,8 @@ export default function Market({ marketData, userId }: MarketProps) {
         stocks={marketData.stocks}
         currencies={marketData.currencies}
         loading={loading}
-        selectedCurrency={currency as CurrencyCode}
         currencyRates={currencyRates}
+        selectedCurrency={settings.selectedCurrency}
       />
     </div>
   )

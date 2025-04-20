@@ -50,3 +50,16 @@ export interface MarketData {
   stocks: Stock[];
   selectedCurrency?: string;
 }
+
+export interface MarketRatesProps {
+  metals: Metal[] | null;
+  crypto: Crypto[] | null;
+  stocks: Stock[] | null;
+  currencies: Currency[] | null;
+  loading: boolean;
+  selectedCurrency: string;
+  currencyRates: {
+    currencies: Currency[] | null;
+    crypto: Crypto[] | null;
+  };
+}

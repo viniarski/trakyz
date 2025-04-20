@@ -1,30 +1,20 @@
-// components/Markets/MarketRates.tsx
-
+// app/components/market-rates/market-rates.tsx
 "use client";
 
-import { useState, useEffect, useMemo } from "react";
+import { useState, useEffect, useMemo, useCallback } from "react";
+import {
+  registerHandler,
+  unregisterHandler,
+  cleanupChannels,
+  getSubscriptionStatus,
+} from "@/lib/realtime";
 import { MarketHeader } from "./MarketHeader";
 import { LoadingState } from "./LoadingState";
 import { Watchlist } from "./Watchlist";
+import { useUserSettings } from "@/hooks/use-user-settings";
+import type { MarketRatesProps, AssetCategory, Metal, Stock, Currency, Crypto as CryptoType } from "@/types";
+import useMergeData from "./MarketRatesMerge";
 import { MarketAssets } from "./MarketModular";
-import { useMarketSettingsStore } from "@/lib/stores/useMarketSettingsStore";
-import { useWatchlistStore } from "@/lib/stores/useWatchlistStore";
-import { 
-  registerHandler, 
-  unregisterHandler, 
-  cleanupChannels, 
-  getSubscriptionStatus,
-  checkDataFreshness
-} from "@/lib/realtime";
-import useMergeData from "@/hooks/use-merge-data";
-import type { 
-  Metal, 
-  Stock, 
-  Currency, 
-  Crypto, 
-  CurrencyCode, 
-  AssetCategory 
-} from "@/types";
 
 const PREFERRED_CURRENCY_ORDER = ["EUR", "GBP", "CHF", "JPY", "CNY", "PLN", "CAD"];
 const PREFERRED_METALS_ORDER = ["GOLD", "SILVER", "PLATINUM", "PALLADIUM"];
@@ -41,19 +31,6 @@ const PREFERRED_STOCKS_ORDER = [
   "META",
 ];
 
-interface MarketRatesProps {
-  metals: Metal[] | null;
-  crypto: Crypto[] | null;
-  stocks: Stock[] | null;
-  currencies: Currency[] | null;
-  loading: boolean;
-  selectedCurrency: CurrencyCode;
-  currencyRates: {
-    currencies: Currency[] | null;
-    crypto: Crypto[] | null;
-  };
-}
-
 export function MarketRates({
   metals: initialMetals,
   crypto: initialCrypto,
@@ -63,24 +40,17 @@ export function MarketRates({
   selectedCurrency,
   currencyRates: initialCurrencyRates,
 }: MarketRatesProps) {
-  // Get market settings from Zustand store
-  const { 
-    showMore, 
-    setShowMore,
-    selectedPeriod,
-    setSelectedPeriod
-  } = useMarketSettingsStore();
-  
-  // Get watchlist data from Zustand store
   const {
-    watchlist,
-    toggleWatchlistItem
-  } = useWatchlistStore();
-  
+    settings,
+    updateSettings,
+    isLoading: isSettingsLoading,
+  } = useUserSettings();
+  const [showMore, setShowMore] = useState(false);
+  const [selectedPeriod, setSelectedPeriod] = useState<"24H" | "7D">("24H");
   const [view, setView] = useState<"market" | "watchlist">("market");
 
   const [metals, setMetals] = useState<Metal[] | null>(initialMetals || null);
-  const [crypto, setCrypto] = useState<Crypto[] | null>(
+  const [crypto, setCrypto] = useState<CryptoType[] | null>(
     initialCrypto || null
   );
   const [stocks, setStocks] = useState<Stock[] | null>(initialStocks || null);
@@ -92,12 +62,13 @@ export function MarketRates({
   const [currencyRates, setCurrencyRates] = useState(initialCurrencyRates);
   const [error, setError] = useState<string | null>(null);
   const [realtimeConnected, setRealtimeConnected] = useState(false);
-  const [lastRefresh, setLastRefresh] = useState<Record<string, Date>>({
-    metals: new Date(),
-    crypto: new Date(),
-    stocks: new Date(),
-    currencies: new Date()
-  });
+
+  useEffect(() => {
+    if (!isSettingsLoading && settings) {
+      setShowMore(settings.marketRatesShowMore || false);
+      setSelectedPeriod(settings.selectedPeriod || "24H");
+    }
+  }, [isSettingsLoading, settings]);
 
   const {
     mergeMetalData,
@@ -107,222 +78,263 @@ export function MarketRates({
     updatedItems,
   } = useMergeData();
 
-  // Fetch data for a specific market category
-  const fetchData = async (category: "metals" | "crypto" | "stocks" | "currencies") => {
-    try {
-      // Set local loading state just for this category
-      setIsLoading(true);
-      
-      const response = await fetch(`/api/market/${category}`);
-      if (!response.ok) {
-        throw new Error(`Failed to fetch ${category} data: ${response.status}`);
-      }
-      
-      const data = await response.json();
-      
-      if (data.success && data.data) {
-        // Update the state based on the category
-        switch (category) {
-          case "metals":
-            setMetals(data.data);
-            break;
-          case "crypto":
-            setCrypto(data.data);
-            break;
-          case "stocks":
-            setStocks(data.data);
-            break;
-          case "currencies":
-            setCurrencies(data.data);
-            break;
-        }
-        
-        // Update last refresh time
-        setLastRefresh(prev => ({
-          ...prev,
-          [category]: new Date()
-        }));
-      }
-    } catch (err) {
-      console.error(`Error fetching ${category} data:`, err);
-      setError(`Failed to load ${category} data`);
-    } finally {
-      setIsLoading(false);
-    }
-  };
+  const removeMetalData = useCallback(
+    (current: Metal[] | null, oldItem: Metal): Metal[] => {
+      if (!current) return [];
+      return current.filter(
+        (item) =>
+          item.id !== oldItem.id &&
+          item.metal.toLowerCase() !== oldItem.metal.toLowerCase()
+      );
+    },
+    []
+  );
 
-  // Initialize data and set up realtime
+  const removeCryptoData = useCallback(
+    (current: CryptoType[] | null, oldItem: CryptoType): CryptoType[] => {
+      if (!current) return [];
+      return current.filter(
+        (item) => item.id !== oldItem.id && item.symbol !== oldItem.symbol
+      );
+    },
+    []
+  );
+
+  const removeStockData = useCallback(
+    (current: Stock[] | null, oldItem: Stock): Stock[] => {
+      if (!current) return [];
+      return current.filter(
+        (item) => item.id !== oldItem.id && item.symbol !== oldItem.symbol
+      );
+    },
+    []
+  );
+
+  const removeCurrencyData = useCallback(
+    (current: Currency[] | null, oldItem: Currency): Currency[] => {
+      if (!current) return [];
+      return current.filter(
+        (item) => item.id !== oldItem.id && item.symbol !== oldItem.symbol
+      );
+    },
+    []
+  );
+
   useEffect(() => {
-    // Store the initial data if provided
+    console.log("Initializing MarketRates with initial data:", {
+      metals: initialMetals?.length,
+      crypto: initialCrypto?.length,
+      stocks: initialStocks?.length,
+      currencies: initialCurrencies?.length,
+    });
+
     if (initialMetals) setMetals(initialMetals);
     if (initialCrypto) setCrypto(initialCrypto);
     if (initialStocks) setStocks(initialStocks);
     if (initialCurrencies) setCurrencies(initialCurrencies);
-    
-    // Function to check freshness and refresh all data categories if needed
-    const checkAllDataFreshness = async () => {
+
+    const dataFetch = async () => {
+      const [metalsRes, cryptoRes, stocksRes, currenciesRes] =
+        await Promise.all([
+          fetch("/api/market/metals"),
+          fetch("/api/market/crypto"),
+          fetch("/api/market/stocks"),
+          fetch("/api/market/currencies"),
+        ]);
+
+      const [metalsData, cryptoData, stocksData, currenciesData] =
+        await Promise.all([
+          metalsRes.json(),
+          cryptoRes.json(),
+          stocksRes.json(),
+          currenciesRes.json(),
+        ]);
+
+      if (metalsData.success && metalsData.data) setMetals(metalsData.data);
+      if (cryptoData.success && cryptoData.data) setCrypto(cryptoData.data);
+      if (stocksData.success && stocksData.data) setStocks(stocksData.data);
+      if (currenciesData.success && currenciesData.data)
+        setCurrencies(currenciesData.data);
+    };
+
+    const fetchInitialData = async () => {
+      setIsLoading(true);
+      console.log("Fetching initial data...");
       try {
-        setIsLoading(true);
-        const categories: ("metals" | "crypto" | "stocks" | "currencies")[] = [
-          "metals", "crypto", "stocks", "currencies"
-        ];
-        
-        const refreshPromises = categories.map(async category => {
-          const needsRefresh = await checkDataFreshness(category);
-          if (needsRefresh) {
-            console.log(`${category} needs refresh, fetching...`);
-            return fetchData(category);
-          }
-          return Promise.resolve();
-        });
-        
-        await Promise.all(refreshPromises);
+        dataFetch();
       } catch (err) {
-        console.error("Error checking data freshness:", err);
-        setError("Failed to check data freshness");
+        console.error("Error fetching initial data:", err);
+        setError("Failed to load initial market data");
       } finally {
         setIsLoading(false);
       }
     };
 
-    // Initial check of data freshness
-    checkAllDataFreshness();
-    
-    // Set up realtime listeners
-    const setupRealtime = () => {
-      type DataType = Metal | Crypto | Stock | Currency;
-      
-      // Generic handler creation
-      const createChangeHandler = <T extends DataType>(
-        stateSetter: React.Dispatch<React.SetStateAction<T[] | null>>,
-        mergeFn: (current: T[] | null, newData: T) => T[],
-        category: string
-      ) => {
-        return (payload: any) => {
-          const eventType = payload.eventType;
-          if (eventType === "INSERT" || eventType === "UPDATE") {
-            console.log(`Handling ${category} ${eventType}:`, payload.new);
-            stateSetter((current) => {
-              return mergeFn(current, payload.new as T);
-            });
-          }
-        };
-      };
-      
-      // Create handlers for each data type
-      const handleMetalsChanges = createChangeHandler(
-        setMetals,
-        mergeMetalData,
-        "metals"
-      );
-      
-      const handleCryptoChanges = createChangeHandler(
-        setCrypto,
-        mergeCryptoData,
-        "crypto"
-      );
-      
-      const handleStocksChanges = createChangeHandler(
-        setStocks,
-        mergeStockData,
-        "stocks"
-      );
-      
-      const handleCurrenciesChanges = createChangeHandler(
-        setCurrencies,
-        mergeCurrencyData,
-        "currencies"
-      );
-      
-      // Register all handlers
-      registerHandler("metals", handleMetalsChanges);
-      registerHandler("crypto", handleCryptoChanges);
-      registerHandler("stocks", handleStocksChanges);
-      registerHandler("currencies", handleCurrenciesChanges);
-      
-      // Return cleanup function
-      return () => {
-        unregisterHandler("metals", handleMetalsChanges);
-        unregisterHandler("crypto", handleCryptoChanges);
-        unregisterHandler("stocks", handleStocksChanges);
-        unregisterHandler("currencies", handleCurrenciesChanges);
-        if (process.env.NODE_ENV !== "development") {
-          cleanupChannels();
+    const backgroundRefresh = async () => {
+      if (realtimeConnected) {
+        console.log("Realtime connected, skipping background refresh");
+        return;
+      }
+      console.log("Executing background refresh...");
+      try {
+        dataFetch();
+      } catch (err) {
+        console.error("Error during background refresh:", err);
+      }
+    };
+
+    fetchInitialData();
+    const refreshInterval = setInterval(backgroundRefresh, 60000);
+
+    type DataType = Metal | CryptoType | Stock | Currency;
+    type SetStateFunction<T> = React.Dispatch<React.SetStateAction<T[] | null>>;
+    type MergeFunction<T> = (current: T[], newData: T) => T[];
+    type RemoveFunction<T> = (current: T[], oldData: T) => T[];
+
+    const createGenericChangeHandler = <T extends DataType>(
+      setState: SetStateFunction<T>,
+      mergeFunction: MergeFunction<T>,
+      removeFunction: RemoveFunction<T>,
+      label: string
+    ) => {
+      return (payload: Record<string, unknown>) => {
+        if (payload.eventType === "INSERT" || payload.eventType === "UPDATE") {
+          console.log(`Handling ${label} ${payload.eventType}:`, payload.new);
+          setState((current) => {
+            const currentArray = current ?? [];
+            return mergeFunction(currentArray, payload.new as T);
+          });
+        } else if (payload.eventType === "DELETE") {
+          setState((current) => {
+            if (!current) return null;
+            const updatedArray = removeFunction(current, payload.old as T);
+            return updatedArray.length > 0 ? updatedArray : null;
+          });
         }
       };
     };
-    
-    // Setup realtime
-    const realtimeCleanup = setupRealtime();
-    
-    // Set up periodic checks for realtime status
-    const statusInterval = setInterval(() => {
+
+    const handleMetalsChanges = createGenericChangeHandler<Metal>(
+      setMetals,
+      mergeMetalData,
+      removeMetalData,
+      "metals"
+    );
+
+    const handleCryptoChanges = createGenericChangeHandler<CryptoType>(
+      setCrypto,
+      mergeCryptoData,
+      removeCryptoData,
+      "crypto"
+    );
+
+    const handleStocksChanges = createGenericChangeHandler<Stock>(
+      setStocks,
+      mergeStockData,
+      removeStockData,
+      "stocks"
+    );
+
+    const handleCurrenciesChanges = createGenericChangeHandler<Currency>(
+      setCurrencies,
+      mergeCurrencyData,
+      removeCurrencyData,
+      "currencies"
+    );
+
+    registerHandler("metals", handleMetalsChanges);
+    registerHandler("crypto", handleCryptoChanges);
+    registerHandler("stocks", handleStocksChanges);
+    registerHandler("currencies", handleCurrenciesChanges);
+
+    const statusCheckInterval = setInterval(() => {
       const categories: ("metals" | "crypto" | "stocks" | "currencies")[] = [
-        "metals", "crypto", "stocks", "currencies"
+        "metals",
+        "crypto",
+        "stocks",
+        "currencies",
       ];
-      
       const allSubscribed = categories.every(
         (cat) => getSubscriptionStatus(cat) === "SUBSCRIBED"
       );
-      
       setRealtimeConnected(allSubscribed);
-      
-      // If realtime is not connected, check if data needs refresh
-      if (!allSubscribed && !isLoading) {
-        checkAllDataFreshness();
+      if (!allSubscribed) {
+        console.log(
+          "Subscription status:",
+          categories.map((cat) => `${cat}: ${getSubscriptionStatus(cat)}`)
+        );
       }
     }, 10000);
-    
-    // Set up a periodic data refresh as a fallback
-    const refreshInterval = setInterval(() => {
-      checkAllDataFreshness();
-    }, 300000); // Every 5 minutes as a fallback
-    
-    // Cleanup
+
     return () => {
-      realtimeCleanup();
-      clearInterval(statusInterval);
+      unregisterHandler("metals", handleMetalsChanges);
+      unregisterHandler("crypto", handleCryptoChanges);
+      unregisterHandler("stocks", handleStocksChanges);
+      unregisterHandler("currencies", handleCurrenciesChanges);
       clearInterval(refreshInterval);
+      clearInterval(statusCheckInterval);
+      if (process.env.NODE_ENV !== "development") {
+        cleanupChannels();
+      }
     };
   }, [
-    initialMetals, 
-    initialCrypto, 
-    initialStocks, 
+    initialMetals,
+    initialCrypto,
+    initialStocks,
     initialCurrencies,
     mergeMetalData,
     mergeCryptoData,
     mergeStockData,
-    mergeCurrencyData
+    mergeCurrencyData,
+    removeMetalData,
+    removeCryptoData,
+    removeStockData,
+    removeCurrencyData,
+    realtimeConnected,
   ]);
 
-  // Update currency rates when relevant data changes
   useEffect(() => {
     if (crypto || currencies) {
       setCurrencyRates({ crypto, currencies });
     }
   }, [crypto, currencies]);
 
-  // Sort cryptocurrencies by market cap
-  const sortedCrypto = useMemo(() => {
-    return crypto
-      ? [...crypto].sort((a, b) => {
-          // Primary sort by market cap (descending)
-          if (a.market_cap && b.market_cap) {
-            return b.market_cap - a.market_cap;
-          }
-          
-          // If market cap is missing for either, fallback to using the volume
-          if (a.volume_24h && b.volume_24h) {
-            return b.volume_24h - a.volume_24h;
-          }
-          
-          // Last resort: alphabetical sort by symbol
-          return a.symbol.localeCompare(b.symbol);
-        })
-      : null;
-  }, [crypto]);
+  const handleShowMore = (value: boolean) => {
+    setShowMore(value);
+    updateSettings({ marketRatesShowMore: value });
+  };
 
-  // Sort stocks based on preferred order
+  const handlePeriodChange = (period: "24H" | "7D") => {
+    setSelectedPeriod(period);
+    updateSettings({ selectedPeriod: period });
+  };
+
+  const handleToggleWatchlist = (category: string, symbol: string) => {
+    if (!settings?.watchlist) return;
+    const watchlist = Array.isArray(settings.watchlist)
+      ? settings.watchlist
+      : [];
+    const existingItem = watchlist.find(
+      (item) => item.category === category && item.symbol === symbol
+    );
+
+    if (existingItem) {
+      const updatedWatchlist = watchlist.filter(
+        (item) => item.id !== existingItem.id
+      );
+      updateSettings({ watchlist: updatedWatchlist });
+    } else {
+      const newItem = {
+        id: `${category}-${symbol}`,
+        category: category as AssetCategory,
+        symbol,
+        order: watchlist.length,
+      };
+      const updatedWatchlist = [...watchlist, newItem];
+      updateSettings({ watchlist: updatedWatchlist });
+    }
+  };
+
   const sortedStocks = useMemo(() => {
     return stocks
       ? [...stocks].sort((a, b) => {
@@ -337,7 +349,6 @@ export function MarketRates({
       : null;
   }, [stocks]);
 
-  // Sort currencies based on preferred order
   const sortedCurrencies = useMemo(() => {
     return currencies
       ? [...currencies].sort((a, b) => {
@@ -352,7 +363,6 @@ export function MarketRates({
       : null;
   }, [currencies]);
 
-  // Sort metals based on preferred order
   const sortedMetals = useMemo(() => {
     return metals
       ? [...metals].sort((a, b) => {
@@ -367,7 +377,6 @@ export function MarketRates({
       : null;
   }, [metals]);
 
-  // Filter currencies based on show more setting
   const filteredCurrencies = useMemo(() => {
     return sortedCurrencies
       ? showMore
@@ -378,10 +387,14 @@ export function MarketRates({
       : null;
   }, [sortedCurrencies, showMore]);
 
-  // Prepare watchlist data
   const watchlistData = useMemo(() => {
+    if (!settings?.watchlist)
+      return { crypto: null, stocks: null, metals: null, currencies: null };
+    const watchlist = Array.isArray(settings.watchlist)
+      ? settings.watchlist
+      : [];
     const cryptoWatchlist =
-      sortedCrypto?.filter((c) =>
+      crypto?.filter((c) =>
         watchlist.some(
           (item) => item.category === "Crypto" && item.symbol === c.symbol
         )
@@ -414,14 +427,13 @@ export function MarketRates({
       currencies: currenciesWatchlist,
     };
   }, [
-    watchlist,
-    sortedCrypto,
+    settings?.watchlist,
+    crypto,
     sortedStocks,
     sortedMetals,
     filteredCurrencies,
   ]);
 
-  // Check if watchlist has any items
   const hasWatchlistItems =
     view === "watchlist" &&
     ((watchlistData.crypto && watchlistData.crypto.length > 0) ||
@@ -429,7 +441,6 @@ export function MarketRates({
       (watchlistData.metals && watchlistData.metals.length > 0) ||
       (watchlistData.currencies && watchlistData.currencies.length > 0));
 
-  // Handle error case
   if (error) {
     return (
       <div className="bg-[var(--bg-secondary)] rounded-xl mt-3 p-6 text-red-500">
@@ -441,6 +452,8 @@ export function MarketRates({
   return (
     <div className="bg-[var(--bg-secondary)] rounded-xl mt-3">
       <MarketHeader
+        selectedPeriod={selectedPeriod}
+        setSelectedPeriod={handlePeriodChange}
         view={view}
         setView={setView}
       />
@@ -451,16 +464,19 @@ export function MarketRates({
         ) : view === "watchlist" ? (
           hasWatchlistItems ? (
             <Watchlist
-              watchlist={watchlist}
-              onToggleWatchlist={toggleWatchlistItem}
+              watchlist={
+                Array.isArray(settings?.watchlist) ? settings.watchlist : []
+              }
+              onToggleWatchlist={handleToggleWatchlist}
               marketData={{
                 metals: sortedMetals,
-                crypto: sortedCrypto,
+                crypto,
                 stocks: sortedStocks,
                 currencies: sortedCurrencies,
               }}
               selectedCurrency={selectedCurrency}
               currencyRates={currencyRates}
+              selectedPeriod={selectedPeriod}
               updatedItems={updatedItems}
             />
           ) : (
@@ -472,12 +488,15 @@ export function MarketRates({
           <div className="grid grid-cols-1 md:grid-cols-3 gap-10">
             <div className="transition-all duration-300 ease-in-out">
               <MarketAssets
-                assets={sortedCrypto}
+                assets={crypto}
                 limit={showMore ? 20 : 10}
-                watchlist={watchlist}
-                onToggleWatchlist={toggleWatchlistItem}
+                watchlist={
+                  Array.isArray(settings?.watchlist) ? settings.watchlist : []
+                }
+                onToggleWatchlist={handleToggleWatchlist}
                 selectedCurrency={selectedCurrency}
                 currencyRates={currencyRates}
+                selectedPeriod={selectedPeriod}
                 updatedItems={updatedItems.crypto}
                 assetType="Crypto"
               />
@@ -486,10 +505,13 @@ export function MarketRates({
               <MarketAssets
                 assets={sortedStocks}
                 limit={showMore ? 20 : 10}
-                watchlist={watchlist}
-                onToggleWatchlist={toggleWatchlistItem}
+                watchlist={
+                  Array.isArray(settings?.watchlist) ? settings.watchlist : []
+                }
+                onToggleWatchlist={handleToggleWatchlist}
                 selectedCurrency={selectedCurrency}
                 currencyRates={currencyRates}
+                selectedPeriod={selectedPeriod}
                 updatedItems={updatedItems.stocks}
                 assetType="Stocks & Indexes"
               />
@@ -498,20 +520,26 @@ export function MarketRates({
               <MarketAssets
                 assets={sortedMetals}
                 limit={showMore ? 4 : 2}
-                watchlist={watchlist}
-                onToggleWatchlist={toggleWatchlistItem}
+                watchlist={
+                  Array.isArray(settings?.watchlist) ? settings.watchlist : []
+                }
+                onToggleWatchlist={handleToggleWatchlist}
                 selectedCurrency={selectedCurrency}
                 currencyRates={currencyRates}
+                selectedPeriod={selectedPeriod}
                 updatedItems={updatedItems.metals}
                 assetType="Precious Metals"
               />
               <MarketAssets
                 assets={filteredCurrencies}
                 limit={showMore ? 15 : 7}
-                watchlist={watchlist}
-                onToggleWatchlist={toggleWatchlistItem}
+                watchlist={
+                  Array.isArray(settings?.watchlist) ? settings.watchlist : []
+                }
+                onToggleWatchlist={handleToggleWatchlist}
                 selectedCurrency={selectedCurrency}
                 currencyRates={currencyRates}
+                selectedPeriod={selectedPeriod}
                 updatedItems={updatedItems.currencies}
                 assetType="Cash"
               />
@@ -524,7 +552,7 @@ export function MarketRates({
         <div className="sm:flex hidden justify-center py-3 border-t border-gray-800/50">
           <button
             className="flex items-center gap-2 text-sm text-[var(--text-secondary)] hover:text-[var(--text-primary)] transition-colors"
-            onClick={() => setShowMore(!showMore)}
+            onClick={() => handleShowMore(!showMore)}
           >
             {showMore ? "Show Less" : "Show More"}
             <span

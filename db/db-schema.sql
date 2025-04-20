@@ -243,58 +243,60 @@ CREATE TABLE public.budget_expenses (
 -- Enable the uuid-ossp extension for uuid_generate_v4()
 CREATE EXTENSION IF NOT EXISTS "uuid-ossp";
 
--- Table: stocks
-CREATE TABLE stocks (
-    id uuid PRIMARY KEY DEFAULT gen_random_uuid(),
-    symbol varchar,
-    name varchar,
-    date timestamp,
-    price numeric,
-    volume numeric,
-    created_at timestamp DEFAULT now(),
-    date_day text
+-- Crypto table
+CREATE TABLE public.crypto (
+    name VARCHAR NOT NULL,
+    date TIMESTAMP WITH TIME ZONE NOT NULL,
+    price NUMERIC NOT NULL,
+    market_cap NUMERIC,
+    volume_24h NUMERIC,
+    created_at TIMESTAMP WITH TIME ZONE DEFAULT now(),
+    date_day TEXT,
+    symbol VARCHAR NOT NULL,
+    id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+    CONSTRAINT unique_symbol_date UNIQUE (symbol, date)
+);
+
+-- Currencies table
+CREATE TABLE public.currencies (
+    created_at TIMESTAMP WITH TIME ZONE DEFAULT now(),
+    symbol VARCHAR NOT NULL,
+    name VARCHAR NOT NULL,
+    date TIMESTAMP WITHOUT TIME ZONE NOT NULL,
+    id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+    price NUMERIC NOT NULL
+);
+
+-- Metals table
+CREATE TABLE public.metals (
+    date TIMESTAMP WITHOUT TIME ZONE NOT NULL,
+    metal VARCHAR NOT NULL,
+    id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+    created_at TIMESTAMP WITH TIME ZONE DEFAULT now(),
+    price NUMERIC NOT NULL
+);
+   
+-- Stocks table
+CREATE TABLE public.stocks (
+    price NUMERIC NOT NULL,
+    volume NUMERIC,
+    created_at TIMESTAMP WITH TIME ZONE DEFAULT now(),
+    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+    date TIMESTAMP WITH TIME ZONE NOT NULL,
+    name VARCHAR NOT NULL,
+    symbol VARCHAR NOT NULL,
+    date_day TEXT,
+    CONSTRAINT unique_symbol_date_stocks UNIQUE (symbol, date)
 );
 
 -- Enable Row-Level Security for stocks
 ALTER TABLE stocks ENABLE ROW LEVEL SECURITY;
 
--- Table: crypto
-CREATE TABLE crypto (
-    id uuid PRIMARY KEY DEFAULT uuid_generate_v4(),
-    symbol varchar,
-    name varchar,
-    date timestamp,
-    price numeric,
-    market_cap numeric,
-    volume_24h numeric,
-    created_at timestamp DEFAULT now(),
-    date_day text
-);
-
 -- Enable Row-Level Security for crypto
 ALTER TABLE crypto ENABLE ROW LEVEL SECURITY;
 
--- Table: metals
-CREATE TABLE metals (
-    id uuid PRIMARY KEY DEFAULT uuid_generate_v4(),
-    metal varchar,
-    date timestamp,
-    price numeric,
-    created_at timestamp DEFAULT now()
-);
-
 -- Enable Row-Level Security for metals
 ALTER TABLE metals ENABLE ROW LEVEL SECURITY;
-
--- Table: currencies
-CREATE TABLE currencies (
-    id uuid PRIMARY KEY DEFAULT uuid_generate_v4(),
-    symbol varchar,
-    name varchar,
-    date timestamp,
-    price numeric,
-    created_at timestamp DEFAULT now()
-);
 
 -- Enable Row-Level Security for currencies
 ALTER TABLE currencies ENABLE ROW LEVEL SECURITY;

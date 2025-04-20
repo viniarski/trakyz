@@ -1,4 +1,4 @@
-// components/Markets/MarketModular.tsx
+// component/Markets/MarketModular.tsx
 
 "use client";
 
@@ -11,24 +11,35 @@ import {
   TrendingUp,
   TrendingDown,
 } from "lucide-react";
-import type { Metal, Stock, Currency, CurrencyCode, AssetCategory, Crypto } from "@/types";
+import type {
+  Metal,
+  Stock,
+  Currency,
+  CurrencyCode,
+  AssetCategory,
+  Crypto as CryptoType,
+} from "@/types";
 import { formatCurrency, convertCurrency } from "@/lib/utils";
-import { useMarketSettingsStore } from "@/lib/stores/useMarketSettingsStore";
 import { AssetContextMenu } from "../ui/context-menu";
-import { WatchlistItem } from "@/lib/stores/useWatchlistStore";
 
-type Asset = Currency | Crypto | Metal | Stock;
+type Asset = Currency | CryptoType | Metal | Stock;
 
 type MarketAssetsProps = {
   assets: Asset[] | null;
   limit: number;
-  watchlist: WatchlistItem[];
+  watchlist: {
+    id: string;
+    category: AssetCategory;
+    symbol: string;
+    order: number;
+  }[];
   onToggleWatchlist: (category: AssetCategory, symbol: string) => void;
   selectedCurrency: CurrencyCode;
   currencyRates: {
     currencies: Currency[] | null;
-    crypto: Crypto[] | null;
+    crypto: CryptoType[] | null;
   };
+  selectedPeriod: "24H" | "7D";
   updatedItems?: Set<string>;
   assetType: AssetCategory;
 };
@@ -41,12 +52,10 @@ export const MarketAssets = memo(
     onToggleWatchlist,
     selectedCurrency,
     currencyRates,
+    selectedPeriod,
     updatedItems = new Set(),
     assetType,
   }: MarketAssetsProps) {
-    // Get selected period from store
-    const { selectedPeriod } = useMarketSettingsStore();
-    
     const calculatePriceChange = useMemo(
       () =>
         (symbol: string): { changePercent: number; isPositive: boolean } => {
@@ -54,7 +63,7 @@ export const MarketAssets = memo(
             .filter((a) =>
               // filtering logic for different asset types
               assetType === "Crypto"
-                ? (a as Crypto).symbol === symbol
+                ? (a as CryptoType).symbol === symbol
                 : assetType === "Cash"
                 ? (a as Currency).symbol === symbol
                 : assetType === "Precious Metals"
@@ -106,7 +115,7 @@ export const MarketAssets = memo(
           let key: string;
           switch (assetType) {
             case "Crypto":
-              key = (asset as Crypto).symbol;
+              key = (asset as CryptoType).symbol;
               break;
             case "Cash":
               key = (asset as Currency).symbol;
@@ -144,8 +153,8 @@ export const MarketAssets = memo(
           return {
             icon: <Bitcoin className="h-5 w-5 text-orange-500" />,
             title: "Crypto",
-            getSymbol: (asset: Asset) => (asset as Crypto).symbol,
-            getName: (asset: Asset) => (asset as Crypto).name,
+            getSymbol: (asset: Asset) => (asset as CryptoType).symbol,
+            getName: (asset: Asset) => (asset as CryptoType).name,
           };
         case "Cash":
           return {
@@ -279,6 +288,7 @@ export const MarketAssets = memo(
       prevProps.watchlist === nextProps.watchlist &&
       prevProps.selectedCurrency === nextProps.selectedCurrency &&
       prevProps.currencyRates === nextProps.currencyRates &&
+      prevProps.selectedPeriod === nextProps.selectedPeriod &&
       prevProps.updatedItems === nextProps.updatedItems &&
       prevProps.assetType === nextProps.assetType
     );

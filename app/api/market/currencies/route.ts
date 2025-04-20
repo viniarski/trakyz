@@ -1,29 +1,7 @@
 // app/api/market/currencies/route.ts
 
 import { NextResponse } from 'next/server';
-import { createClient } from '@supabase/supabase-js';
-
-// Direct Supabase connection
-const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
-const supabaseServiceKey = process.env.SUPABASE_SERVICE_ROLE_KEY;
-
-if (!supabaseUrl || !supabaseServiceKey) {
-  console.error('Missing Supabase credentials:', { 
-    hasUrl: !!supabaseUrl, 
-    hasServiceKey: !!supabaseServiceKey 
-  });
-}
-
-const supabaseAdmin = createClient(
-  supabaseUrl || '',
-  supabaseServiceKey || '',
-  {
-    auth: {
-      autoRefreshToken: false,
-      persistSession: false
-    }
-  }
-);
+import { supabaseAdmin } from '@/lib/supabase/admin';
 
 const CURRENCY_PAIRS = [
   // Major currencies
@@ -54,178 +32,93 @@ const CURRENCY_PAIRS = [
 export async function GET() {
   try {
     const today = new Date().toISOString().split('T')[0];
-    console.log('Currencies API: Starting request', { today });
+    console.log('Checking currency rates for date:', today);
 
-    // Check if we have today's data
-    let todayData = null;
+    // Always try to get data from the database first
+    const { data: todaysPrices, error: dbError } = await supabaseAdmin
+      .from('currencies')
+      .select('*')
+      .eq('date', today);
+
+    if (dbError) {
+      console.error('Database error:', dbError);
+      throw dbError;
+    }
+
+    if (todaysPrices && todaysPrices.length > 0) {
+      console.log('Found today\'s currency rates in DB');
+      return NextResponse.json({
+        success: true,
+        data: todaysPrices
+      });
+    }
+
+    // If we don't have today's data, check if we can find the most recent data
+    const { data: recentPrices, error: recentError } = await supabaseAdmin
+      .from('currencies')
+      .select('*')
+      .order('date', { ascending: false })
+      .limit(CURRENCY_PAIRS.length); // Get the most recent currency rates
+
+    if (!recentError && recentPrices && recentPrices.length > 0) {
+      console.log('Using most recent currency rates from DB');
+      return NextResponse.json({
+        success: true,
+        data: recentPrices
+      });
+    }
+
+    // If we still don't have data, this is likely a new installation or empty DB
+    // In this case only, we'll fetch from the API as a fallback
+    console.log('No currency data in DB, fetching from API as fallback');
     
     try {
-      const dataResult = await supabaseAdmin
-        .from('currencies')
-        .select('*')
-        .eq('date', today)
-        .order('date', { ascending: false });
+      const response = await fetch(
+        `${process.env.FOREX_API_URL}/latest.json?app_id=${process.env.FOREX_API_KEY}&base=USD`
+      );
 
-      if (dataResult.error) {
-        console.error('Error fetching currencies data:', dataResult.error);
-      } else {
-        todayData = dataResult.data;
-        console.log('Currencies API: Data check complete', { 
-          hasTodayData: todayData && todayData.length > 0 
-        });
+      if (!response.ok) {
+        throw new Error(`API error: ${response.status}`);
       }
 
-      // If we already have today's data, return it
-      if (todayData && todayData.length > 0) {
-        console.log('Found today\'s currency rates in DB');
-        return NextResponse.json({
-          success: true,
-          data: todayData
-        });
-      }
+      const responseText = await response.text();
+      const data = JSON.parse(responseText);
 
-      // If we don't have today's data, check if we have any data to use as fallback
-      const recentResult = await supabaseAdmin
-        .from('currencies')
-        .select('*')
-        .order('date', { ascending: false })
-        .limit(CURRENCY_PAIRS.length);
-        
-      if (recentResult.error) {
-        console.error('Error fetching recent currencies data:', recentResult.error);
-      } else if (recentResult.data && recentResult.data.length > 0) {
-        console.log('Using most recent currency rates from DB');
-        return NextResponse.json({
-          success: true,
-          data: recentResult.data
-        });
-      }
-
-      // If we need to fetch data from the API
-      console.log('No currency data found, creating mock data');
-      
-      // Create a fallback mock dataset since the API might not be configured
-      const mockRates = {
-        EUR: 0.92,
-        GBP: 0.78,
-        JPY: 150.45,
-        CHF: 0.89,
-        AUD: 1.48,
-        CAD: 1.35,
-        CNY: 7.2,
-        PLN: 3.95,
-        NOK: 10.5,
-        BRL: 5.1,
-        RUB: 90.2,
-        INR: 83.5,
-        SGD: 1.34,
-        NZD: 1.61,
-        HKD: 7.82,
-        SEK: 10.45,
-        MXN: 16.8,
-        ZAR: 18.6
-      };
-      
-      const mockCurrencyData = CURRENCY_PAIRS.map(pair => ({
+      const currencyData = CURRENCY_PAIRS.map(pair => ({
         symbol: pair.symbol,
         name: pair.name,
         date: today,
-        price: 1 / (mockRates[pair.symbol as keyof typeof mockRates] || 1)
+        price: 1 / (data.rates[pair.symbol] || 1)
       }));
-      
-      // If we have the API credentials, try to use them instead
-      if (process.env.FOREX_API_URL && process.env.FOREX_API_KEY) {
-        try {
-          console.log('Attempting to fetch currency data from API');
-          const response = await fetch(
-            `${process.env.FOREX_API_URL}/latest.json?app_id=${process.env.FOREX_API_KEY}&base=USD`
-          );
 
-          if (!response.ok) {
-            throw new Error(`API error: ${response.status}`);
-          }
-
-          const responseText = await response.text();
-          const data = JSON.parse(responseText);
-
-          if (data.rates) {
-            const currencyData = CURRENCY_PAIRS.map(pair => ({
-              symbol: pair.symbol,
-              name: pair.name,
-              date: today,
-              price: 1 / (data.rates[pair.symbol] || 1) // Convert to USD base
-            }));
-            
-            console.log('Successfully fetched currency data from API');
-            
-            // Save the data in the database
-            const insertResult = await supabaseAdmin
-              .from('currencies')
-              .insert(currencyData);
-
-            if (insertResult.error) {
-              console.error('Error inserting currency data:', insertResult.error);
-            } else {
-              console.log('Successfully saved currency data to database');
-              return NextResponse.json({
-                success: true,
-                data: currencyData
-              });
-            }
-          }
-        } catch (apiError) {
-          console.error('Forex API fetch error:', apiError);
-        }
-      }
-      
-      // If API fetch failed or wasn't attempted, use the mock data
-      // Save the mock data to the database
-      const insertResult = await supabaseAdmin
+      // Save the data for future use
+      const { error: insertError } = await supabaseAdmin
         .from('currencies')
-        .insert(mockCurrencyData);
-        
-      if (insertResult.error) {
-        console.error('Error inserting mock currency data:', insertResult.error);
-      } else {
-        console.log('Successfully saved mock currency data to database');
+        .insert(currencyData);
+
+      if (insertError) {
+        console.error('Insert error:', insertError);
+        throw insertError;
       }
-      
-      // Return the mock data
+
       return NextResponse.json({
         success: true,
-        data: mockCurrencyData,
-        note: 'Using mock currency data as fallback'
+        data: currencyData
       });
-    } catch (dbError) {
-      console.error('Database operation error:', dbError);
-      
-      // Create minimal fallback data for the most important currencies
-      const fallbackData = [
-        { id: 'mock-eur', symbol: 'EUR', name: 'Euro', date: today, price: 1.09 },
-        { id: 'mock-gbp', symbol: 'GBP', name: 'British Pound', date: today, price: 1.28 },
-        { id: 'mock-jpy', symbol: 'JPY', name: 'Japanese Yen', date: today, price: 0.0066 }
-      ];
-      
-      return NextResponse.json({
-        success: true,
-        data: fallbackData,
-        message: 'Returned fallback data due to database error'
-      });
+
+    } catch (apiError) {
+      console.error('API call error:', apiError);
+      throw apiError;
     }
+
   } catch (error) {
-    const errorMessage = error instanceof Error ? error.message : 'Unknown error';
-    console.error('Currencies API Fatal Error:', errorMessage);
-    
-    // On complete failure, return minimal mock data rather than a 500
+    console.error('Detailed error:', error);
     return NextResponse.json(
       { 
-        success: true,
-        data: [
-          { id: 'fallback-eur', symbol: 'EUR', name: 'Euro', date: new Date().toISOString().split('T')[0], price: 1.09 },
-          { id: 'fallback-gbp', symbol: 'GBP', name: 'British Pound', date: new Date().toISOString().split('T')[0], price: 1.28 }
-        ],
-        error: 'Failed to fetch currency data: ' + errorMessage
-      }
+        error: 'Failed to fetch currency data',
+        details: error instanceof Error ? error.message : 'Unknown error'
+      },
+      { status: 500 }
     );
   }
 }
