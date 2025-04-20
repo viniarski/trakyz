@@ -148,6 +148,51 @@ CREATE TABLE public.real_estate_properties (
     updated_at TIMESTAMPTZ DEFAULT NOW()
 );
 
+-------------------- WATCHLIST TABLES --------------------
+
+-- Create watchlist table
+CREATE TABLE public.watchlist (
+    id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+    user_id UUID NOT NULL REFERENCES auth.users(id) ON DELETE CASCADE,
+    category TEXT NOT NULL,
+    symbol TEXT NOT NULL,
+    order_index INTEGER DEFAULT 0,
+    created_at TIMESTAMPTZ DEFAULT NOW(),
+    updated_at TIMESTAMPTZ DEFAULT NOW(),
+    UNIQUE(user_id, category, symbol)
+);
+
+-- Enable Row Level Security
+ALTER TABLE public.watchlist ENABLE ROW LEVEL SECURITY;
+
+-- Create RLS policies
+CREATE POLICY "Users can view their own watchlist items"
+  ON public.watchlist
+  FOR SELECT
+  USING (auth.uid() = user_id);
+
+
+CREATE POLICY "Users can insert their own watchlist items"
+  ON public.watchlist
+  FOR INSERT
+  WITH CHECK (auth.uid() = user_id);
+
+CREATE POLICY "Users can update their own watchlist items"
+  ON public.watchlist
+  FOR UPDATE
+  USING (auth.uid() = user_id);
+
+CREATE POLICY "Users can delete their own watchlist items"
+  ON public.watchlist
+  FOR DELETE
+  USING (auth.uid() = user_id);
+
+-- Trigger to update updated_at timestamp automatically
+CREATE TRIGGER update_watchlist_updated_at
+BEFORE UPDATE ON public.watchlist
+FOR EACH ROW EXECUTE FUNCTION update_updated_at_column();
+
+
 -------------------- BUDGET TABLES --------------------
 
 -- Table storing predefined income options

@@ -76,19 +76,35 @@ export const useWatchlistStore = create<WatchlistState>()(
           
           console.log(`Updating user ${user.id} watchlist`);
           
-          // Update the user_profiles table with the watchlist
-          const { error } = await supabase
-            .from('user_profiles')
-            .update({ 
-              watchlist: get().watchlist,
-              updated_at: new Date().toISOString(),
-            })
-            .eq('id', user.id);
+          // First, delete all existing watchlist items for this user
+          const { error: deleteError } = await supabase
+            .from('watchlist')
+            .delete()
+            .eq('user_id', user.id);
+            
+          if (deleteError) {
+            console.error('Error deleting existing watchlist items:', deleteError);
+            return;
+          }
           
-          if (error) {
-            console.error('Database update error:', JSON.stringify(error));
-          } else {
-            console.log('Watchlist updated successfully in database');
+          // Then insert all current watchlist items
+          if (get().watchlist.length > 0) {
+            const watchlistData = get().watchlist.map((item, index) => ({
+              user_id: user.id,
+              category: item.category,
+              symbol: item.symbol,
+              order_index: index,
+            }));
+            
+            const { error: insertError } = await supabase
+              .from('watchlist')
+              .insert(watchlistData);
+              
+            if (insertError) {
+              console.error('Error inserting watchlist items:', insertError);
+            } else {
+              console.log('Watchlist updated successfully in database');
+            }
           }
         } catch (error: any) {
           console.error('Error syncing watchlist with database:', 
@@ -107,21 +123,27 @@ export const useWatchlistStore = create<WatchlistState>()(
             return;
           }
           
+          // Fetch all watchlist items for this user
           const { data, error } = await supabase
-            .from('user_profiles')
-            .select('watchlist')
-            .eq('id', user.id)
-            .single();
+            .from('watchlist')
+            .select('*')
+            .eq('user_id', user.id)
+            .order('order_index', { ascending: true });
           
           if (error) {
-            if (error.code !== 'PGRST116') {
-              throw error;
-            }
-            return;
+            throw error;
           }
           
-          if (data?.watchlist && Array.isArray(data.watchlist)) {
-            set({ watchlist: data.watchlist });
+          if (data && data.length > 0) {
+            // Convert database items to WatchlistItem format
+            const watchlistItems: WatchlistItem[] = data.map(item => ({
+              id: `${item.category}-${item.symbol}`,
+              category: item.category as AssetCategory,
+              symbol: item.symbol,
+              order: item.order_index || 0,
+            }));
+            
+            set({ watchlist: watchlistItems });
           }
         } catch (error: any) {
           console.error('Error initializing watchlist from database:', error.message || error);
