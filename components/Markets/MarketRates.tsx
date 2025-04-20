@@ -12,8 +12,19 @@ import {
 import { MarketHeader } from "./MarketHeader";
 import { LoadingState } from "./LoadingState";
 import { Watchlist } from "./Watchlist";
-import { useUserSettings } from "@/hooks/use-user-settings";
-import type { MarketRatesProps, AssetCategory, Metal, Stock, Currency, Crypto as CryptoType } from "@/types";
+import { useUserSettings } from "@/hooks/useUserSettings";
+import { useCurrencyStore } from "@/lib/stores/useCurrencyStore";
+import { useCurrencyConverter } from "@/hooks/useCurrencyConverter";
+import type { 
+  MarketRatesProps, 
+  AssetCategory, 
+  Metal, 
+  Stock, 
+  Currency, 
+  Crypto as CryptoType, 
+  WatchlistItem,
+  CurrencyCode
+} from "@/types";
 import useMergeData from "./MarketRatesMerge";
 import { MarketAssets } from "./MarketModular";
 
@@ -38,7 +49,7 @@ export function MarketRates({
   stocks: initialStocks,
   currencies: initialCurrencies,
   loading: initialLoading,
-  selectedCurrency,
+  selectedCurrency: initialSelectedCurrency,
   currencyRates: initialCurrencyRates,
 }: MarketRatesProps) {
   const {
@@ -46,6 +57,13 @@ export function MarketRates({
     updateSettings,
     isLoading: isSettingsLoading,
   } = useUserSettings();
+  
+  // Use currency from Zustand store (this will come from the CurrencySwitcher)
+  const { currency } = useCurrencyStore();
+  
+  // Use our new currency converter hook
+  const { convertValue, convertAndFormat } = useCurrencyConverter();
+  
   const [showMore, setShowMore] = useState(false);
   const [selectedPeriod, setSelectedPeriod] = useState<"24H" | "7D">("24H");
   const [view, setView] = useState<"market" | "watchlist">("market");
@@ -60,10 +78,11 @@ export function MarketRates({
   );
 
   const [isLoading, setIsLoading] = useState(initialLoading);
-  const [currencyRates, setCurrencyRates] = useState(initialCurrencyRates);
+  const [currencyRatesState, setCurrencyRatesState] = useState(initialCurrencyRates);
   const [error, setError] = useState<string | null>(null);
   const [realtimeConnected, setRealtimeConnected] = useState(false);
 
+  // Initialize settings when they're loaded
   useEffect(() => {
     if (!isSettingsLoading && settings) {
       setShowMore(settings.marketRatesShowMore || false);
@@ -187,6 +206,7 @@ export function MarketRates({
     fetchInitialData();
     const refreshInterval = setInterval(backgroundRefresh, 60000);
 
+    // This part handles real-time updates from Supabase
     type DataType = Metal | CryptoType | Stock | Currency;
     type SetStateFunction<T> = React.Dispatch<React.SetStateAction<T[] | null>>;
     type MergeFunction<T> = (current: T[], newData: T) => T[];
@@ -243,11 +263,13 @@ export function MarketRates({
       "currencies"
     );
 
+    // Register real-time handlers with Supabase
     registerHandler("metals", handleMetalsChanges);
     registerHandler("crypto", handleCryptoChanges);
     registerHandler("stocks", handleStocksChanges);
     registerHandler("currencies", handleCurrenciesChanges);
 
+    // Check subscription status to avoid unnecessary polling
     const statusCheckInterval = setInterval(() => {
       const categories: ("metals" | "crypto" | "stocks" | "currencies")[] = [
         "metals",
@@ -267,6 +289,7 @@ export function MarketRates({
       }
     }, 10000);
 
+    // Cleanup function for when component unmounts
     return () => {
       unregisterHandler("metals", handleMetalsChanges);
       unregisterHandler("crypto", handleCryptoChanges);
@@ -294,23 +317,27 @@ export function MarketRates({
     realtimeConnected,
   ]);
 
+  // Update currency rates when crypto or currencies change
   useEffect(() => {
     if (crypto || currencies) {
-      setCurrencyRates({ crypto, currencies });
+      setCurrencyRatesState({ crypto, currencies });
     }
   }, [crypto, currencies]);
 
+  // Handler for toggling show more/less
   const handleShowMore = (value: boolean) => {
     setShowMore(value);
     updateSettings({ marketRatesShowMore: value });
   };
 
+  // Handler for changing period
   const handlePeriodChange = (period: "24H" | "7D") => {
     setSelectedPeriod(period);
     updateSettings({ selectedPeriod: period });
   };
 
-  const handleToggleWatchlist = (category: string, symbol: string) => {
+  // Handler for toggling watchlist items
+  const handleToggleWatchlist = (category: AssetCategory, symbol: string) => {
     if (!settings?.watchlist) return;
     const watchlist = Array.isArray(settings.watchlist)
       ? settings.watchlist
@@ -320,14 +347,16 @@ export function MarketRates({
     );
 
     if (existingItem) {
+      // Remove item if it exists
       const updatedWatchlist = watchlist.filter(
         (item) => item.id !== existingItem.id
       );
       updateSettings({ watchlist: updatedWatchlist });
     } else {
+      // Add new item to watchlist
       const newItem = {
         id: `${category}-${symbol}`,
-        category: category as AssetCategory,
+        category: category,
         symbol,
         order: watchlist.length,
       };
@@ -336,6 +365,7 @@ export function MarketRates({
     }
   };
 
+  // Sort stocks by preferred order
   const sortedStocks = useMemo(() => {
     return stocks
       ? [...stocks].sort((a, b) => {
@@ -350,6 +380,7 @@ export function MarketRates({
       : null;
   }, [stocks]);
 
+  // Sort currencies by preferred order
   const sortedCurrencies = useMemo(() => {
     return currencies
       ? [...currencies].sort((a, b) => {
@@ -364,6 +395,7 @@ export function MarketRates({
       : null;
   }, [currencies]);
 
+  // Sort metals by preferred order
   const sortedMetals = useMemo(() => {
     return metals
       ? [...metals].sort((a, b) => {
@@ -378,6 +410,7 @@ export function MarketRates({
       : null;
   }, [metals]);
 
+  // Filter currencies based on showMore state
   const filteredCurrencies = useMemo(() => {
     return sortedCurrencies
       ? showMore
@@ -388,6 +421,7 @@ export function MarketRates({
       : null;
   }, [sortedCurrencies, showMore]);
 
+  // Determine which assets to show in watchlist
   const watchlistData = useMemo(() => {
     if (!settings?.watchlist)
       return { crypto: null, stocks: null, metals: null, currencies: null };
@@ -435,6 +469,7 @@ export function MarketRates({
     filteredCurrencies,
   ]);
 
+  // Check if watchlist has any items
   const hasWatchlistItems =
     view === "watchlist" &&
     ((watchlistData.crypto && watchlistData.crypto.length > 0) ||
@@ -452,6 +487,7 @@ export function MarketRates({
 
   return (
     <div className="bg-[var(--bg-secondary)] rounded-xl mt-3">
+      {/* Header with period selector and view tabs */}
       <MarketHeader
         selectedPeriod={selectedPeriod}
         setSelectedPeriod={handlePeriodChange}
@@ -475,8 +511,8 @@ export function MarketRates({
                 stocks: sortedStocks,
                 currencies: sortedCurrencies,
               }}
-              selectedCurrency={selectedCurrency}
-              currencyRates={currencyRates}
+              selectedCurrency={currency}
+              currencyRates={currencyRatesState}
               selectedPeriod={selectedPeriod}
               updatedItems={updatedItems}
             />
@@ -487,6 +523,7 @@ export function MarketRates({
           )
         ) : (
           <div className="grid grid-cols-1 md:grid-cols-3 gap-10">
+            {/* Crypto Assets */}
             <div className="transition-all duration-300 ease-in-out">
               <MarketAssets
                 assets={crypto}
@@ -495,13 +532,15 @@ export function MarketRates({
                   Array.isArray(settings?.watchlist) ? settings.watchlist : []
                 }
                 onToggleWatchlist={handleToggleWatchlist}
-                selectedCurrency={selectedCurrency}
-                currencyRates={currencyRates}
+                selectedCurrency={currency}
+                currencyRates={currencyRatesState}
                 selectedPeriod={selectedPeriod}
                 updatedItems={updatedItems.crypto}
                 assetType="Crypto"
               />
             </div>
+            
+            {/* Stocks & ETFs */}
             <div className="transition-all duration-300 ease-in-out">
               <MarketAssets
                 assets={sortedStocks}
@@ -510,13 +549,15 @@ export function MarketRates({
                   Array.isArray(settings?.watchlist) ? settings.watchlist : []
                 }
                 onToggleWatchlist={handleToggleWatchlist}
-                selectedCurrency={selectedCurrency}
-                currencyRates={currencyRates}
+                selectedCurrency={currency}
+                currencyRates={currencyRatesState}
                 selectedPeriod={selectedPeriod}
                 updatedItems={updatedItems.stocks}
                 assetType="Stocks & Indexes"
               />
             </div>
+            
+            {/* Metals and Currencies */}
             <div className="space-y-7 transition-all duration-300 ease-in-out">
               <MarketAssets
                 assets={sortedMetals}
@@ -525,8 +566,8 @@ export function MarketRates({
                   Array.isArray(settings?.watchlist) ? settings.watchlist : []
                 }
                 onToggleWatchlist={handleToggleWatchlist}
-                selectedCurrency={selectedCurrency}
-                currencyRates={currencyRates}
+                selectedCurrency={currency}
+                currencyRates={currencyRatesState}
                 selectedPeriod={selectedPeriod}
                 updatedItems={updatedItems.metals}
                 assetType="Precious Metals"
@@ -538,8 +579,8 @@ export function MarketRates({
                   Array.isArray(settings?.watchlist) ? settings.watchlist : []
                 }
                 onToggleWatchlist={handleToggleWatchlist}
-                selectedCurrency={selectedCurrency}
-                currencyRates={currencyRates}
+                selectedCurrency={currency}
+                currencyRates={currencyRatesState}
                 selectedPeriod={selectedPeriod}
                 updatedItems={updatedItems.currencies}
                 assetType="Cash"
@@ -549,6 +590,7 @@ export function MarketRates({
         )}
       </div>
 
+      {/* Show More/Less Button */}
       {view === "market" && (
         <div className="sm:flex hidden justify-center py-3 border-t border-gray-800/50">
           <button

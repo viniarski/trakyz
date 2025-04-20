@@ -5,7 +5,7 @@
 import { useState, useMemo } from 'react'
 import { Star, TrendingUp, TrendingDown } from 'lucide-react'
 import { CategoryIcon } from '@/components/ui/category-icon'
-import { formatCurrency, convertCurrency } from '@/lib/utils'
+import { useCurrencyConverter } from '@/hooks/useCurrencyConverter'
 import { 
   Metal, 
   Stock, 
@@ -48,13 +48,16 @@ export function Watchlist({
   currencyRates,
   selectedPeriod,
   updatedItems = {
-    crypto: new Set(),
-    stocks: new Set(),
-    metals: new Set(),
-    currencies: new Set()
+    crypto: new Set<string>(),
+    stocks: new Set<string>(),
+    metals: new Set<string>(),
+    currencies: new Set<string>()
   }
 }: WatchlistProps) {
-  const [isHovering, setIsHovering] = useState<string | null>(null)
+  const [isHovering, setIsHovering] = useState<string | null>(null);
+  
+  // Use our currency converter
+  const { convertValue, formatPreciseValue } = useCurrencyConverter();
 
   // Group watchlist items by category
   const categorizedWatchlist = useMemo(() => {
@@ -132,15 +135,24 @@ export function Watchlist({
       return { changePercent: 0, isPositive: true }
     }
 
-    const currentPrice = 'price' in currentData ? currentData.price : 0
+    // Check if the currentData has price property
+    if (!('price' in currentData)) {
+      return { changePercent: 0, isPositive: true };
+    }
+
+    const currentPrice = currentData.price;
 
     if (selectedPeriod === '24H') {
       const oneDayAgo = new Date()
       oneDayAgo.setHours(oneDayAgo.getHours() - 24)
       
       const oldPriceData = historicalData.find(d => new Date(d.date) <= oneDayAgo)
-      const oldPrice = oldPriceData && 'price' in oldPriceData ? oldPriceData.price : currentPrice
-      const changePercent = ((currentPrice - oldPrice) / oldPrice) * 100
+      if (!oldPriceData || !('price' in oldPriceData)) {
+        return { changePercent: 0, isPositive: true };
+      }
+      
+      const oldPrice = oldPriceData.price;
+      const changePercent = ((currentPrice - oldPrice) / oldPrice) * 100;
 
       return {
         changePercent,
@@ -151,8 +163,12 @@ export function Watchlist({
       sevenDaysAgo.setDate(sevenDaysAgo.getDate() - 7)
       
       const oldPriceData = historicalData.find(d => new Date(d.date) <= sevenDaysAgo)
-      const oldPrice = oldPriceData && 'price' in oldPriceData ? oldPriceData.price : currentPrice
-      const changePercent = ((currentPrice - oldPrice) / oldPrice) * 100
+      if (!oldPriceData || !('price' in oldPriceData)) {
+        return { changePercent: 0, isPositive: true };
+      }
+      
+      const oldPrice = oldPriceData.price;
+      const changePercent = ((currentPrice - oldPrice) / oldPrice) * 100;
 
       return {
         changePercent,
@@ -187,23 +203,21 @@ export function Watchlist({
           <h3 className="text-base font-medium text-[var(--text-primary)]">{category}</h3>
           <div className="space-y-2">
             {items.map((item) => {
-              const { currentData } = getAssetData(item.category as AssetCategory, item.symbol);
-              const priceChange = calculatePriceChange(item.category as AssetCategory, item.symbol);
+              const { currentData } = getAssetData(item.category, item.symbol);
+              const priceChange = calculatePriceChange(item.category, item.symbol);
               
               if (!currentData) return null;
 
-              const rawPrice = convertCurrency(
-                'price' in currentData ? currentData.price : 0,
-                'USD',
-                selectedCurrency,
-                currencyRates
-              );
+              // Convert the USD price to the selected currency
+              const rawPrice = 'price' in currentData 
+                ? convertValue(currentData.price, currencyRates)
+                : 0;
 
-              // Format the price directly instead of using the hook
-              const displayPrice = formatCurrency(rawPrice, selectedCurrency);
+              // Format the price with the appropriate currency symbol and precision
+              const displayPrice = formatPreciseValue(rawPrice);
 
-              const assetName = getAssetName(item.category as AssetCategory, currentData);
-              const isUpdated = hasRecentUpdate(item.category as AssetCategory, item.symbol);
+              const assetName = getAssetName(item.category, currentData);
+              const isUpdated = hasRecentUpdate(item.category, item.symbol);
 
               return (
                 <div

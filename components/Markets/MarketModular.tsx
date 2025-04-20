@@ -20,12 +20,12 @@ import {
   Crypto as CryptoType,
   WatchlistItem
 } from "@/types";
-import { formatCurrency, convertCurrency } from "@/lib/utils";
+import { useCurrencyConverter } from "@/hooks/useCurrencyConverter";
 import { AssetContextMenu } from "../ui/context-menu";
 
 type Asset = Currency | CryptoType | Metal | Stock;
 
-type MarketAssetsProps = {
+interface MarketAssetsProps {
   assets: Asset[] | null;
   limit: number;
   watchlist: WatchlistItem[];
@@ -38,7 +38,7 @@ type MarketAssetsProps = {
   selectedPeriod: "24H" | "7D";
   updatedItems?: Set<string>;
   assetType: AssetCategory;
-};
+}
 
 export const MarketAssets = memo(
   function MarketAssets({
@@ -52,62 +52,63 @@ export const MarketAssets = memo(
     updatedItems = new Set(),
     assetType,
   }: MarketAssetsProps) {
-    const calculatePriceChange = useMemo(
-      () =>
-        (symbol: string): { changePercent: number; isPositive: boolean } => {
-          const allPricesForSymbol = (assets || [])
-            .filter((a) =>
-              // filtering logic for different asset types
-              assetType === "Crypto"
-                ? (a as CryptoType).symbol === symbol
-                : assetType === "Cash"
-                ? (a as Currency).symbol === symbol
-                : assetType === "Precious Metals"
-                ? (a as Metal).metal.toLowerCase() === symbol.toLowerCase()
-                : assetType === "Stocks & Indexes"
-                ? (a as Stock).symbol === symbol
-                : false
-            )
-            .sort(
-              (a, b) =>
-                new Date((b as Asset).date).getTime() -
-                new Date((a as Asset).date).getTime()
-            );
-
-          if (allPricesForSymbol.length === 0)
-            return { changePercent: 0, isPositive: true };
-
-          const currentPrice = (allPricesForSymbol[0] as Asset).price;
-          const comparisonDate = new Date();
-
-          if (selectedPeriod === "24H") {
-            comparisonDate.setHours(comparisonDate.getHours() - 24);
-          } else {
-            comparisonDate.setDate(comparisonDate.getDate() - 7);
+    // Use the currency converter hook
+    const { convertValue, formatPreciseValue } = useCurrencyConverter();
+    
+    const calculatePriceChange = useMemo(() => {
+      return (symbol: string): { changePercent: number; isPositive: boolean } => {
+        if (!assets) return { changePercent: 0, isPositive: true };
+        
+        const allPricesForSymbol = assets.filter((a) => {
+          if (assetType === "Crypto") {
+            return (a as CryptoType).symbol === symbol;
+          } else if (assetType === "Cash") {
+            return (a as Currency).symbol === symbol;
+          } else if (assetType === "Precious Metals") {
+            return (a as Metal).metal.toLowerCase() === symbol.toLowerCase();
+          } else if (assetType === "Stocks & Indexes") {
+            return (a as Stock).symbol === symbol;
           }
+          return false;
+        }).sort(
+          (a, b) =>
+            new Date((b as Asset).date).getTime() -
+            new Date((a as Asset).date).getTime()
+        );
 
-          const oldPriceData = allPricesForSymbol.find(
-            (p) => new Date((p as Asset).date) <= comparisonDate
-          );
-          if (!oldPriceData) return { changePercent: 0, isPositive: true };
+        if (allPricesForSymbol.length === 0)
+          return { changePercent: 0, isPositive: true };
 
-          const changePercent =
-            ((currentPrice - (oldPriceData as Asset).price) /
-              (oldPriceData as Asset).price) *
-            100;
-          return {
-            changePercent,
-            isPositive: changePercent >= 0,
-          };
-        },
-      [assets, selectedPeriod, assetType]
-    );
+        const currentPrice = allPricesForSymbol[0].price;
+        const comparisonDate = new Date();
+
+        if (selectedPeriod === "24H") {
+          comparisonDate.setHours(comparisonDate.getHours() - 24);
+        } else {
+          comparisonDate.setDate(comparisonDate.getDate() - 7);
+        }
+
+        const oldPriceData = allPricesForSymbol.find(
+          (p) => new Date(p.date) <= comparisonDate
+        );
+        
+        if (!oldPriceData) return { changePercent: 0, isPositive: true };
+
+        const changePercent =
+          ((currentPrice - oldPriceData.price) / oldPriceData.price) * 100;
+        
+        return {
+          changePercent,
+          isPositive: changePercent >= 0,
+        };
+      };
+    }, [assets, selectedPeriod, assetType]);
 
     const displayAssets = useMemo(() => {
       if (!assets) return [];
 
       const uniqueAssets = Array.from(
-        assets.reduce((map, asset) => {
+        assets.reduce((map: Map<string, Asset>, asset: Asset) => {
           let key: string;
           switch (assetType) {
             case "Crypto":
@@ -208,14 +209,13 @@ export const MarketAssets = memo(
             );
 
             const priceChange = calculatePriceChange(symbol);
-            const rawPrice = convertCurrency(
-              asset.price,
-              "USD",
-              selectedCurrency,
-              currencyRates
-            );
-
-            const displayPrice = formatCurrency(rawPrice, selectedCurrency);
+            
+            // Convert the price from USD to the selected currency
+            const rawPrice = convertValue(asset.price, currencyRates);
+            
+            // Format the price with the appropriate currency symbol
+            const displayPrice = formatPreciseValue(rawPrice);
+            
             const hasRecentUpdate = updatedItems.has(
               assetType === "Precious Metals" ? symbol.toLowerCase() : symbol
             );
@@ -277,7 +277,7 @@ export const MarketAssets = memo(
       </div>
     );
   },
-  (prevProps, nextProps) => {
+  (prevProps: MarketAssetsProps, nextProps: MarketAssetsProps) => {
     return (
       prevProps.assets === nextProps.assets &&
       prevProps.limit === nextProps.limit &&

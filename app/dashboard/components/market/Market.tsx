@@ -5,7 +5,7 @@
 import { useState, useEffect } from 'react'
 import { MarketData } from '@/types'
 import { MarketRates } from '@/components/Markets/MarketRates'
-import { useUserSettings } from '@/hooks/use-user-settings'
+import { useUserSettings } from '@/hooks/useUserSettings'
 
 interface MarketProps {
   marketData: MarketData
