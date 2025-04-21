@@ -1,15 +1,49 @@
 // components/Header/UserMenu.tsx
-
 'use client'
 
 import { useState, useRef, useEffect } from 'react'
 import Link from 'next/link'
 import { signOutAction } from "@/app/actions"
 import { User, Settings, HelpCircle, LogOut, Shield } from 'lucide-react'
-import { UserMenuProps } from '@/types'
-export default function UserMenu({ userEmail, userRole }: UserMenuProps) {
+import { createClient } from '@/lib/supabase/client'
+
+// Update the props type definition
+interface UserMenuProps {
+  userEmail?: string | null;
+  userRole?: string | null;
+}
+
+export default function UserMenu({ userEmail, userRole: propUserRole }: UserMenuProps) {
   const [isOpen, setIsOpen] = useState(false)
   const menuRef = useRef<HTMLDivElement>(null)
+  const [userRole, setUserRole] = useState<string | null>(propUserRole || null)
+  
+  // Fetch role directly as a fallback
+  useEffect(() => {
+    const fetchRoleDirectly = async () => {
+      try {
+        const supabase = createClient()
+        const { data: { user } } = await supabase.auth.getUser()
+        
+        if (user) {
+          // Get the user's role from user_profiles table directly
+          const { data, error } = await supabase
+            .from('user_profiles')
+            .select('role')
+            .eq('id', user.id)
+            .single()
+          
+          if (!error && data) {
+            setUserRole(data.role)
+          }
+        }
+      } catch (error) {
+        console.error('Error in fetchRoleDirectly:', error)
+      }
+    }
+    
+    fetchRoleDirectly()
+  }, [])
   
   // Close dropdown when clicking outside
   useEffect(() => {
