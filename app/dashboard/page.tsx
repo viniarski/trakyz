@@ -1,5 +1,4 @@
 // app/dashboard/page.tsx
-
 import { createClient } from "@/lib/supabase/server";
 import { redirect } from "next/navigation";
 import Header from "@/components/Header/index";
@@ -13,6 +12,7 @@ import Transactions from "./components/transactions/Transactions";
 import TabNavigation from "@/components/TabNavigation";
 import Analytics from "./components/analytics/Analytics";
 import Debt from "./components/debt/Debt";
+import FinancialSummary from "@/components/FinancialSummary";
 
 // Define valid tab names
 const validTabs = [
@@ -276,6 +276,9 @@ export default async function Page(props: any) {
           </p>
         </div>
       )}
+
+      {/* Financial Summary Component */}
+      <FinancialSummary />
 
       <div className="flex-1 w-[90%] mx-auto py-8">
         <TabNavigation currentTab={currentTab} />
