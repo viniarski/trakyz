@@ -76,7 +76,11 @@ export function MarketRates({
   );
 
   const [isLoading, setIsLoading] = useState(initialLoading);
-  const [currencyRatesState, setCurrencyRatesState] = useState(initialCurrencyRates);
+  const [currencyRatesState, setCurrencyRatesState] = useState<{
+    currencies: Currency[] | null;
+    crypto: CryptoType[] | null;
+    metals?: Metal[] | null;
+  }>(initialCurrencyRates);
   const [error, setError] = useState<string | null>(null);
   const [realtimeConnected, setRealtimeConnected] = useState(false);
 
