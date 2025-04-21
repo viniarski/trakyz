@@ -22,8 +22,6 @@ import type {
   Stock, 
   Currency, 
   Crypto as CryptoType, 
-  WatchlistItem,
-  CurrencyCode
 } from "@/types";
 import useMergeData from "./MarketRatesMerge";
 import { MarketAssets } from "./MarketModular";
@@ -317,12 +315,12 @@ export function MarketRates({
     realtimeConnected,
   ]);
 
-  // Update currency rates when crypto or currencies change
+  // Update currency rates when crypto, currencies, or metals change
   useEffect(() => {
-    if (crypto || currencies) {
-      setCurrencyRatesState({ crypto, currencies });
+    if (crypto || currencies || metals) {
+      setCurrencyRatesState({ crypto, currencies, metals });
     }
-  }, [crypto, currencies]);
+  }, [crypto, currencies, metals]);
 
   // Handler for toggling show more/less
   const handleShowMore = (value: boolean) => {

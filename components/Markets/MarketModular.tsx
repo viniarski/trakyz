@@ -1,4 +1,4 @@
-// component/Markets/MarketModular.tsx
+// components/Markets/MarketModular.tsx
 
 "use client";
 
@@ -34,6 +34,7 @@ interface MarketAssetsProps {
   currencyRates: {
     currencies: Currency[] | null;
     crypto: CryptoType[] | null;
+    metals?: Metal[] | null;
   };
   selectedPeriod: "24H" | "7D";
   updatedItems?: Set<string>;
@@ -210,8 +211,8 @@ export const MarketAssets = memo(
 
             const priceChange = calculatePriceChange(symbol);
             
-            // Convert the price from USD to the selected currency
-            const rawPrice = convertValue(asset.price, currencyRates);
+            // Convert the price from USD to the selected currency, passing the asset symbol
+            const rawPrice = convertValue(asset.price, currencyRates, symbol);
             
             // Format the price with the appropriate currency symbol
             const displayPrice = formatPreciseValue(rawPrice);

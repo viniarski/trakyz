@@ -1,5 +1,4 @@
 // lib/utils/format.ts
-
 import { CurrencyCode } from "@/types";
 
 /**
@@ -14,13 +13,30 @@ export function formatCurrency(
   currency: CurrencyCode = "USD",
   options?: Intl.NumberFormatOptions
 ): string {
+  // Handle special cases for non-standard currency codes
+  if (currency === "GOLD") {
+    const opts = options || {};
+    return `${amount.toLocaleString('en-US', {
+      minimumFractionDigits: opts.minimumFractionDigits || 2,
+      maximumFractionDigits: opts.maximumFractionDigits || 2,
+    })} XAU`;
+  }
+  
+  if (currency === "BTC") {
+    const opts = options || {};
+    return `${amount.toLocaleString('en-US', {
+      minimumFractionDigits: opts.minimumFractionDigits || 8,
+      maximumFractionDigits: opts.maximumFractionDigits || 8,
+    })} BTC`;
+  }
+
   const currencyMap: Record<CurrencyCode, string> = {
     USD: "USD",
     EUR: "EUR",
     GBP: "GBP",
     CHF: "CHF",
     BTC: "BTC",
-    ETH: "ETH",
+    ETH: "ETH", // Left for type compatibility
     GOLD: "XAU",
   };
 
@@ -30,12 +46,6 @@ export function formatCurrency(
     minimumFractionDigits: 2,
     maximumFractionDigits: 2,
   };
-
-  // Special handling for crypto
-  if (currency === "BTC" || currency === "ETH") {
-    defaultOptions.minimumFractionDigits = 8;
-    defaultOptions.maximumFractionDigits = 8;
-  }
 
   // Use provided options or defaults
   const formatOptions = { ...defaultOptions, ...options };
@@ -58,6 +68,7 @@ export function convertCurrency(
   rates: {
     currencies: any[] | null;
     crypto: any[] | null;
+    metals?: any[] | null;
   }
 ): number {
   // If currencies are the same, return the original amount
@@ -99,6 +110,7 @@ function getCurrencyRate(
   rates: {
     currencies: any[] | null;
     crypto: any[] | null;
+    metals?: any[] | null;
   }
 ): number | null {
   if (currency === "USD") return 1;
@@ -106,19 +118,26 @@ function getCurrencyRate(
   // Check in fiat currencies
   if (rates.currencies) {
     const fiatCurrency = rates.currencies.find(c => c.symbol === currency);
-    if (fiatCurrency) return fiatCurrency.price;
+    if (fiatCurrency && fiatCurrency.price > 0) return fiatCurrency.price;
   }
 
   // Check in crypto currencies
   if (rates.crypto) {
     const cryptoCurrency = rates.crypto.find(c => c.symbol === currency);
-    if (cryptoCurrency) return cryptoCurrency.price;
+    if (cryptoCurrency && cryptoCurrency.price > 0) return cryptoCurrency.price;
   }
 
-  // Default conversions for gold if rates not available
-  if (currency === "GOLD") return 2000; // Approximate price of gold
+  // Check in metals for GOLD
+  if (currency === "GOLD" && rates.metals) {
+    const goldData = rates.metals.find(m => m.metal.toLowerCase() === 'gold');
+    if (goldData && goldData.price > 0) {
+      return goldData.price;
+    }
+  }
 
-  return null;
+  // If nothing is found, return 1 to prevent division by zero
+  console.warn(`Exchange rate for ${currency} not found, using 1:1 rate`);
+  return 1;
 }
 
 /**

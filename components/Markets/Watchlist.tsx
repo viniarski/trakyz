@@ -30,6 +30,7 @@ interface WatchlistProps {
   currencyRates: {
     currencies: Currency[] | null;
     crypto: Crypto[] | null;
+    metals?: Metal[] | null;
   };
   selectedPeriod: '24H' | '7D';
   updatedItems?: Record<string, Set<string>>;
@@ -208,9 +209,9 @@ export function Watchlist({
               
               if (!currentData) return null;
 
-              // Convert the USD price to the selected currency
+              // Convert the USD price to the selected currency, passing the asset symbol
               const rawPrice = 'price' in currentData 
-                ? convertValue(currentData.price, currencyRates)
+                ? convertValue(currentData.price, currencyRates, item.symbol)
                 : 0;
 
               // Format the price with the appropriate currency symbol and precision

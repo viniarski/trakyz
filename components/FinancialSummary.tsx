@@ -10,11 +10,26 @@ export default function FinancialSummary() {
   
   // Format currency values - hardcoded to $0 for now
   const formatCurrency = (value: number) => {
-    return new Intl.NumberFormat('en-US', {
-      style: 'currency',
-      currency: currency,
-      maximumFractionDigits: 0
-    }).format(value);
+    // Special formatting for non-standard currencies
+    if (currency === 'GOLD') {
+      return `${value.toFixed(2)} XAU`;
+    }
+    if (currency === 'BTC') {
+      return `${value.toFixed(8)} BTC`;
+    }
+    
+    try {
+      // Standard currency formatting for ISO currencies
+      return new Intl.NumberFormat('en-US', {
+        style: 'currency',
+        currency: currency,
+        maximumFractionDigits: 0
+      }).format(value);
+    } catch (error) {
+      // Fallback formatting if currency code is invalid
+      console.warn(`Invalid currency code "${currency}", using fallback formatting`);
+      return `$${value.toFixed(0)}`;
+    }
   }
 
   return (
