@@ -15,18 +15,30 @@ import { Watchlist } from "./Watchlist";
 import { useUserSettings } from "@/hooks/useUserSettings";
 import { useCurrencyStore } from "@/lib/stores/useCurrencyStore";
 import { useCurrencyConverter } from "@/hooks/useCurrencyConverter";
-import type { 
-  MarketRatesProps, 
-  AssetCategory, 
-  Metal, 
-  Stock, 
-  Currency, 
-  Crypto as CryptoType, 
+import type {
+  MarketRatesProps,
+  AssetCategory,
+  Metal,
+  Stock,
+  Currency,
+  Crypto as CryptoType,
 } from "@/types";
 import useMergeData from "./MarketRatesMerge";
 import { MarketAssets } from "./MarketModular";
+import {
+  createGenericChangeHandler,
+  sortByPreferredOrder,
+} from "@/lib/utils/market";
 
-const PREFERRED_CURRENCY_ORDER = ["EUR", "GBP", "CHF", "JPY", "CNY", "PLN", "CAD"];
+const PREFERRED_CURRENCY_ORDER = [
+  "EUR",
+  "GBP",
+  "CHF",
+  "JPY",
+  "CNY",
+  "PLN",
+  "CAD",
+];
 const PREFERRED_METALS_ORDER = ["GOLD", "SILVER", "PLATINUM", "PALLADIUM"];
 const PREFERRED_STOCKS_ORDER = [
   "SPY",
@@ -55,13 +67,13 @@ export function MarketRates({
     updateSettings,
     isLoading: isSettingsLoading,
   } = useUserSettings();
-  
+
   // Use currency from Zustand store (this will come from the CurrencySwitcher)
   const { currency } = useCurrencyStore();
-  
+
   // Use our new currency converter hook
   const { convertValue, convertAndFormat } = useCurrencyConverter();
-  
+
   const [showMore, setShowMore] = useState(false);
   const [selectedPeriod, setSelectedPeriod] = useState<"24H" | "7D">("24H");
   const [view, setView] = useState<"market" | "watchlist">("market");
@@ -154,88 +166,10 @@ export function MarketRates({
     if (initialCrypto) setCrypto(initialCrypto);
     if (initialStocks) setStocks(initialStocks);
     if (initialCurrencies) setCurrencies(initialCurrencies);
-
-    const dataFetch = async () => {
-      const [metalsRes, cryptoRes, stocksRes, currenciesRes] =
-        await Promise.all([
-          fetch("/api/market/metals"),
-          fetch("/api/market/crypto"),
-          fetch("/api/market/stocks"),
-          fetch("/api/market/currencies"),
-        ]);
-
-      const [metalsData, cryptoData, stocksData, currenciesData] =
-        await Promise.all([
-          metalsRes.json(),
-          cryptoRes.json(),
-          stocksRes.json(),
-          currenciesRes.json(),
-        ]);
-
-      if (metalsData.success && metalsData.data) setMetals(metalsData.data);
-      if (cryptoData.success && cryptoData.data) setCrypto(cryptoData.data);
-      if (stocksData.success && stocksData.data) setStocks(stocksData.data);
-      if (currenciesData.success && currenciesData.data)
-        setCurrencies(currenciesData.data);
-    };
-
-    const fetchInitialData = async () => {
-      setIsLoading(true);
-      console.log("Fetching initial data...");
-      try {
-        dataFetch();
-      } catch (err) {
-        console.error("Error fetching initial data:", err);
-        setError("Failed to load initial market data");
-      } finally {
-        setIsLoading(false);
-      }
-    };
-
-    const backgroundRefresh = async () => {
-      if (realtimeConnected) {
-        console.log("Realtime connected, skipping background refresh");
-        return;
-      }
-      console.log("Executing background refresh...");
-      try {
-        dataFetch();
-      } catch (err) {
-        console.error("Error during background refresh:", err);
-      }
-    };
-
-    fetchInitialData();
-    const refreshInterval = setInterval(backgroundRefresh, 60000);
+    if (initialMetals && initialCrypto && initialStocks && initialCurrencies)
+      setIsLoading(false);
 
     // This part handles real-time updates from Supabase
-    type DataType = Metal | CryptoType | Stock | Currency;
-    type SetStateFunction<T> = React.Dispatch<React.SetStateAction<T[] | null>>;
-    type MergeFunction<T> = (current: T[], newData: T) => T[];
-    type RemoveFunction<T> = (current: T[], oldData: T) => T[];
-
-    const createGenericChangeHandler = <T extends DataType>(
-      setState: SetStateFunction<T>,
-      mergeFunction: MergeFunction<T>,
-      removeFunction: RemoveFunction<T>,
-      label: string
-    ) => {
-      return (payload: Record<string, unknown>) => {
-        if (payload.eventType === "INSERT" || payload.eventType === "UPDATE") {
-          console.log(`Handling ${label} ${payload.eventType}:`, payload.new);
-          setState((current) => {
-            const currentArray = current ?? [];
-            return mergeFunction(currentArray, payload.new as T);
-          });
-        } else if (payload.eventType === "DELETE") {
-          setState((current) => {
-            if (!current) return null;
-            const updatedArray = removeFunction(current, payload.old as T);
-            return updatedArray.length > 0 ? updatedArray : null;
-          });
-        }
-      };
-    };
 
     const handleMetalsChanges = createGenericChangeHandler<Metal>(
       setMetals,
@@ -297,8 +231,8 @@ export function MarketRates({
       unregisterHandler("crypto", handleCryptoChanges);
       unregisterHandler("stocks", handleStocksChanges);
       unregisterHandler("currencies", handleCurrenciesChanges);
-      clearInterval(refreshInterval);
-      clearInterval(statusCheckInterval);
+      //clearInterval(refreshInterval);
+      //clearInterval(statusCheckInterval);
       if (process.env.NODE_ENV !== "development") {
         cleanupChannels();
       }
@@ -368,49 +302,37 @@ export function MarketRates({
   };
 
   // Sort stocks by preferred order
-  const sortedStocks = useMemo(() => {
-    return stocks
-      ? [...stocks].sort((a, b) => {
-          const indexA = PREFERRED_STOCKS_ORDER.indexOf(a.symbol);
-          const indexB = PREFERRED_STOCKS_ORDER.indexOf(b.symbol);
-          if (indexA === -1 && indexB === -1)
-            return a.symbol.localeCompare(b.symbol);
-          if (indexA === -1) return 1;
-          if (indexB === -1) return -1;
-          return indexA - indexB;
-        })
-      : null;
-  }, [stocks]);
+  const sortedStocks = useMemo(
+    () =>
+      stocks
+        ? sortByPreferredOrder(stocks, PREFERRED_STOCKS_ORDER, (s) => s.symbol)
+        : null,
+    [stocks]
+  );
 
   // Sort currencies by preferred order
-  const sortedCurrencies = useMemo(() => {
-    return currencies
-      ? [...currencies].sort((a, b) => {
-          const indexA = PREFERRED_CURRENCY_ORDER.indexOf(a.symbol);
-          const indexB = PREFERRED_CURRENCY_ORDER.indexOf(b.symbol);
-          if (indexA === -1 && indexB === -1)
-            return a.symbol.localeCompare(b.symbol);
-          if (indexA === -1) return 1;
-          if (indexB === -1) return -1;
-          return indexA - indexB;
-        })
-      : null;
-  }, [currencies]);
+  const sortedCurrencies = useMemo(
+    () =>
+      currencies
+        ? sortByPreferredOrder(
+            currencies,
+            PREFERRED_CURRENCY_ORDER,
+            (s) => s.symbol
+          )
+        : null,
+    [currencies]
+  );
 
   // Sort metals by preferred order
-  const sortedMetals = useMemo(() => {
-    return metals
-      ? [...metals].sort((a, b) => {
-          const indexA = PREFERRED_METALS_ORDER.indexOf(a.metal.toUpperCase());
-          const indexB = PREFERRED_METALS_ORDER.indexOf(b.metal.toUpperCase());
-          if (indexA === -1 && indexB === -1)
-            return a.metal.localeCompare(b.metal);
-          if (indexA === -1) return 1;
-          if (indexB === -1) return -1;
-          return indexA - indexB;
-        })
-      : null;
-  }, [metals]);
+  const sortedMetals = useMemo(
+    () =>
+      metals
+        ? sortByPreferredOrder(metals, PREFERRED_METALS_ORDER, (s) =>
+            s.metal.toUpperCase()
+          )
+        : null,
+    [metals]
+  );
 
   // Filter currencies based on showMore state
   const filteredCurrencies = useMemo(() => {
@@ -541,7 +463,7 @@ export function MarketRates({
                 assetType="Crypto"
               />
             </div>
-            
+
             {/* Stocks & ETFs */}
             <div className="transition-all duration-300 ease-in-out">
               <MarketAssets
@@ -558,7 +480,7 @@ export function MarketRates({
                 assetType="Stocks & Indexes"
               />
             </div>
-            
+
             {/* Metals and Currencies */}
             <div className="space-y-7 transition-all duration-300 ease-in-out">
               <MarketAssets

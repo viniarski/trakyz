@@ -4,7 +4,6 @@ import { UserResponse } from "@supabase/supabase-js";
 import { redirect } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
 import Settings from "./components/Settings";
-//import { Notifications, SystemSetting } from "@/lib/types/systemTypes";
 
 export default async function SettingsPage() {
   const supabase = await createClient();
@@ -15,25 +14,6 @@ export default async function SettingsPage() {
 
   if (!user) {
     return redirect("/sign-in");
-  }
-
-  // Fetch system settings
-  const { data: systemData, error: systemError } = await supabase
-    .from("system_settings")
-    .select("*");
-
-  if (systemError) {
-    console.error("Error fetching system settings:", systemError);
-  }
-
-  // Fetch notifications
-  const { data: notificationData, error: notificationError } = await supabase
-    .from("notifications")
-    .select("*")
-    .eq("user_id", user.id);
-
-  if (notificationError) {
-    console.error("Error fetching notifications:", notificationError);
   }
 
   // Fetch subscription data
