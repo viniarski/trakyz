@@ -1,17 +1,15 @@
 // types/portfolio.ts
 
-import { CurrencyCode } from './index';
-
 // Asset categories
-export type AssetCategory = 
-  | 'Crypto' 
-  | 'Precious Metals' 
-  | 'Stocks & Indexes' 
-  | 'REIT' 
-  | 'Bonds' 
-  | 'Cash' 
-  | 'Commodities'
-  | 'Real Estate';
+export type AssetCategory =
+  | "Crypto"
+  | "Precious Metals"
+  | "Stocks & Indexes"
+  | "REIT"
+  | "Bonds"
+  | "Cash"
+  | "Commodities"
+  | "Real Estate";
 
 // Portfolio types
 export interface Portfolio {
@@ -67,7 +65,7 @@ export interface Transaction {
   portfolio_id: string;
   category: AssetCategory;
   asset_type: string;
-  transaction_type: 'BUY' | 'SELL';
+  transaction_type: "BUY" | "SELL";
   quantity: number;
   price: number;
   date: string;
