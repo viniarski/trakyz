@@ -301,6 +301,20 @@ export function MarketRates({
     }
   };
 
+  // Sort cryptocurrencies by market cap
+  const sortedCrypto = useMemo(() => {
+    return crypto
+      ? [...crypto].sort((a, b) => {
+          // Handle undefined market caps
+          const marketCapA = a.market_cap || 0;
+          const marketCapB = b.market_cap || 0;
+          
+          // Sort by market cap (descending)
+          return marketCapB - marketCapA;
+        })
+      : null;
+  }, [crypto]);
+
   // Sort stocks by preferred order
   const sortedStocks = useMemo(
     () =>
@@ -353,7 +367,7 @@ export function MarketRates({
       ? settings.watchlist
       : [];
     const cryptoWatchlist =
-      crypto?.filter((c) =>
+      sortedCrypto?.filter((c) =>
         watchlist.some(
           (item) => item.category === "Crypto" && item.symbol === c.symbol
         )
@@ -387,7 +401,7 @@ export function MarketRates({
     };
   }, [
     settings?.watchlist,
-    crypto,
+    sortedCrypto,
     sortedStocks,
     sortedMetals,
     filteredCurrencies,
@@ -431,7 +445,7 @@ export function MarketRates({
               onToggleWatchlist={handleToggleWatchlist}
               marketData={{
                 metals: sortedMetals,
-                crypto,
+                crypto: sortedCrypto,
                 stocks: sortedStocks,
                 currencies: sortedCurrencies,
               }}
@@ -450,7 +464,7 @@ export function MarketRates({
             {/* Crypto Assets */}
             <div className="transition-all duration-300 ease-in-out">
               <MarketAssets
-                assets={crypto}
+                assets={sortedCrypto}
                 limit={showMore ? 20 : 10}
                 watchlist={
                   Array.isArray(settings?.watchlist) ? settings.watchlist : []
