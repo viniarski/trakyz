@@ -11,7 +11,7 @@ export default function CallToAction() {
         Ready to Transform Your Investment Strategy?
       </h2>
       <p className="text-xl text-gray-400 mb-8 max-w-2xl mx-auto">
-        Join thousands of successful investors who are already optimizing their portfolios with Trakyz
+        Join successful investors who are already optimizing their portfolios with Trakyz
       </p>
       <div className="flex flex-col sm:flex-row items-center justify-center gap-4">
         <CtaButtonWithArrow href="/sign-in">
