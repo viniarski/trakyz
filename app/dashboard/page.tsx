@@ -3,7 +3,14 @@ import { createClient } from "@/lib/supabase/server";
 import { redirect } from "next/navigation";
 import Header from "@/components/Header/index";
 import Budget from "@/app/dashboard/components/budget/Budget";
-import { BudgetData, MarketData, RealEstateProperty, Transaction, DebtData, Portfolio } from "@/types";
+import {
+  BudgetData,
+  MarketData,
+  RealEstateProperty,
+  Transaction,
+  DebtData,
+  Portfolio,
+} from "@/types";
 import { UserResponse } from "@supabase/supabase-js";
 import Market from "./components/market/Market";
 import RealEstate from "./components/real-estate/RealEstate";
@@ -81,7 +88,10 @@ export default async function Page(props: any) {
     ] = await Promise.all([
       supabase.from("metals").select("*").order("date", { ascending: false }),
       supabase.from("crypto").select("*").order("date", { ascending: false }),
-      supabase.from("currencies").select("*").order("date", { ascending: false }),
+      supabase
+        .from("currencies")
+        .select("*")
+        .order("date", { ascending: false }),
       supabase.from("stocks").select("*").order("date", { ascending: false }),
     ]);
 
@@ -97,7 +107,7 @@ export default async function Page(props: any) {
       crypto: crypto || [],
       currencies: currencies || [],
       stocks: stocks || [],
-      selectedCurrency: userProfile?.selected_currency || 'USD'
+      selectedCurrency: userProfile?.selected_currency || "USD",
     };
 
     // Log any market data errors
