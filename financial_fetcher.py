@@ -341,18 +341,39 @@ def fetch_stocks():
 def main():
     logger.info("Starting financial data fetcher")
     
+    # Initialize last run timestamps
+    last_crypto_run = 0
+    last_stocks_run = 0
+    last_daily_run = 0
+    
+    # Set intervals (in seconds)
+    crypto_interval = 300  # 5 minutes
+    stocks_interval = 3600  # 1 hour
+    daily_interval = 86400  # 24 hours
+    
     while True:
         try:
-            logger.info("=== Fetching Financial Data ===")
+            current_time = time.time()
             
-            # Fetch all data types
-            fetch_crypto()
-            fetch_currencies()
-            fetch_metals()
-            fetch_stocks()
+            # Check if it's time to run each fetcher
+            if current_time - last_crypto_run >= crypto_interval:
+                logger.info("=== Fetching Crypto Data ===")
+                fetch_crypto()
+                last_crypto_run = current_time
             
-            logger.info("✅ All data fetched. Sleeping for 1 hour...")
-            time.sleep(3600)  # Sleep for 1 hour
+            if current_time - last_stocks_run >= stocks_interval:
+                logger.info("=== Fetching Stock Data ===")
+                fetch_stocks()
+                last_stocks_run = current_time
+            
+            if current_time - last_daily_run >= daily_interval:
+                logger.info("=== Fetching Daily Data (Currencies & Metals) ===")
+                fetch_currencies()
+                fetch_metals()
+                last_daily_run = current_time
+            
+            # Sleep for a short interval before checking again
+            time.sleep(60)  # Check every minute
             
         except Exception as e:
             logger.error(f"Error in main loop: {e}")
