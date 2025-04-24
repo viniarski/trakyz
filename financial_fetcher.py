@@ -25,7 +25,6 @@ logging.basicConfig(
 )
 logger = logging.getLogger(__name__)
 
-
 # === Setup Supabase ===
 supabase_url = os.getenv("SUPABASE_URL")
 supabase_key = os.getenv("SUPABASE_SERVICE_ROLE_KEY")
@@ -95,7 +94,7 @@ def should_fetch_data(table_name, min_age_seconds=3600):
         result = supabase.table(table_name) \
             .select('date') \
             .eq('date_day', today) \
-            .order('date', {'ascending': False}) \
+            .order('date', desc=True) \
             .limit(1) \
             .execute()
             
@@ -155,7 +154,6 @@ def fetch_crypto():
     except Exception as e:
         logger.error(f"Error fetching crypto data: {e}")
 
-
 def fetch_currencies():
     """Fetch currency exchange rates from Forex API"""
     logger.info("Fetching currency exchange rates...")
@@ -168,7 +166,6 @@ def fetch_currencies():
         return
         
     try:
-        # Correctly formatted URL
         forex_api_url = os.getenv("FOREX_API_URL")
         forex_api_key = os.getenv("FOREX_API_KEY")
         
@@ -192,18 +189,18 @@ def fetch_currencies():
             rate = rates.get(symbol)
             
             if rate:
-                # Convert from USD/XXX to XXX/USD (invert the rate)
                 price = 1 / rate
                 currency_data.append({
                     "symbol": symbol,
                     "name": pair["name"],
-                    "date": today,  # Use date without time
-                    "price": price
+                    "date": now_iso,  # Fixed: Use offset-aware datetime
+                    "price": price,
+                    "date_day": today
                 })
                 logger.info(f"Currency {symbol}: {price}")
                 
         # Delete existing entries for today
-        supabase.table("currencies").delete().eq("date", today).execute()
+        supabase.table("currencies").delete().eq("date_day", today).execute()
         
         # Insert new data
         supabase.table("currencies").insert(currency_data).execute()
@@ -211,11 +208,11 @@ def fetch_currencies():
     except Exception as e:
         logger.error(f"Error fetching currency data: {e}")
 
-
 def fetch_metals():
     """Fetch precious metals prices"""
     logger.info("Fetching precious metals prices...")
     now = datetime.now(timezone.utc)
+    now_iso = now.isoformat()
     today = now.date().isoformat()
     
     if not should_fetch_data('metals'):
@@ -244,20 +241,20 @@ def fetch_metals():
             price = data.get("metals", {}).get(metal, 0)
             metals_data.append({
                 "metal": metal,
-                "date": today,
-                "price": price
+                "date": now_iso,  # Fixed: Use offset-aware datetime
+                "price": price,
+                "date_day": today
             })
             logger.info(f"Metal {metal}: ${price}")
             
         # Delete existing entries for today
-        supabase.table("metals").delete().eq("date", today).execute()
+        supabase.table("metals").delete().eq("date_day", today).execute()
         
         # Insert new data
         supabase.table("metals").insert(metals_data).execute()
         logger.info(f"Successfully updated {len(metals_data)} metals")
     except Exception as e:
         logger.error(f"Error fetching metals data: {e}")
-
 
 def fetch_stocks():
     """Fetch stock prices from Yahoo Finance"""
@@ -273,80 +270,96 @@ def fetch_stocks():
     errors = []
     stock_data = []
     
+    headers = {
+        "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36"
+    }
+    
     for stock in STOCK_SYMBOLS:
         symbol = stock["symbol"]
         clean_symbol = symbol.replace("^", "")
         
-        try:
-            logger.info(f"Fetching data for {symbol}...")
-            url = f"https://query1.finance.yahoo.com/v8/finance/chart/{symbol}?interval=1d&range=1d"
-            response = requests.get(url, timeout=10)
-            
-            if not response.ok:
-                error_msg = f"HTTP error! status: {response.status_code}"
+        retries = 3
+        initial_delay = 10
+        
+        for attempt in range(retries):
+            try:
+                logger.info(f"Fetching data for {symbol} (Attempt {attempt + 1}/{retries})...")
+                url = f"https://query1.finance.yahoo.com/v8/finance/chart/{symbol}?interval=1d&range=1d"
+                logger.info(f"{url}")
+                response = requests.get(url, headers=headers, timeout=10)
+                
+                if response.status_code == 429:
+                    delay = initial_delay * (2 ** attempt)
+                    logger.warning(f"Rate limit hit for {symbol}, retrying after {delay}s...")
+                    time.sleep(delay)
+                    continue
+                
+                if not response.ok:
+                    error_msg = f"HTTP error! status: {response.status_code}"
+                    logger.error(f"Error fetching {symbol}: {error_msg}")
+                    errors.append(f"{symbol}: {error_msg}")
+                    break
+                
+                data = response.json()
+                result = data.get("chart", {}).get("result", [{}])[0]
+                meta = result.get("meta", {})
+                price = meta.get("regularMarketPrice")
+                
+                indicators = result.get("indicators", {})
+                quote = indicators.get("quote", [{}])[0]
+                volume = quote.get("volume", [0])[0] or 0
+                
+                if not price:
+                    error_msg = "No price data available"
+                    logger.error(f"Error fetching {symbol}: {error_msg}")
+                    errors.append(f"{symbol}: {error_msg}")
+                    break
+                
+                stock_data.append({
+                    "symbol": clean_symbol,
+                    "name": stock["name"],
+                    "date": now_iso,
+                    "price": price,
+                    "volume": volume,
+                    "date_day": today
+                })
+                
+                logger.info(f"Successfully processed {symbol}: ${price}")
+                break
+                
+            except Exception as e:
+                error_msg = str(e)
                 logger.error(f"Error fetching {symbol}: {error_msg}")
                 errors.append(f"{symbol}: {error_msg}")
-                continue
-                
-            data = response.json()
-            result = data.get("chart", {}).get("result", [{}])[0]
-            meta = result.get("meta", {})
-            price = meta.get("regularMarketPrice")
+                break
             
-            indicators = result.get("indicators", {})
-            quote = indicators.get("quote", [{}])[0]
-            volume = quote.get("volume", [0])[0] or 0
-            
-            if not price:
-                error_msg = "No price data available"
-                logger.error(f"Error fetching {symbol}: {error_msg}")
-                errors.append(f"{symbol}: {error_msg}")
-                continue
-                
-            stock_data.append({
-                "symbol": clean_symbol,
-                "name": stock["name"],
-                "date": now_iso,
-                "price": price,
-                "volume": volume,
-                "date_day": today
-            })
-            
-            logger.info(f"Successfully processed {symbol}: ${price}")
-            
-        except Exception as e:
-            error_msg = str(e)
-            logger.error(f"Error fetching {symbol}: {error_msg}")
-            errors.append(f"{symbol}: {error_msg}")
-            
-        # Sleep to avoid rate limiting
-        time.sleep(1)
+            time.sleep(15)
     
     if stock_data:
         try:
-            # Delete existing entries for today
-            supabase.table("stocks").delete().eq("date_day", today).execute()
-            
-            # Insert new data
+            logger.info(f"Preparing to insert {len(stock_data)} stocks into database...")
+            existing_data = supabase.table("stocks").select("*").eq("date_day", today).execute().data
             supabase.table("stocks").insert(stock_data).execute()
-            logger.info(f"Successfully updated {len(stock_data)} stocks")
+            logger.info(f"Successfully inserted {len(stock_data)} stocks into database")
+            supabase.table("stocks").delete().eq("date_day", today).neq("date", now_iso).execute()
+            logger.info("Cleaned up old stock data for today")
         except Exception as e:
             logger.error(f"Database error while saving stocks: {e}")
+            errors.append(f"Database error: {e}")
     
     if errors:
-        logger.warning(f"Encountered {len(errors)} errors while fetching stocks")
-
+        logger.warning(f"Encountered {len(errors)} errors while fetching stocks: {errors}")
+    else:
+        logger.info("Stock fetching completed with no errors")
 
 # === Main Function ===
 def main():
     logger.info("Starting financial data fetcher")
     
-    # Initialize last run timestamps
     last_crypto_run = 0
     last_stocks_run = 0
     last_daily_run = 0
     
-    # Set intervals (in seconds)
     crypto_interval = 300  # 5 minutes
     stocks_interval = 3600  # 1 hour
     daily_interval = 86400  # 24 hours
@@ -355,7 +368,6 @@ def main():
         try:
             current_time = time.time()
             
-            # Check if it's time to run each fetcher
             if current_time - last_crypto_run >= crypto_interval:
                 logger.info("=== Fetching Crypto Data ===")
                 fetch_crypto()
@@ -372,14 +384,12 @@ def main():
                 fetch_metals()
                 last_daily_run = current_time
             
-            # Sleep for a short interval before checking again
-            time.sleep(60)  # Check every minute
+            time.sleep(60)
             
         except Exception as e:
             logger.error(f"Error in main loop: {e}")
             logger.info("Sleeping for 5 minutes before retry...")
-            time.sleep(300)  # Sleep for 5 minutes before retrying
-
+            time.sleep(300)
 
 if __name__ == "__main__":
     main()
