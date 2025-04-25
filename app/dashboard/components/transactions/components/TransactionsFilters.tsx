@@ -1,4 +1,4 @@
-// app/dashboard/components/transactions/TransactionsFilters.tsx
+// app/dashboard/components/transactions/components/TransactionsFilters.tsx
 
 import React from 'react';
 import { Input } from '@/components/ui/input';
@@ -29,7 +29,7 @@ export function TransactionsFilters({ filters, setFilters }: TransactionsFilters
           onChange={(e) =>
             setFilters({ ...filters, startDate: e.target.value })
           }
-          className="mt-1"
+          className="mt-1 bg-[var(--bg-secondary)] border-[var(--bg-hover)]"
         />
       </div>
       
@@ -43,7 +43,7 @@ export function TransactionsFilters({ filters, setFilters }: TransactionsFilters
           onChange={(e) =>
             setFilters({ ...filters, endDate: e.target.value })
           }
-          className="mt-1"
+          className="mt-1 bg-[var(--bg-secondary)] border-[var(--bg-hover)]"
         />
       </div>
       
@@ -57,7 +57,7 @@ export function TransactionsFilters({ filters, setFilters }: TransactionsFilters
               type: e.target.value as "ALL" | "BUY" | "SELL",
             })
           }
-          className="w-full p-2 rounded bg-[var(--bg-hover)] text-[var(--text-primary)] border-0 focus:ring-2 focus:ring-[var(--accent-primary)] mt-1"
+          className="w-full p-2 rounded bg-[var(--bg-secondary)] text-[var(--text-primary)] border border-[var(--bg-hover)] focus:outline-none focus:ring-1 focus:ring-[var(--accent-primary)] mt-1"
         >
           <option value="ALL">All</option>
           <option value="BUY">Buy</option>
@@ -75,7 +75,7 @@ export function TransactionsFilters({ filters, setFilters }: TransactionsFilters
             setFilters({ ...filters, category: e.target.value })
           }
           placeholder="e.g., Crypto"
-          className="mt-1"
+          className="mt-1 bg-[var(--bg-secondary)] border-[var(--bg-hover)]"
         />
       </div>
       
@@ -89,7 +89,7 @@ export function TransactionsFilters({ filters, setFilters }: TransactionsFilters
             setFilters({ ...filters, assetType: e.target.value })
           }
           placeholder="e.g., BTC"
-          className="mt-1"
+          className="mt-1 bg-[var(--bg-secondary)] border-[var(--bg-hover)]"
         />
       </div>
     </div>

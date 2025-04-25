@@ -2,12 +2,15 @@
 
 "use client";
 
-import React, { useState } from "react";
-import { Transaction } from "@/types";
+import React, { useState, useEffect } from "react";
+import { Transaction, CurrencyCode, Currency, Crypto } from "@/types";
 import { useCurrencyStore } from "@/lib/stores/useCurrencyStore";
-import { FileDown, FileUp, Filter, Plus, Trash2 } from "lucide-react";
+import { Filter, Plus, Trash2 } from "lucide-react";
 import { TransactionsList } from "./components/TransactionsList";
 import { TransactionsFilters } from "./components/TransactionsFilters";
+import { ImportMenu } from "./components/import-menu";
+import { ExportMenu } from "./components/export-menu";
+import { createClient } from '@/lib/supabase/client';
 
 interface TransactionsProps {
   transactions: Transaction[];
@@ -25,7 +28,7 @@ type SortKey =
 type SortOrder = "asc" | "desc";
 
 const Transactions: React.FC<TransactionsProps> = ({
-  transactions,
+  transactions: initialTransactions,
   userId,
 }) => {
   // State for sorting and filtering
@@ -39,9 +42,91 @@ const Transactions: React.FC<TransactionsProps> = ({
     category: "",
     assetType: "",
   });
+  
+  // State for transactions and related operations
+  const [transactions, setTransactions] = useState<Transaction[]>(initialTransactions);
+  const [isLoading, setIsLoading] = useState(false);
+  const [notification, setNotification] = useState<{ type: 'success' | 'error', message: string } | null>(null);
+  const [deleteAllConfirm, setDeleteAllConfirm] = useState(false);
+  const [selectedPortfolio, setSelectedPortfolio] = useState<string | null>(null);
+  const [availablePortfolios, setAvailablePortfolios] = useState<{ id: string, name: string }[]>([]);
+  const [currencyRates, setCurrencyRates] = useState<{
+    currencies: Currency[] | null;
+    crypto: Crypto[] | null;
+  }>({ currencies: null, crypto: null });
 
   // Get currency from store
   const { currency } = useCurrencyStore();
+  const supabase = createClient();
+
+  // Fetch available portfolios for filtering
+  useEffect(() => {
+    const fetchPortfolios = async () => {
+      try {
+        const { data: portfolios, error } = await supabase
+          .from('portfolios')
+          .select('id, name, is_default')
+          .eq('user_id', userId)
+          .order('created_at', { ascending: true });
+        
+        if (error) throw error;
+        
+        if (portfolios && portfolios.length > 0) {
+          setAvailablePortfolios(portfolios);
+          
+          // Set default portfolio if none selected
+          if (!selectedPortfolio) {
+            const defaultPortfolio = portfolios.find(p => p.is_default) || portfolios[0];
+            setSelectedPortfolio(defaultPortfolio.id);
+          }
+        }
+      } catch (error) {
+        console.error('Error fetching portfolios:', error);
+        showNotification('error', 'Failed to load portfolios');
+      }
+    };
+    
+    fetchPortfolios();
+  }, [userId]);
+
+  // Fetch transactions when filters change
+  useEffect(() => {
+    if (selectedPortfolio) {
+      fetchTransactions(selectedPortfolio);
+    }
+  }, [selectedPortfolio, filters]);
+
+  // Fetch current rates for currency conversion in exports
+  useEffect(() => {
+    const fetchRates = async () => {
+      try {
+        const [{ data: metals }, { data: crypto }, { data: currencies }] = await Promise.all([
+          supabase.from("metals").select("*").order("date", { ascending: false }),
+          supabase.from("crypto").select("*").order("date", { ascending: false }),
+          supabase.from("currencies").select("*").order("date", { ascending: false }),
+        ]);
+
+        setCurrencyRates({
+          currencies: currencies || null,
+          crypto: crypto || null
+        });
+      } catch (error) {
+        console.error('Error fetching rates:', error);
+      }
+    };
+    
+    fetchRates();
+  }, []);
+
+  // Show a notification message
+  const showNotification = (type: 'success' | 'error', message: string) => {
+    setNotification({ type, message });
+    
+    // Clear notification after 5 seconds
+    setTimeout(() => {
+      setNotification(null);
+    }, 5000);
+  };
 
   // Handle sort column click
   const handleSort = (key: SortKey) => {
@@ -99,21 +184,57 @@ const Transactions: React.FC<TransactionsProps> = ({
     return sortOrder === "asc" ? comparison : -comparison;
   });
 
-  // Handle importing transactions
-  const handleImport = () => {
-    alert("Import functionality to be implemented");
+  // Handle successful import
+  const handleImportSuccess = () => {
+    // Refresh the transactions list
+    if (selectedPortfolio) {
+      fetchTransactions(selectedPortfolio);
+    }
   };
 
-  // Handle exporting transactions
-  const handleExport = () => {
-    alert("Export functionality to be implemented");
-  };
-
-  // Handle deleting all transactions
-  const handleDeleteAll = () => {
-    const confirmed = window.confirm("Are you sure you want to delete all transactions? This action cannot be undone.");
-    if (confirmed) {
-      alert("Delete all functionality to be implemented");
+  // Fetch transactions for a portfolio
+  const fetchTransactions = async (portfolioId: string) => {
+    setIsLoading(true);
+    try {
+      let query = supabase
+        .from('transactions')
+        .select('*')
+        .eq('user_id', userId)
+        .eq('portfolio_id', portfolioId);
+      
+      if (filters.startDate) {
+        query = query.gte('date', filters.startDate);
+      }
+      if (filters.endDate) {
+        query = query.lte('date', filters.endDate);
+      }
+      if (filters.type !== "ALL") {
+        query = query.eq('transaction_type', filters.type);
+      }
+      if (filters.category) {
+        query = query.ilike('category', `%${filters.category}%`);
+      }
+      if (filters.assetType) {
+        query = query.ilike('asset_type', `%${filters.assetType}%`);
+      }
+      
+      // Apply sorting
+      if (sortKey === 'date') {
+        query = query.order('date', { ascending: sortOrder === 'asc' });
+      } else if (sortKey) {
+        query = query.order(sortKey, { ascending: sortOrder === 'asc' });
+      }
+      
+      const { data, error } = await query;
+      
+      if (error) throw error;
+      
+      setTransactions(data || []);
+    } catch (error) {
+      console.error('Error fetching transactions:', error);
+      showNotification('error', 'Failed to load transactions');
+    } finally {
+      setIsLoading(false);
     }
   };
 
@@ -122,7 +243,46 @@ const Transactions: React.FC<TransactionsProps> = ({
     alert("Add transaction functionality to be implemented");
   };
 
-  // Button styles to match the 24H/7D buttons
+  // Handle deleting all transactions
+  const handleDeleteAll = () => {
+    setDeleteAllConfirm(true);
+  };
+
+  // Confirm delete all transactions
+  const confirmDeleteAll = async () => {
+    if (!selectedPortfolio) {
+      showNotification('error', 'No portfolio selected');
+      setDeleteAllConfirm(false);
+      return;
+    }
+    
+    setIsLoading(true);
+    try {
+      const { error } = await supabase
+        .from('transactions')
+        .delete()
+        .eq('portfolio_id', selectedPortfolio)
+        .eq('user_id', userId);
+      
+      if (error) throw error;
+      
+      showNotification('success', 'All transactions deleted successfully');
+      setTransactions([]);
+    } catch (error) {
+      console.error('Error deleting transactions:', error);
+      showNotification('error', 'Failed to delete transactions');
+    } finally {
+      setIsLoading(false);
+      setDeleteAllConfirm(false);
+    }
+  };
+
+  // Cancel delete all
+  const cancelDeleteAll = () => {
+    setDeleteAllConfirm(false);
+  };
+
+  // Button styles to match the Filter button
   const baseButtonClass = "text-sm px-3 py-1.5 rounded-md transition-colors font-medium";
   const activeButtonClass = "bg-[var(--accent-primary-20)] text-[var(--accent-primary)]";
   const inactiveButtonClass = "bg-transparent text-[var(--text-secondary)] hover:bg-[var(--bg-hover)] hover:text-[var(--text-primary)]";
@@ -140,6 +300,21 @@ const Transactions: React.FC<TransactionsProps> = ({
             <Plus className="h-3.5 w-3.5" />
             <span className="hidden xs:inline">Add Transaction</span>
           </button>
+          
+          {/* Portfolio selector - Updated styling to match Filter button */}
+          {availablePortfolios.length > 0 && (
+            <select
+              value={selectedPortfolio || ''}
+              onChange={(e) => setSelectedPortfolio(e.target.value)}
+              className={`${baseButtonClass} ${inactiveButtonClass} focus:outline-none`}
+            >
+              {availablePortfolios.map(portfolio => (
+                <option key={portfolio.id} value={portfolio.id}>
+                  {portfolio.name}
+                </option>
+              ))}
+            </select>
+          )}
         </div>
         
         <div className="flex flex-wrap items-center gap-2">
@@ -152,25 +327,23 @@ const Transactions: React.FC<TransactionsProps> = ({
             <span className="hidden xs:inline">Filters</span>
           </button>
           
-          <button
-            onClick={handleImport}
-            className={`${baseButtonClass} ${inactiveButtonClass} flex items-center gap-1.5`}
-          >
-            <FileUp className="h-3.5 w-3.5" />
-            <span className="hidden xs:inline">Import</span>
-          </button>
+          <ImportMenu 
+            onNotification={showNotification}
+            onImportSuccess={handleImportSuccess}
+            selectedPortfolio={selectedPortfolio || undefined}
+          />
           
-          <button
-            onClick={handleExport}
-            className={`${baseButtonClass} ${inactiveButtonClass} flex items-center gap-1.5`}
-          >
-            <FileDown className="h-3.5 w-3.5" />
-            <span className="hidden xs:inline">Export</span>
-          </button>
+          <ExportMenu 
+            onNotification={showNotification}
+            selectedCurrency={currency}
+            currencyRates={currencyRates}
+            selectedPortfolio={selectedPortfolio || undefined}
+          />
           
           <button
             onClick={handleDeleteAll}
-            className={`${baseButtonClass} text-red-500 hover:bg-red-500/10 flex items-center gap-1.5`}
+            className={`${baseButtonClass} ${inactiveButtonClass} text-red-500 hover:bg-red-500/10 flex items-center gap-1.5`}
+            disabled={!selectedPortfolio || transactions.length === 0}
           >
             <Trash2 className="h-3.5 w-3.5" />
             <span className="hidden xs:inline">Delete All</span>
@@ -187,13 +360,57 @@ const Transactions: React.FC<TransactionsProps> = ({
       )}
 
       {/* Transactions List */}
-      <TransactionsList
-        transactions={sortedTransactions}
-        sortKey={sortKey}
-        sortOrder={sortOrder}
-        handleSort={handleSort}
-        currency={currency}
-      />
+      {isLoading ? (
+        <div className="p-8 text-center text-[var(--text-secondary)]">
+          <div className="animate-spin rounded-full h-8 w-8 border-2 border-t-transparent border-[var(--accent-primary)] mx-auto mb-4"></div>
+          Loading transactions...
+        </div>
+      ) : (
+        <TransactionsList
+          transactions={sortedTransactions}
+          sortKey={sortKey}
+          sortOrder={sortOrder}
+          handleSort={handleSort}
+          currency={currency}
+        />
+      )}
+
+      {/* Notification */}
+      {notification && (
+        <div className={`fixed bottom-4 right-4 rounded-lg px-4 py-2 shadow-lg z-50 ${
+          notification.type === 'success' ? 'bg-green-500 text-white' : 'bg-red-500 text-white'
+        }`}>
+          {notification.message}
+        </div>
+      )}
+
+      {/* Delete All Confirmation Modal */}
+      {deleteAllConfirm && (
+        <div className="fixed inset-0 bg-black/80 flex items-center justify-center z-50">
+          <div className="bg-[var(--bg-secondary)] rounded-xl p-6 w-full max-w-md">
+            <h3 className="text-lg font-semibold text-[var(--text-primary)] mb-4">Delete All Transactions</h3>
+            <p className="text-[var(--text-secondary)]">
+              Are you sure you want to delete all transactions in this portfolio? This action cannot be undone.
+            </p>
+            <div className="flex justify-end gap-4 mt-6">
+              <button
+                onClick={cancelDeleteAll}
+                className="px-4 py-2 rounded-lg bg-[var(--bg-hover)] text-[var(--text-secondary)] hover:text-[var(--text-primary)]"
+                disabled={isLoading}
+              >
+                Cancel
+              </button>
+              <button
+                onClick={confirmDeleteAll}
+                className="px-4 py-2 rounded-lg bg-red-500/10 text-red-500 hover:bg-red-500/20"
+                disabled={isLoading}
+              >
+                {isLoading ? 'Deleting...' : 'Delete All'}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 };
