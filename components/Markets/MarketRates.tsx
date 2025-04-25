@@ -61,7 +61,12 @@ export function MarketRates({
   loading: initialLoading,
   selectedCurrency: initialSelectedCurrency,
   currencyRates: initialCurrencyRates,
-}: MarketRatesProps) {
+  activeCategory,
+  setActiveCategory,
+}: MarketRatesProps & {
+  activeCategory: "all" | "crypto" | "stocks" | "metals" | "currencies";
+  setActiveCategory: (category: "all" | "crypto" | "stocks" | "metals" | "currencies") => void;
+}) {
   const {
     settings,
     updateSettings,
@@ -170,7 +175,6 @@ export function MarketRates({
       setIsLoading(false);
 
     // This part handles real-time updates from Supabase
-
     const handleMetalsChanges = createGenericChangeHandler<Metal>(
       setMetals,
       mergeMetalData,
@@ -231,8 +235,6 @@ export function MarketRates({
       unregisterHandler("crypto", handleCryptoChanges);
       unregisterHandler("stocks", handleStocksChanges);
       unregisterHandler("currencies", handleCurrenciesChanges);
-      //clearInterval(refreshInterval);
-      //clearInterval(statusCheckInterval);
       if (process.env.NODE_ENV !== "development") {
         cleanupChannels();
       }
@@ -425,12 +427,14 @@ export function MarketRates({
 
   return (
     <div className="bg-[var(--bg-secondary)] rounded-xl mt-3">
-      {/* Header with period selector and view tabs */}
+      {/* Header with period selector, view tabs, and category filters */}
       <MarketHeader
         selectedPeriod={selectedPeriod}
         setSelectedPeriod={handlePeriodChange}
         view={view}
         setView={setView}
+        activeCategory={activeCategory}
+        setActiveCategory={setActiveCategory}
       />
 
       <div className="p-6 border-t border-gray-800/50">

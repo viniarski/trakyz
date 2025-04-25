@@ -13,3 +13,5 @@ export * from './user';
 export type CurrencyCode = 'USD' | 'EUR' | 'GBP' | 'CHF' | 'BTC' | 'ETH' | 'GOLD';
 
 export type AssetCategory = 'Crypto' | 'Stocks & Indexes' | 'Precious Metals' | 'Cash' | 'Real Estate' | 'Bonds' | 'Commodities' | 'REIT';
+
+export type MarketCategory = "all" | "crypto" | "stocks" | "metals" | "currencies";
