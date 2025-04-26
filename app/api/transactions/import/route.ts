@@ -1,23 +1,9 @@
 // app/api/transactions/import/route.ts
-
-// Add type declaration for js-xlsx
-declare module 'js-xlsx' {
-    export function read(data: any, opts?: any): any;
-    export namespace utils {
-      export function sheet_to_json(worksheet: any, opts?: any): any[];
-    }
-    export interface WorkBook {
-      SheetNames: string[];
-      Sheets: {
-        [sheet: string]: any;
-      };
-    }
-  }
   
   import { NextResponse } from 'next/server';
   import { createClient } from '@/lib/supabase/server';
   import * as Papa from 'papaparse';
-  import * as XLSX from 'js-xlsx'; // Changed from 'xlsx' to 'js-xlsx'
+  import * as XLSX from 'xlsx';
   
   interface ValidationError {
     row: number;
@@ -241,18 +227,29 @@ declare module 'js-xlsx' {
       else if (type === 'xlsx') {
         try {
           const buffer = await file.arrayBuffer();
-          // Updated to use js-xlsx with proper buffer handling
-          const workbook = XLSX.read(new Uint8Array(buffer), { type: 'array' });
-  
-          const firstSheetName = workbook.SheetNames[0];
-          const worksheet = workbook.Sheets[firstSheetName];
           
-          if (!worksheet) {
-            return NextResponse.json({ error: 'Empty workbook' }, { status: 400 });
+          // Try to use the most compatible approach
+          let workbook;
+          try {
+            workbook = XLSX.read(new Uint8Array(buffer), { type: 'array' });
+          } catch (e) {
+            // Fallback method
+            workbook = XLSX.read(buffer, { type: 'buffer' });
           }
   
-          importedData = XLSX.utils.sheet_to_json(worksheet);
+          const firstSheetName = workbook.SheetNames?.[0];
+          if (!firstSheetName) {
+            return NextResponse.json({ error: 'No sheets found in workbook' }, { status: 400 });
+          }
+          
+          const worksheet = workbook.Sheets[firstSheetName];
+          if (!worksheet) {
+            return NextResponse.json({ error: 'Empty worksheet' }, { status: 400 });
+          }
+  
+          importedData = XLSX.utils.sheet_to_json(worksheet, { defval: '' });
         } catch (error) {
+          console.error('Excel parsing error:', error);
           return NextResponse.json({ 
             error: 'Failed to parse Excel file',
             details: error instanceof Error ? error.message : 'Unknown error'
