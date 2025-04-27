@@ -2,14 +2,15 @@
 
 "use client";
 
-import React, { useState, useEffect } from "react";
-import { Transaction, CurrencyCode, Currency, Crypto } from "@/types";
+import { useState, useEffect } from "react";
+import { Transaction, CurrencyCode, Currency, Crypto, AssetCategory, Metal, Stock } from "@/types";
 import { useCurrencyStore } from "@/lib/stores/useCurrencyStore";
 import { Filter, Plus, Trash2 } from "lucide-react";
 import { TransactionsList } from "./components/TransactionsList";
 import { TransactionsFilters } from "./components/TransactionsFilters";
 import { ImportMenu } from "./components/import-menu";
 import { ExportMenu } from "./components/export-menu";
+import { AddTransactionModal } from "@/components/modals/add-transaction";
 import { createClient } from '@/lib/supabase/client';
 
 interface TransactionsProps {
@@ -53,7 +54,57 @@ const Transactions: React.FC<TransactionsProps> = ({
   const [currencyRates, setCurrencyRates] = useState<{
     currencies: Currency[] | null;
     crypto: Crypto[] | null;
-  }>({ currencies: null, crypto: null });
+    metals: Metal[] | null;
+    stocks: Stock[] | null;
+  }>({ currencies: null, crypto: null, metals: null, stocks: null });
+
+  // State for Add Transaction modal
+  const [showAddTransaction, setShowAddTransaction] = useState(false);
+  
+  // Handle adding a new transaction
+  const handleAddTransaction = () => {
+    setShowAddTransaction(true);
+  };
+  
+  // Function to add a transaction to the database
+  const addTransaction = async (transaction: {
+    transaction_type: 'BUY' | 'SELL'
+    category: AssetCategory
+    asset_type: string
+    quantity: number
+    price: number
+    date: string
+    portfolio_id: string
+  }) => {
+    try {
+      setIsLoading(true);
+      
+      const { error } = await supabase
+        .from('transactions')
+        .insert({
+          user_id: userId,
+          portfolio_id: transaction.portfolio_id,
+          transaction_type: transaction.transaction_type,
+          category: transaction.category,
+          asset_type: transaction.asset_type,
+          quantity: transaction.quantity,
+          price: transaction.price,
+          date: transaction.date
+        });
+      
+      if (error) throw error;
+      
+      // Refresh the transactions list
+      fetchTransactions(transaction.portfolio_id);
+      showNotification('success', 'Transaction added successfully');
+      setShowAddTransaction(false);
+    } catch (error) {
+      console.error('Error adding transaction:', error);
+      throw error;
+    } finally {
+      setIsLoading(false);
+    }
+  };
 
   // Get currency from store
   const { currency } = useCurrencyStore();
@@ -96,19 +147,22 @@ const Transactions: React.FC<TransactionsProps> = ({
     }
   }, [selectedPortfolio, filters]);
 
-  // Fetch current rates for currency conversion in exports
+  // Fetch current rates for currency conversion in exports and for market data
   useEffect(() => {
     const fetchRates = async () => {
       try {
-        const [{ data: metals }, { data: crypto }, { data: currencies }] = await Promise.all([
+        const [{ data: metals }, { data: crypto }, { data: currencies }, { data: stocks }] = await Promise.all([
           supabase.from("metals").select("*").order("date", { ascending: false }),
           supabase.from("crypto").select("*").order("date", { ascending: false }),
           supabase.from("currencies").select("*").order("date", { ascending: false }),
+          supabase.from("stocks").select("*").order("date", { ascending: false }),
         ]);
 
         setCurrencyRates({
           currencies: currencies || null,
-          crypto: crypto || null
+          crypto: crypto || null,
+          metals: metals || null,
+          stocks: stocks || null
         });
       } catch (error) {
         console.error('Error fetching rates:', error);
@@ -202,6 +256,7 @@ const Transactions: React.FC<TransactionsProps> = ({
         .eq('user_id', userId)
         .eq('portfolio_id', portfolioId);
       
+      // Handle date filtering
       if (filters.startDate) {
         query = query.gte('date', filters.startDate);
       }
@@ -236,11 +291,6 @@ const Transactions: React.FC<TransactionsProps> = ({
     } finally {
       setIsLoading(false);
     }
-  };
-
-  // Handle adding a new transaction
-  const handleAddTransaction = () => {
-    alert("Add transaction functionality to be implemented");
   };
 
   // Handle deleting all transactions
@@ -336,18 +386,21 @@ const Transactions: React.FC<TransactionsProps> = ({
           <ExportMenu 
             onNotification={showNotification}
             selectedCurrency={currency}
-            currencyRates={currencyRates}
+            currencyRates={{
+              currencies: currencyRates.currencies,
+              crypto: currencyRates.crypto
+            }}
             selectedPortfolio={selectedPortfolio || undefined}
           />
           
           <button
-            onClick={handleDeleteAll}
-            className={`${baseButtonClass} ${inactiveButtonClass} text-red-500 hover:bg-red-500/10 flex items-center gap-1.5`}
-            disabled={!selectedPortfolio || transactions.length === 0}
-          >
-            <Trash2 className="h-3.5 w-3.5" />
-            <span className="hidden xs:inline">Delete All</span>
-          </button>
+  onClick={handleDeleteAll}
+  className={`${baseButtonClass} ${inactiveButtonClass} text-red-500 hover:text-red-500 hover:bg-red-500/10 flex items-center gap-1.5`}
+  disabled={!selectedPortfolio || transactions.length === 0}
+>
+  <Trash2 className="h-3.5 w-3.5" />
+  <span className="hidden xs:inline">Delete All</span>
+</button>
         </div>
       </div>
 
@@ -410,6 +463,23 @@ const Transactions: React.FC<TransactionsProps> = ({
             </div>
           </div>
         </div>
+      )}
+      
+      {/* Add Transaction Modal */}
+      {showAddTransaction && (
+        <AddTransactionModal
+          onClose={() => setShowAddTransaction(false)}
+          onAddTransaction={addTransaction}
+          marketData={{
+            metals: currencyRates.metals || null,
+            crypto: currencyRates.crypto || null,
+            stocks: currencyRates.stocks || null,
+            currencies: currencyRates.currencies || null
+          }}
+          portfolios={availablePortfolios}
+          selectedPortfolioId={selectedPortfolio}
+          title="Add Transaction"
+        />
       )}
     </div>
   );

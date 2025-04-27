@@ -1,9 +1,9 @@
-// app/dashboard/components/portfolio/portfolio-header.tsx
+// app/dashboard/components/portfolio/components/portfolio-header.tsx
 
 'use client'
 
+import { useState } from 'react'
 import { Plus } from 'lucide-react'
-import { PortfolioSelector } from './portfolio-selector'
 import type { Portfolio } from '@/types'
 
 interface PortfolioHeaderProps {
@@ -27,27 +27,42 @@ export function PortfolioHeader({
 }: PortfolioHeaderProps) {
   if (!selectedPortfolio) return null;
   
+  // Button styles to match the Transactions component
+  const baseButtonClass = "text-sm px-3 py-1.5 rounded-md transition-colors font-medium";
+  const activeButtonClass = "bg-[var(--accent-primary-20)] text-[var(--accent-primary)]";
+  const inactiveButtonClass = "bg-transparent text-[var(--text-secondary)] hover:bg-[var(--bg-hover)] hover:text-[var(--text-primary)]";
+  
   return (
-    <div className="p-3 sm:p-4 md:p-4 flex justify-center items-center">
-      <div className="flex flex-wrap items-center gap-2 justify-center">
-        {/* Portfolio Selector */}
-        <PortfolioSelector
-          portfolios={portfolios}
-          selectedPortfolio={selectedPortfolio}
-          onSelectPortfolio={onSelectPortfolio}
-          onCreatePortfolio={onCreatePortfolio}
-          onRenamePortfolio={onRenamePortfolio}
-          onDeletePortfolio={onDeletePortfolio}
-        />
-        
-        {/* Add Asset Button */}
+    <div className="p-4 flex justify-between items-center">
+      <div className="flex flex-wrap items-center gap-2">
+        {/* Add Asset Button - now on the left */}
         <button
           onClick={() => setShowAddAsset(true)}
-          className="flex items-center justify-center gap-1 sm:gap-2 px-2 sm:px-4 py-1 sm:py-2 bg-[var(--accent-primary-10)] hover:bg-[var(--accent-primary-20)] text-[var(--accent-primary)] rounded-lg text-sm transition-colors"
+          className={`${baseButtonClass} ${activeButtonClass} flex items-center gap-1.5`}
         >
-          <Plus className="h-3 sm:h-4 w-3 sm:w-4" />
-          Add Asset
+          <Plus className="h-3.5 w-3.5" />
+          <span className="hidden xs:inline">Add Asset</span>
         </button>
+        
+        {/* Portfolio Selector - also on the left with matching style */}
+        <select
+          value={selectedPortfolio.id}
+          onChange={(e) => {
+            const portfolio = portfolios.find(p => p.id === e.target.value);
+            if (portfolio) onSelectPortfolio(portfolio);
+          }}
+          className={`${baseButtonClass} ${inactiveButtonClass} focus:outline-none`}
+        >
+          {portfolios.map(portfolio => (
+            <option key={portfolio.id} value={portfolio.id}>
+              {portfolio.name}
+            </option>
+          ))}
+        </select>
+      </div>
+      
+      <div className="flex flex-wrap items-center gap-2">
+        {/* Right side placeholder */}
       </div>
     </div>
   )

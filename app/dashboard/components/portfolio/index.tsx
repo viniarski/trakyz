@@ -1,4 +1,4 @@
-// app/dashboard/components/portfolio/Portfolio.tsx
+// app/dashboard/components/portfolio/index.tsx
 
 'use client'
 
@@ -9,7 +9,7 @@ import { useCurrencyStore } from "@/lib/stores/useCurrencyStore";
 import { Plus, ChevronDown } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { CreatePortfolioModal } from "./modals/create-portfolio-modal";
-import { AddAssetModal } from "./modals/add-asset-modal";
+import { AddTransactionModal } from "@/components/modals/add-transaction";
 
 interface PortfoliosProps {
   portfolios: Portfolio[];
@@ -54,12 +54,14 @@ const Portfolios: React.FC<PortfoliosProps> = ({ portfolios, userId }) => {
   };
 
   // Handle adding a new asset
-  const handleAddAsset = async (asset: {
-    category: string;
-    asset_type: string;
-    quantity: number;
-    price: number;
-    date: string;
+  const handleAddTransaction = async (transaction: {
+    transaction_type: 'BUY' | 'SELL'
+    category: string
+    asset_type: string
+    quantity: number
+    price: number
+    date: string
+    portfolio_id: string
   }) => {
     if (!selectedPortfolio) return;
     
@@ -71,13 +73,13 @@ const Portfolios: React.FC<PortfoliosProps> = ({ portfolios, userId }) => {
           'x-user-id': userId,
         },
         body: JSON.stringify({
-          portfolio_id: selectedPortfolio.id,
-          category: asset.category,
-          asset_type: asset.asset_type,
-          transaction_type: 'BUY',
-          quantity: asset.quantity,
-          price: asset.price,
-          date: asset.date,
+          portfolio_id: transaction.portfolio_id,
+          transaction_type: transaction.transaction_type,
+          category: transaction.category,
+          asset_type: transaction.asset_type,
+          quantity: transaction.quantity,
+          price: transaction.price,
+          date: transaction.date,
         }),
       });
 
@@ -88,13 +90,16 @@ const Portfolios: React.FC<PortfoliosProps> = ({ portfolios, userId }) => {
       // Refresh the page to show new asset
       window.location.reload();
       
+      // Close the modal
+      setShowAddAsset(false);
+      
     } catch (error) {
       console.error('Error adding asset:', error);
       alert('Failed to add asset');
     }
   };
 
-  // Mock market data for AddAssetModal
+  // Mock market data for AddTransactionModal
   const marketData = {
     metals: [],
     crypto: [],
@@ -255,11 +260,16 @@ const Portfolios: React.FC<PortfoliosProps> = ({ portfolios, userId }) => {
       )}
 
       {showAddAsset && selectedPortfolio && (
-        <AddAssetModal
+        <AddTransactionModal
           onClose={() => setShowAddAsset(false)}
-          onAddAsset={handleAddAsset}
+          onAddTransaction={handleAddTransaction}
           marketData={marketData}
-          portfolioName={selectedPortfolio.name}
+          portfolios={[{ id: selectedPortfolio.id, name: selectedPortfolio.name }]}
+          selectedPortfolioId={selectedPortfolio.id}
+          title="Add New Asset"
+          initialValues={{
+            transactionType: 'BUY'
+          }}
         />
       )}
     </div>

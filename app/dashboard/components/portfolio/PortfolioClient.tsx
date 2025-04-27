@@ -3,13 +3,12 @@
 'use client'
 
 import { useState, useEffect, useCallback, useRef } from 'react'
-import { Loader2 } from 'lucide-react'
+import { Loader2, Plus } from 'lucide-react'
 
-import { PortfolioHeader } from './components/portfolio-header'
 import { PortfolioSummary } from './components/portfolio-summary'
 import { CategoryList } from './components/category-list'
 import { BuySellModal } from './modals/buy-sell-modal'
-import { AddAssetModal } from './modals/add-asset-modal'
+import { AddTransactionModal } from '@/components/modals/add-transaction'
 import { CreatePortfolioModal } from './modals/create-portfolio-modal'
 
 import type {
@@ -401,36 +400,44 @@ export function PortfolioClient({
     }
   }
 
-  // Handle adding a new asset
-  const handleAddAsset = async (newAsset: {
+  // Handle adding a new asset/transaction
+  const handleAddAsset = async (transaction: {
+    transaction_type: 'BUY' | 'SELL'
     category: AssetCategory
     asset_type: string
     quantity: number
     price: number
     date: string
+    portfolio_id: string
   }) => {
-    if (!selectedPortfolio) return
-
+    if (!selectedPortfolio) return;
+    
     try {
       // Close modal first to prevent flash
-      setShowAddAsset(false)
+      setShowAddAsset(false);
       
       // Add indicator
-      const indicator = document.createElement('div')
-      indicator.className = 'fixed bottom-4 right-4 bg-[var(--accent-primary)] text-white px-4 py-2 rounded shadow z-50'
-      indicator.innerText = 'Adding asset...'
-      document.body.appendChild(indicator)
+      const indicator = document.createElement('div');
+      indicator.className = 'fixed bottom-4 right-4 bg-[var(--accent-primary)] text-white px-4 py-2 rounded shadow z-50';
+      indicator.innerText = 'Adding asset...';
+      document.body.appendChild(indicator);
       
       // Add transaction (buying a new asset)
-      await handleAddTransaction('BUY', newAsset)
+      await handleAddTransaction('BUY', {
+        category: transaction.category,
+        asset_type: transaction.asset_type,
+        quantity: transaction.quantity,
+        price: transaction.price,
+        date: transaction.date
+      });
       
       // Remove indicator
-      document.body.removeChild(indicator)
+      document.body.removeChild(indicator);
     } catch (error) {
-      console.error('Error adding asset:', error)
-      alert(error instanceof Error ? error.message : 'Failed to add asset')
+      console.error('Error adding asset:', error);
+      alert(error instanceof Error ? error.message : 'Failed to add asset');
     }
-  }
+  };
 
   // Toggle category expansion
   const toggleCategory = (category: AssetCategory) => {
@@ -507,6 +514,11 @@ export function PortfolioClient({
     }
   }, [initialTransactions, initialDefaultPortfolio])
 
+  // Button styles to match the Transactions component
+  const baseButtonClass = "text-sm px-3 py-1.5 rounded-md transition-colors font-medium";
+  const activeButtonClass = "bg-[var(--accent-primary-20)] text-[var(--accent-primary)]";
+  const inactiveButtonClass = "bg-transparent text-[var(--text-secondary)] hover:bg-[var(--bg-hover)] hover:text-[var(--text-primary)]";
+
   if (isPortfolioLoading) {
     return (
       <div className="bg-[var(--bg-secondary)] rounded-xl mt-4 min-h-[300px]">
@@ -568,15 +580,41 @@ export function PortfolioClient({
 
   return (
     <div className="bg-[var(--bg-secondary)] rounded-xl mt-4">
-      <PortfolioHeader 
-        setShowAddAsset={setShowAddAsset}
-        portfolios={portfolios}
-        selectedPortfolio={selectedPortfolio}
-        onSelectPortfolio={setSelectedPortfolio}
-        onCreatePortfolio={() => setShowCreatePortfolio(true)}
-        onRenamePortfolio={handleRenamePortfolio}
-        onDeletePortfolio={handleDeletePortfolio}
-      />
+      {/* Header with buttons */}
+      <div className="p-4 flex justify-between items-center">
+        <div className="flex flex-wrap items-center gap-2">
+          {/* Add Asset on the left */}
+          <button
+            onClick={() => setShowAddAsset(true)}
+            className={`${baseButtonClass} ${activeButtonClass} flex items-center gap-1.5`}
+          >
+            <Plus className="h-3.5 w-3.5" />
+            <span className="hidden xs:inline">Add Asset</span>
+          </button>
+          
+          {/* Portfolio selector - same style as Transactions */}
+          {portfolios.length > 0 && (
+            <select
+              value={selectedPortfolio?.id || ''}
+              onChange={(e) => {
+                const portfolio = portfolios.find(p => p.id === e.target.value);
+                if (portfolio) setSelectedPortfolio(portfolio);
+              }}
+              className={`${baseButtonClass} ${inactiveButtonClass} focus:outline-none`}
+            >
+              {portfolios.map(portfolio => (
+                <option key={portfolio.id} value={portfolio.id}>
+                  {portfolio.name}
+                </option>
+              ))}
+            </select>
+          )}
+        </div>
+        
+        <div className="flex flex-wrap items-center gap-2">
+          {/* Right side placeholder for future buttons */}
+        </div>
+      </div>
 
       <div className="p-3 sm:p-6 md:p-6">
         {isSummaryLoading ? (
@@ -643,11 +681,16 @@ export function PortfolioClient({
       )}
 
       {showAddAsset && selectedPortfolio && (
-        <AddAssetModal
+        <AddTransactionModal
           onClose={() => setShowAddAsset(false)}
-          onAddAsset={handleAddAsset}
+          onAddTransaction={handleAddAsset}
           marketData={marketData}
-          portfolioName={selectedPortfolio.name}
+          portfolios={[{ id: selectedPortfolio.id, name: selectedPortfolio.name }]}
+          selectedPortfolioId={selectedPortfolio.id}
+          title="Add New Asset"
+          initialValues={{
+            transactionType: 'BUY'
+          }}
         />
       )}
 
