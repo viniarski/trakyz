@@ -1,4 +1,4 @@
-// app/dashboard/components/transactions/TransactionsList.tsx
+// components/Transactions/TransactionsList.tsx
 
 import React from 'react';
 import { ChevronUp } from 'lucide-react';

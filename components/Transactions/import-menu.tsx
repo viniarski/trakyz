@@ -1,4 +1,4 @@
-// app/dashboard/components/transactions/components/import-menu.tsx
+// components/Transactions/components/import-menu.tsx
 
 'use client'
 

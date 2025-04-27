@@ -1,4 +1,4 @@
-// app/dashboard/components/transactions/components/export-modal.tsx
+// components/Transactions/components/export-modal.tsx
 
 'use client'
 

@@ -6,10 +6,10 @@ import { useState, useEffect } from "react";
 import { Transaction, CurrencyCode, Currency, Crypto, AssetCategory, Metal, Stock } from "@/types";
 import { useCurrencyStore } from "@/lib/stores/useCurrencyStore";
 import { Filter, Plus, Trash2 } from "lucide-react";
-import { TransactionsList } from "./components/TransactionsList";
-import { TransactionsFilters } from "./components/TransactionsFilters";
-import { ImportMenu } from "./components/import-menu";
-import { ExportMenu } from "./components/export-menu";
+import { TransactionsList } from "@/components/Transactions/TransactionsList";
+import { TransactionsFilters } from "@/components/Transactions/TransactionsFilters";
+import { ImportMenu } from "@/components/Transactions/import-menu";
+import { ExportMenu } from "@/components/Transactions/export-menu";
 import { AddTransactionModal } from "@/components/modals/add-transaction";
 import { createClient } from '@/lib/supabase/client';
 

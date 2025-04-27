@@ -1,4 +1,4 @@
-// app/dashboard/components/transactions/components/TransactionsFilters.tsx
+// components/Transactions/components/TransactionsFilters.tsx
 
 import React from 'react';
 import { Input } from '@/components/ui/input';

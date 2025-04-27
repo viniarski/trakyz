@@ -1,4 +1,4 @@
-// app/dashboard/components/transactions/components/import-modal.tsx
+// components/Transactions/components/import-modal.tsx
 'use client'
 
 import { useState } from 'react'
