@@ -3,14 +3,13 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import { Transaction, CurrencyCode, Currency, Crypto, AssetCategory, Metal, Stock } from "@/types";
+import { Transaction, Currency, Crypto, AssetCategory, Metal, Stock } from "@/types";
 import { useCurrencyStore } from "@/lib/stores/useCurrencyStore";
 import { Filter, Plus, Trash2 } from "lucide-react";
-import { TransactionsList } from "@/components/Transactions/TransactionsList";
-import { TransactionsFilters } from "@/components/Transactions/TransactionsFilters";
-import { ImportMenu } from "@/components/Transactions/import-menu";
-import { ExportMenu } from "@/components/Transactions/export-menu";
-import { AddTransactionModal } from "@/components/modals/add-transaction";
+import { TransactionsList, TransactionsFilters } from "@/components/Transactions";
+import { ImportMenu } from "@/components/Transactions/import/ImportMenu";
+import { ExportMenu } from "@/components/Transactions/export/ExportMenu";
+import { AddAsset } from "@/components/modals/AddAsset";
 import { createClient } from '@/lib/supabase/client';
 
 interface TransactionsProps {
@@ -465,9 +464,9 @@ const Transactions: React.FC<TransactionsProps> = ({
         </div>
       )}
       
-      {/* Add Transaction Modal */}
+      {/* Add Transaction - AddAsset Modal */}
       {showAddTransaction && (
-        <AddTransactionModal
+        <AddAsset
           onClose={() => setShowAddTransaction(false)}
           onAddTransaction={addTransaction}
           marketData={{

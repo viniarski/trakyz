@@ -8,8 +8,8 @@ import { formatCurrency } from "@/lib/utils";
 import { useCurrencyStore } from "@/lib/stores/useCurrencyStore";
 import { Plus, ChevronDown } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import { CreatePortfolioModal } from "./modals/create-portfolio-modal";
-import { AddTransactionModal } from "@/components/modals/add-transaction";
+import { CreatePortfolioModal } from "../../../../components/Portfolios/modals/create-portfolio-modal";
+import { AddAsset } from "@/components/modals/AddAsset";
 
 interface PortfoliosProps {
   portfolios: Portfolio[];
@@ -99,7 +99,7 @@ const Portfolios: React.FC<PortfoliosProps> = ({ portfolios, userId }) => {
     }
   };
 
-  // Mock market data for AddTransactionModal
+  // Mock market data for AddAsset
   const marketData = {
     metals: [],
     crypto: [],
@@ -260,7 +260,7 @@ const Portfolios: React.FC<PortfoliosProps> = ({ portfolios, userId }) => {
       )}
 
       {showAddAsset && selectedPortfolio && (
-        <AddTransactionModal
+        <AddAsset
           onClose={() => setShowAddAsset(false)}
           onAddTransaction={handleAddTransaction}
           marketData={marketData}

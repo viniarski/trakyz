@@ -20,7 +20,7 @@ type AssetOption = {
   readonly name: string;
 }
 
-interface AddTransactionModalProps {
+interface AddAssetProps {
   onClose: () => void
   onAddTransaction: (transaction: {
     transaction_type: 'BUY' | 'SELL'
@@ -48,7 +48,7 @@ interface AddTransactionModalProps {
   }
 }
 
-export function AddTransactionModal({ 
+export function AddAsset({ 
   onClose, 
   onAddTransaction, 
   marketData,
@@ -56,7 +56,7 @@ export function AddTransactionModal({
   selectedPortfolioId,
   title = "Add Transaction",
   initialValues = {}
-}: AddTransactionModalProps) {
+}: AddAssetProps) {
   const [transactionType, setTransactionType] = useState<'BUY' | 'SELL'>(initialValues.transactionType || 'BUY')
   const [category, setCategory] = useState<AssetCategory>(initialValues.category || 'Crypto')
   const [assetType, setAssetType] = useState(initialValues.assetType || '')

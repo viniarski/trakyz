@@ -4,7 +4,7 @@
 
 import { useState, useRef, useEffect } from 'react'
 import { Download, ChevronDown, FileSpreadsheet, FileJson, FileText, File } from 'lucide-react'
-import { ExportModal } from './export-modal'
+import { ExportModal } from './ExportModal'
 import { CurrencyCode, Currency, Crypto } from '@/types'
 
 interface ExportMenuProps {

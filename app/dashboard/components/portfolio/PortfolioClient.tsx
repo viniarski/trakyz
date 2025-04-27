@@ -5,11 +5,11 @@
 import { useState, useEffect, useCallback, useRef } from 'react'
 import { Loader2, Plus } from 'lucide-react'
 
-import { PortfolioSummary } from './components/portfolio-summary'
-import { CategoryList } from './components/category-list'
-import { BuySellModal } from './modals/buy-sell-modal'
-import { AddTransactionModal } from '@/components/modals/add-transaction'
-import { CreatePortfolioModal } from './modals/create-portfolio-modal'
+import { PortfolioSummary } from '../../../../components/Portfolios/components/portfolio-summary'
+import { CategoryList } from '../../../../components/Portfolios/components/category-list'
+import { BuySellModal } from '../../../../components/Portfolios/modals/buy-sell-modal'
+import { AddAsset } from '@/components/modals/AddAsset'
+import { CreatePortfolioModal } from '../../../../components/Portfolios/modals/create-portfolio-modal'
 
 import type {
   AssetCategory,
@@ -681,7 +681,7 @@ export function PortfolioClient({
       )}
 
       {showAddAsset && selectedPortfolio && (
-        <AddTransactionModal
+        <AddAsset
           onClose={() => setShowAddAsset(false)}
           onAddTransaction={handleAddAsset}
           marketData={marketData}
