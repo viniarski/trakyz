@@ -1,16 +1,16 @@
-// app/dashboard/components/transactions/Transactions.tsx
-
 "use client";
 
 import { useState, useEffect } from "react";
 import { Transaction, Currency, Crypto, AssetCategory, Metal, Stock } from "@/types";
 import { useCurrencyStore } from "@/lib/stores/useCurrencyStore";
 import { Filter, Plus, Trash2 } from "lucide-react";
-import { TransactionsList, TransactionsFilters } from "@/components/Transactions";
+import { TransactionsList } from "@/components/Transactions";
+import Filters from "@/components/modals/Filters";
 import { ImportMenu } from "@/components/Transactions/import/ImportMenu";
 import { ExportMenu } from "@/components/Transactions/export/ExportMenu";
 import { AddAsset } from "@/components/modals/AddAsset";
 import { createClient } from '@/lib/supabase/client';
+import DeleteAll from "@/components/modals/DeleteAll";
 
 interface TransactionsProps {
   transactions: Transaction[];
@@ -393,23 +393,22 @@ const Transactions: React.FC<TransactionsProps> = ({
           />
           
           <button
-  onClick={handleDeleteAll}
-  className={`${baseButtonClass} ${inactiveButtonClass} text-red-500 hover:text-red-500 hover:bg-red-500/10 flex items-center gap-1.5`}
-  disabled={!selectedPortfolio || transactions.length === 0}
->
-  <Trash2 className="h-3.5 w-3.5" />
-  <span className="hidden xs:inline">Delete All</span>
-</button>
+            onClick={handleDeleteAll}
+            className={`${baseButtonClass} ${inactiveButtonClass} text-red-500 hover:text-red-500 hover:bg-red-500/10 flex items-center gap-1.5`}
+            disabled={!selectedPortfolio || transactions.length === 0}
+          >
+            <Trash2 className="h-3.5 w-3.5" />
+            <span className="hidden xs:inline">Delete All</span>
+          </button>
         </div>
       </div>
 
       {/* Filters */}
-      {showFilters && (
-        <TransactionsFilters 
-          filters={filters} 
-          setFilters={setFilters} 
-        />
-      )}
+      <Filters 
+        filters={filters} 
+        setFilters={setFilters} 
+        showFilters={showFilters}
+      />
 
       {/* Transactions List */}
       {isLoading ? (
@@ -438,30 +437,11 @@ const Transactions: React.FC<TransactionsProps> = ({
 
       {/* Delete All Confirmation Modal */}
       {deleteAllConfirm && (
-        <div className="fixed inset-0 bg-black/80 flex items-center justify-center z-50">
-          <div className="bg-[var(--bg-secondary)] rounded-xl p-6 w-full max-w-md">
-            <h3 className="text-lg font-semibold text-[var(--text-primary)] mb-4">Delete All Transactions</h3>
-            <p className="text-[var(--text-secondary)]">
-              Are you sure you want to delete all transactions in this portfolio? This action cannot be undone.
-            </p>
-            <div className="flex justify-end gap-4 mt-6">
-              <button
-                onClick={cancelDeleteAll}
-                className="px-4 py-2 rounded-lg bg-[var(--bg-hover)] text-[var(--text-secondary)] hover:text-[var(--text-primary)]"
-                disabled={isLoading}
-              >
-                Cancel
-              </button>
-              <button
-                onClick={confirmDeleteAll}
-                className="px-4 py-2 rounded-lg bg-red-500/10 text-red-500 hover:bg-red-500/20"
-                disabled={isLoading}
-              >
-                {isLoading ? 'Deleting...' : 'Delete All'}
-              </button>
-            </div>
-          </div>
-        </div>
+        <DeleteAll
+          isLoading={isLoading}
+          onConfirm={confirmDeleteAll}
+          onCancel={cancelDeleteAll}
+        />
       )}
       
       {/* Add Transaction - AddAsset Modal */}

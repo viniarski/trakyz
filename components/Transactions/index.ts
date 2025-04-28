@@ -1,4 +1,4 @@
-// components/transactions/index.ts
+// components/Transactions/index.ts
 
 // Main components
 export * from './TransactionsList';
