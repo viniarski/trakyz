@@ -4,7 +4,7 @@
 
 import { useState } from 'react'
 import { CreditCard, Calendar, Receipt, Shield, DownloadCloud, AlertCircle, Info, CheckCircle } from 'lucide-react'
-import { Button } from '@/components/ui/Button'
+import { Button } from '@/components/ui/button'
 import { User } from '@supabase/supabase-js'
 
 interface SubscriptionSectionProps {

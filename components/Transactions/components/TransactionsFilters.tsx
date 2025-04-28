@@ -1,7 +1,7 @@
 // components/Transactions/components/TransactionsFilters.tsx
 
 import React from 'react';
-import { Input } from '@/components/ui/Input';
+import { Input } from '@/components/ui/input';
 
 interface FiltersState {
   startDate: string;
