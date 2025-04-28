@@ -1,4 +1,4 @@
-// components/ui/Navigation.tsx
+// components/ui/navigation.tsx
 
 'use client'
 
