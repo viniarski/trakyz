@@ -1,4 +1,4 @@
-// components/modals/AddAsset.tsx
+// components/AddAsset.tsx
 
 'use client'
 

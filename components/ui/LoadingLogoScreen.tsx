@@ -1,4 +1,4 @@
-// components/ui/loading-screen.tsx
+// components/ui/LoadingLogoScreen.tsx
 
 'use client';
 

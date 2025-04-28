@@ -4,7 +4,7 @@
 
 import Link from 'next/link'
 import Image from 'next/image'
-import { CtaButton } from '@/components/ui/cta'
+import { CtaButton } from '@/components/ui/CTA'
 
 export default function Navigation() {
   return (

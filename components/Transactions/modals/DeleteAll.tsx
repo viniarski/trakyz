@@ -1,5 +1,4 @@
-// components/modals/DeleteAll.tsx
-
+// components/Transactions/modals/DeleteAll.tsx
 import React from 'react';
 
 interface DeleteAllProps {

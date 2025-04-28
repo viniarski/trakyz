@@ -4,7 +4,7 @@
 
 import { useState, useMemo } from 'react'
 import { Star, TrendingUp, TrendingDown } from 'lucide-react'
-import { CategoryIcon } from '@/components/ui/category-icon'
+import { CategoryIcon } from '@/components/ui/CategoryIcon'
 import { useCurrencyConverter } from '@/hooks/useCurrencyConverter'
 import { 
   Metal, 
@@ -15,7 +15,7 @@ import {
   Crypto,
   WatchlistItem
 } from '@/types'
-import { AssetContextMenu } from '../ui/context-menu'
+import { AssetContextMenu } from '../ui/ContextMenu'
 
 interface WatchlistProps {
   watchlist: WatchlistItem[];

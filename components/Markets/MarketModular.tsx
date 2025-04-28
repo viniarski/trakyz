@@ -21,7 +21,7 @@ import {
   WatchlistItem
 } from "@/types";
 import { useCurrencyConverter } from "@/hooks/useCurrencyConverter";
-import { AssetContextMenu } from "../ui/context-menu";
+import { AssetContextMenu } from "../ui/ContextMenu";
 
 type Asset = Currency | CryptoType | Metal | Stock;
 

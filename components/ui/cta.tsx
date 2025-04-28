@@ -1,4 +1,4 @@
-// components/ui/cta.tsx
+// components/ui/CTA.tsx
 
 'use client'
 

@@ -4,7 +4,7 @@
 
 import { useState } from 'react'
 import { X, AlertCircle } from 'lucide-react'
-import { CategoryIcon } from '@/components/ui/category-icon'
+import { CategoryIcon } from '@/components/ui/CategoryIcon'
 import { formatCurrency } from '@/lib/utils'
 import { AssetCategory } from '@/types'
 

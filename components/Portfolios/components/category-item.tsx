@@ -2,7 +2,7 @@
 
 import { ChevronUp, ChevronDown, TrendingUp, TrendingDown } from 'lucide-react'
 import { formatCurrency } from '@/lib/utils'
-import { CategoryIcon } from '@/components/ui/category-icon'
+import { CategoryIcon } from '@/components/ui/CategoryIcon'
 import { AssetList } from './asset-list'
 import { AssetCategory, CategorySummary, CurrencyCode, PortfolioAsset } from '@/types'
 

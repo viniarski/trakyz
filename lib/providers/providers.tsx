@@ -5,7 +5,7 @@
 import { useState, useEffect } from 'react'
 import ThemeInitializer from '@/components/ThemeInitializer'
 import CurrencyInitializer from '@/components/CurrencyInitializer'
-import { LoadingScreen } from '@/components/ui/loading-screen'
+import { LoadingScreen } from '@/components/ui/LoadingLogoScreen'
 import { useThemeStore } from '@/lib/stores/useThemeStore'
 import { usePathname } from 'next/navigation'
 

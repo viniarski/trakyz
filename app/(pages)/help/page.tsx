@@ -2,8 +2,8 @@
 
 'use client'
 
-import Navigation from '@/components/ui/navigation'
-import PageHeader from '@/components/ui/page-header'
+import Navigation from '@/components/ui/Navigation'
+import PageHeader from '@/components/ui/PageHeader'
 import QuickLinks from './components/quick-links'
 import FAQSection from './components/faq'
 import ContactSupport from './components/contact-support'

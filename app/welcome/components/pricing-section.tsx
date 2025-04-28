@@ -4,7 +4,7 @@
 
 import { useState } from 'react'
 import { Check } from 'lucide-react'
-import { CtaButton } from '@/components/ui/cta'
+import { CtaButton } from '@/components/ui/CTA'
 
 export default function PricingSection() {
   const [isYearly, setIsYearly] = useState(false) // Changed to false for monthly default

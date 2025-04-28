@@ -1,9 +1,9 @@
-// components/Transactions/TransactionsList.tsx
+// components/Transactions/components/TransactionsList.tsx
 
 import React from 'react';
 import { ChevronUp } from 'lucide-react';
 import { formatCurrency } from '@/lib/utils';
-import { CategoryIcon } from '@/components/ui/category-icon';
+import { CategoryIcon } from '@/components/ui/CategoryIcon';
 import { Transaction, CurrencyCode } from '@/types';
 
 type SortKey =

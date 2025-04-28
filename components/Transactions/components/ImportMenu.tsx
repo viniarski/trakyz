@@ -4,7 +4,7 @@
 
 import { useState, useRef, useEffect } from 'react'
 import { Upload, ChevronDown, FileSpreadsheet, FileJson, FileText } from 'lucide-react'
-import { ImportModal } from '@/components/modals/ImportModal'
+import { ImportModal } from '@/components/Transactions/modals/ImportModal'
 
 interface ImportMenuProps {
   onNotification: (type: 'success' | 'error', message: string) => void

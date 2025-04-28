@@ -1,4 +1,4 @@
-// components/Transactions/components/ExportModal.tsx
+// components/Transactions/modals/ExportModal.tsx
 
 'use client'
 

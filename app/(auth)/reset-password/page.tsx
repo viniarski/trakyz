@@ -3,8 +3,8 @@
 import { resetPasswordAction } from "@/app/actions";
 import { FormMessage, Message } from "@/components/FormMessage";
 import { SubmitButton } from "@/components/SubmitButton";
-import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
+import { Input } from "@/components/ui/Input";
+import { Label } from "@/components/ui/Label";
 import Link from "next/link";
 
 export default async function ResetPassword(props: {

@@ -2,8 +2,8 @@
 
 'use client'
 
-import Navigation from '@/components/ui/navigation'
-import PageHeader from '@/components/ui/page-header'
+import Navigation from '@/components/ui/Navigation'
+import PageHeader from '@/components/ui/PageHeader'
 import SecurityOverview from './components/security-overview'
 import SecurityFeatures from './components/security-features'
 import SecurityPractices from './components/security-practices'

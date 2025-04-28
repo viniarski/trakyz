@@ -1,4 +1,4 @@
-// components/modals/ImportModal.tsx
+// components/Transactions/modals/ImportModal.tsx
 
 import { useState } from 'react'
 import { X, Upload } from 'lucide-react'

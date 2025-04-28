@@ -1,4 +1,4 @@
-import { Filter } from "lucide-react";
+// components/Transactions/modals/Filters.tsx
 
 interface FiltersProps {
   filters: {

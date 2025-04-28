@@ -2,7 +2,7 @@
 
 'use client'
 
-import { CtaButton } from '@/components/ui/cta'
+import { CtaButton } from '@/components/ui/CTA'
 
 export default function AdditionalSupport() {
   return (

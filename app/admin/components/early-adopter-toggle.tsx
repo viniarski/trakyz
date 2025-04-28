@@ -2,7 +2,7 @@
 'use client'
 
 import { useState, useEffect } from 'react'
-import { Switch } from '@/components/ui/switch'
+import { Switch } from '@/components/ui/Switch'
 import { createClient } from '@/lib/supabase/client'
 
 export function EarlyAdopterToggle() {
