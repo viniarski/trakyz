@@ -2,7 +2,7 @@
 
 'use client'
 
-import Navigation from '@/components/ui/Navigation'
+import Navigation from '@/components/ui/navigation'
 import PageHeader from '@/components/ui/PageHeader'
 import AboutOverview from './components/about-overview'
 import MissionVision from './components/mission-vision'

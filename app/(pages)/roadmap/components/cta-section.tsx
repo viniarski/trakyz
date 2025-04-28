@@ -2,7 +2,7 @@
 
 'use client'
 
-import { CtaButtonWithArrow } from '@/components/ui/CTA'
+import { CtaButtonWithArrow } from '@/components/ui/cta'
 
 export default function CtaSection() {
   return (

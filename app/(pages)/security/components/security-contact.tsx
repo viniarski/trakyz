@@ -3,7 +3,7 @@
 'use client'
 
 import { Mail } from 'lucide-react'
-import { CtaButton } from '@/components/ui/CTA'
+import { CtaButton } from '@/components/ui/cta'
 
 export default function SecurityContact() {
   return (

@@ -3,7 +3,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import Navigation from "@/components/ui/Navigation";
+import Navigation from "@/components/ui/navigation";
 import PageHeader from "@/components/ui/PageHeader";
 import AccountSection from "./account-section";
 import CustomizationSection from "./customization-section";

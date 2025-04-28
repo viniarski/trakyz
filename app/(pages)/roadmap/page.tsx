@@ -2,7 +2,7 @@
 
 'use client'
 
-import Navigation from '@/components/ui/Navigation'
+import Navigation from '@/components/ui/navigation'
 import PageHeader from '@/components/ui/PageHeader'
 import FeatureList from './components/feature-list'
 import CtaSection from './components/cta-section'
