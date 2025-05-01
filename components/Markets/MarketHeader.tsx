@@ -2,7 +2,8 @@
 
 "use client";
 
-import { Star, Bitcoin, LineChart, Banknote, ShoppingBag } from "lucide-react";
+import { Bitcoin, LineChart, Banknote, ShoppingBag, Star } from "lucide-react";
+import { Button } from "@/components/ui/button";
 import { SelectedPeriod, MarketCategory } from "@/types";
 
 interface MarketHeaderProps {
@@ -22,77 +23,86 @@ export function MarketHeader({
   activeCategory,
   setActiveCategory,
 }: MarketHeaderProps) {
-  // Button styles to match Transactions.tsx
-  const baseButtonClass = "text-sm px-3 py-1.5 rounded-md transition-colors font-medium";
-  const activeButtonClass = "bg-[var(--accent-primary-20)] text-[var(--accent-primary)]";
-  const inactiveButtonClass = "bg-transparent text-[var(--text-secondary)] hover:bg-[var(--bg-hover)] hover:text-[var(--text-primary)]";
-
   return (
     <div className="p-4 flex justify-between items-center flex-wrap gap-y-2">
       {/* Category Filter Buttons on the left */}
       <div className="flex flex-wrap gap-2">
-        <button
+        <Button 
           onClick={() => setActiveCategory("all")}
-          className={`${baseButtonClass} ${activeCategory === "all" ? activeButtonClass : inactiveButtonClass} flex items-center gap-1.5`}
+          variant={activeCategory === "all" ? "subtle" : "ghost"}
+          size="sm"
+          className="flex items-center gap-1.5"
         >
           <LineChart className="h-3.5 w-3.5" />
           <span>All</span>
-        </button>
+        </Button>
         
-        <button
+        <Button
           onClick={() => setActiveCategory("crypto")}
-          className={`${baseButtonClass} ${activeCategory === "crypto" ? activeButtonClass : inactiveButtonClass} flex items-center gap-1.5`}
+          variant={activeCategory === "crypto" ? "subtle" : "ghost"}
+          size="sm"
+          className="flex items-center gap-1.5"
         >
           <Bitcoin className="h-3.5 w-3.5" />
           <span>Crypto</span>
-        </button>
+        </Button>
         
-        <button
+        <Button
           onClick={() => setActiveCategory("stocks")}
-          className={`${baseButtonClass} ${activeCategory === "stocks" ? activeButtonClass : inactiveButtonClass} flex items-center gap-1.5`}
+          variant={activeCategory === "stocks" ? "subtle" : "ghost"}
+          size="sm"
+          className="flex items-center gap-1.5"
         >
           <LineChart className="h-3.5 w-3.5" />
           <span>Stocks</span>
-        </button>
+        </Button>
         
-        <button
+        <Button
           onClick={() => setActiveCategory("metals")}
-          className={`${baseButtonClass} ${activeCategory === "metals" ? activeButtonClass : inactiveButtonClass} flex items-center gap-1.5`}
+          variant={activeCategory === "metals" ? "subtle" : "ghost"}
+          size="sm"
+          className="flex items-center gap-1.5"
         >
           <ShoppingBag className="h-3.5 w-3.5" />
           <span>Metals</span>
-        </button>
+        </Button>
         
-        <button
+        <Button
           onClick={() => setActiveCategory("currencies")}
-          className={`${baseButtonClass} ${activeCategory === "currencies" ? activeButtonClass : inactiveButtonClass} flex items-center gap-1.5`}
+          variant={activeCategory === "currencies" ? "subtle" : "ghost"}
+          size="sm"
+          className="flex items-center gap-1.5"
         >
           <Banknote className="h-3.5 w-3.5" />
           <span>Currencies</span>
-        </button>
+        </Button>
       </div>
 
       {/* Period and Watchlist Buttons on the right */}
       <div className="flex flex-wrap gap-2">
-        <button
+        <Button
           onClick={() => setSelectedPeriod("24H")}
-          className={`${baseButtonClass} ${selectedPeriod === "24H" ? activeButtonClass : inactiveButtonClass}`}
+          variant={selectedPeriod === "24H" ? "subtle" : "ghost"}
+          size="sm"
         >
           24H
-        </button>
-        <button
+        </Button>
+        <Button
           onClick={() => setSelectedPeriod("7D")}
-          className={`${baseButtonClass} ${selectedPeriod === "7D" ? activeButtonClass : inactiveButtonClass}`}
+          variant={selectedPeriod === "7D" ? "subtle" : "ghost"}
+          size="sm"
         >
           7D
-        </button>
-        <button
+        </Button>
+        <Button
           onClick={() => setView(view === "market" ? "watchlist" : "market")}
-          className={`${baseButtonClass} ${view === "watchlist" ? activeButtonClass : inactiveButtonClass} flex items-center gap-1.5`}
+          variant={view === "watchlist" ? "subtle" : "ghost"}
+          size="sm"
+          className="flex items-center gap-1.5"
         >
           <Star className="h-3.5 w-3.5" />
           <span>Watchlist</span>
-        </button>
+        </Button>
       </div>
     </div>
   );

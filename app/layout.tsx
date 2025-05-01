@@ -161,3 +161,5 @@ export default async function RootLayout({
     </html>
   );
 }
+
+// TODO: Cookie pop up

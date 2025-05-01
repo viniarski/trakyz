@@ -84,12 +84,16 @@ const Transactions: React.FC<TransactionsProps> = ({
     }
   };
   
-  // Handle successful import
-  const handleImportSuccess = () => {
-    // Refresh the transactions list
-    if (selectedPortfolio) {
-      fetchTransactions(selectedPortfolio);
-    }
+  // Handle import functionality
+  const handleImport = (type: string) => {
+    showNotification('success', `Import ${type.toUpperCase()} would be handled here`);
+    // Additional import logic would go here
+  };
+  
+  // Handle export functionality
+  const handleExport = (type: string) => {
+    showNotification('success', `Export ${type.toUpperCase()} would be handled here`);
+    // Additional export logic would go here
   };
 
   // Handle deleting all transactions
@@ -131,8 +135,8 @@ const Transactions: React.FC<TransactionsProps> = ({
         setSelectedPortfolio={setSelectedPortfolio}
         handleAddTransaction={handleAddTransaction}
         handleDeleteAll={handleDeleteAll}
-        handleImportSuccess={handleImportSuccess}
-        showNotification={showNotification}
+        handleImport={handleImport}
+        handleExport={handleExport}
         currency={currency}
         transactions={transactions}
       />

@@ -2,10 +2,13 @@
 
 'use client'
 
-import { Filter, Plus, Trash2 } from 'lucide-react'
-import { ImportMenu } from './ImportMenu'
-import { ExportMenu } from './ExportMenu'
+import { Filter, Plus, Trash2, Upload, Download, ChevronDown } from 'lucide-react'
 import { CurrencyCode } from '@/types'
+import { useState, useRef, useEffect } from 'react'
+import { Button } from '@/components/ui/button';
+
+// Define the valid button variant types
+type ButtonVariant = "default" | "destructive" | "outline" | "secondary" | "ghost" | "link" | "subtle";
 
 interface TransactionsHeaderProps {
   showFilters: boolean;
@@ -15,8 +18,8 @@ interface TransactionsHeaderProps {
   setSelectedPortfolio: (id: string) => void;
   handleAddTransaction: () => void;
   handleDeleteAll: () => void;
-  handleImportSuccess: () => void;
-  showNotification: (type: 'success' | 'error', message: string) => void;
+  handleImport: (type: string) => void;
+  handleExport: (type: string) => void;
   currency: CurrencyCode;
   transactions: any[];
 }
@@ -29,34 +32,66 @@ export function TransactionsHeader({
   setSelectedPortfolio,
   handleAddTransaction,
   handleDeleteAll,
-  handleImportSuccess,
-  showNotification,
+  handleImport,
+  handleExport,
   currency,
   transactions
 }: TransactionsHeaderProps) {
-  // Button styles to match the Filter button
-  const baseButtonClass = "text-sm px-3 py-1.5 rounded-md transition-colors font-medium";
-  const activeButtonClass = "bg-[var(--accent-primary-20)] text-[var(--accent-primary)]";
-  const inactiveButtonClass = "bg-transparent text-[var(--text-secondary)] hover:bg-[var(--bg-hover)] hover:text-[var(--text-primary)]";
+  // State for tracking which menu is open
+  const [activeMenu, setActiveMenu] = useState<string | null>(null);
+  
+  // Refs for menu tracking
+  const importMenuRef = useRef<HTMLDivElement>(null);
+  const exportMenuRef = useRef<HTMLDivElement>(null);
+  
+  // Close menus when clicking outside
+  useEffect(() => {
+    function handleClickOutside(event: MouseEvent) {
+      if (
+        importMenuRef.current && 
+        !importMenuRef.current.contains(event.target as Node) &&
+        exportMenuRef.current && 
+        !exportMenuRef.current.contains(event.target as Node)
+      ) {
+        setActiveMenu(null);
+      }
+    }
+    
+    document.addEventListener('mousedown', handleClickOutside);
+    return () => document.removeEventListener('mousedown', handleClickOutside);
+  }, []);
+  
+  // Handle opening/closing import menu
+  const toggleImportMenu = () => {
+    setActiveMenu(activeMenu === 'import' ? null : 'import');
+  };
+  
+  // Handle opening/closing export menu
+  const toggleExportMenu = () => {
+    setActiveMenu(activeMenu === 'export' ? null : 'export');
+  };
 
   return (
-    <div className="p-4 flex justify-between items-center">
+    <div className="p-4 flex justify-between items-center flex-wrap gap-y-2">
+      {/* Left side */}
       <div className="flex flex-wrap items-center gap-2">
-        {/* Add Transaction on the left */}
-        <button
+        {/* Add Transaction button */}
+        <Button
           onClick={handleAddTransaction}
-          className={`${baseButtonClass} bg-[var(--accent-primary-20)] text-[var(--accent-primary)] flex items-center gap-1.5`}
+          variant="subtle"
+          size="sm"
+          className="flex items-center gap-1.5"
         >
           <Plus className="h-3.5 w-3.5" />
           <span className="hidden xs:inline">Add Transaction</span>
-        </button>
+        </Button>
         
-        {/* Portfolio selector - Updated styling to match Filter button */}
+        {/* Portfolio selector */}
         {portfolios.length > 0 && (
           <select
             value={selectedPortfolio || ''}
             onChange={(e) => setSelectedPortfolio(e.target.value)}
-            className={`${baseButtonClass} ${inactiveButtonClass} focus:outline-none`}
+            className="text-sm px-3 py-1.5 rounded-md transition-colors font-medium bg-transparent text-[var(--text-secondary)] hover:bg-[var(--bg-hover)] hover:text-[var(--text-primary)] focus:outline-none"
           >
             {portfolios.map(portfolio => (
               <option key={portfolio.id} value={portfolio.id}>
@@ -67,41 +102,111 @@ export function TransactionsHeader({
         )}
       </div>
       
+      {/* Right side */}
       <div className="flex flex-wrap items-center gap-2">
-        {/* Filter and action buttons on the right */}
-        <button
+        {/* Filter button */}
+        <Button
           onClick={() => setShowFilters(!showFilters)}
-          className={`${baseButtonClass} ${showFilters ? activeButtonClass : inactiveButtonClass} flex items-center gap-1.5`}
+          variant={showFilters ? "subtle" : "ghost"}
+          size="sm"
+          className="flex items-center gap-1.5"
         >
           <Filter className="h-3.5 w-3.5" />
           <span className="hidden xs:inline">Filters</span>
-        </button>
+        </Button>
         
-        <ImportMenu 
-          onNotification={showNotification}
-          onImportSuccess={handleImportSuccess}
-          selectedPortfolio={selectedPortfolio || undefined}
-        />
+        {/* Import button with dropdown */}
+        <div className="relative" ref={importMenuRef}>
+          <Button
+            onClick={toggleImportMenu}
+            variant={activeMenu === 'import' ? "subtle" : "ghost"}
+            size="sm"
+            className="flex items-center gap-1.5"
+          >
+            <Upload className="h-3.5 w-3.5" />
+            <span className="hidden xs:inline">Import</span>
+            <ChevronDown className={`h-3.5 w-3.5 transition-transform hidden xs:inline-block ${activeMenu === 'import' ? 'rotate-180' : ''}`} />
+          </Button>
+          
+          {activeMenu === 'import' && (
+            <div className="absolute right-0 mt-1 w-48 bg-[var(--bg-secondary)] rounded-lg shadow-lg border border-[var(--bg-hover)] overflow-hidden z-10">
+              <button
+                onClick={() => { handleImport('csv'); setActiveMenu(null); }}
+                className="w-full px-4 py-2 text-left text-[var(--text-secondary)] hover:text-[var(--text-primary)] hover:bg-[var(--bg-hover)]"
+              >
+                CSV
+              </button>
+              <button
+                onClick={() => { handleImport('xlsx'); setActiveMenu(null); }}
+                className="w-full px-4 py-2 text-left text-[var(--text-secondary)] hover:text-[var(--text-primary)] hover:bg-[var(--bg-hover)]"
+              >
+                Excel (XLSX)
+              </button>
+              <button
+                onClick={() => { handleImport('json'); setActiveMenu(null); }}
+                className="w-full px-4 py-2 text-left text-[var(--text-secondary)] hover:text-[var(--text-primary)] hover:bg-[var(--bg-hover)]"
+              >
+                JSON
+              </button>
+            </div>
+          )}
+        </div>
         
-        <ExportMenu 
-          onNotification={showNotification}
-          selectedCurrency={currency}
-          currencyRates={{
-            currencies: null,
-            crypto: null
-          }}
-          selectedPortfolio={selectedPortfolio || undefined}
-        />
+        {/* Export button with dropdown */}
+        <div className="relative" ref={exportMenuRef}>
+          <Button
+            onClick={toggleExportMenu}
+            variant={activeMenu === 'export' ? "subtle" : "ghost"}
+            size="sm"
+            className="flex items-center gap-1.5"
+          >
+            <Download className="h-3.5 w-3.5" />
+            <span className="hidden xs:inline">Export</span>
+            <ChevronDown className={`h-3.5 w-3.5 transition-transform hidden xs:inline-block ${activeMenu === 'export' ? 'rotate-180' : ''}`} />
+          </Button>
+          
+          {activeMenu === 'export' && (
+            <div className="absolute right-0 mt-1 w-48 bg-[var(--bg-secondary)] rounded-lg shadow-lg border border-[var(--bg-hover)] overflow-hidden z-10">
+              <button
+                onClick={() => { handleExport('csv'); setActiveMenu(null); }}
+                className="w-full px-4 py-2 text-left text-[var(--text-secondary)] hover:text-[var(--text-primary)] hover:bg-[var(--bg-hover)]"
+              >
+                CSV
+              </button>
+              <button
+                onClick={() => { handleExport('xlsx'); setActiveMenu(null); }}
+                className="w-full px-4 py-2 text-left text-[var(--text-secondary)] hover:text-[var(--text-primary)] hover:bg-[var(--bg-hover)]"
+              >
+                Excel (XLSX)
+              </button>
+              <button
+                onClick={() => { handleExport('json'); setActiveMenu(null); }}
+                className="w-full px-4 py-2 text-left text-[var(--text-secondary)] hover:text-[var(--text-primary)] hover:bg-[var(--bg-hover)]"
+              >
+                JSON
+              </button>
+              <button
+                onClick={() => { handleExport('pdf'); setActiveMenu(null); }}
+                className="w-full px-4 py-2 text-left text-[var(--text-secondary)] hover:text-[var(--text-primary)] hover:bg-[var(--bg-hover)]"
+              >
+                PDF (Report)
+              </button>
+            </div>
+          )}
+        </div>
         
-        <button
+        {/* Delete All button with red hover background */}
+        <Button
           onClick={handleDeleteAll}
-          className={`${baseButtonClass} ${inactiveButtonClass} text-red-500 hover:text-red-500 hover:bg-red-500/10 flex items-center gap-1.5`}
+          variant="ghost"
+          size="sm"
+          className="text-red-500 hover:text-red-500 hover:bg-red-500/10 flex items-center gap-1.5"
           disabled={!selectedPortfolio || transactions.length === 0}
         >
           <Trash2 className="h-3.5 w-3.5" />
           <span className="hidden xs:inline">Delete All</span>
-        </button>
+        </Button>
       </div>
     </div>
-  )
+  );
 }
