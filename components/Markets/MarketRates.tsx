@@ -117,6 +117,7 @@ export function MarketRates({
     updatedItems,
   } = useMergeData();
 
+  // Fix the remove functions to match the expected signature
   const removeMetalData = useCallback(
     (current: Metal[] | null, oldItem: Metal): Metal[] => {
       if (!current) return [];
@@ -238,6 +239,7 @@ export function MarketRates({
       if (process.env.NODE_ENV !== "development") {
         cleanupChannels();
       }
+      clearInterval(statusCheckInterval);
     };
   }, [
     initialMetals,
@@ -463,13 +465,103 @@ export function MarketRates({
               No assets in watchlist yet
             </div>
           )
+        ) : activeCategory === "all" ? (
+          // "All" view - 3-column grid layout (original)
+          <>
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-10">
+              {/* Crypto Assets */}
+              <div className="transition-all duration-300 ease-in-out">
+                <MarketAssets
+                  assets={sortedCrypto}
+                  limit={showMore ? 20 : 10}
+                  watchlist={
+                    Array.isArray(settings?.watchlist) ? settings.watchlist : []
+                  }
+                  onToggleWatchlist={handleToggleWatchlist}
+                  selectedCurrency={currency}
+                  currencyRates={currencyRatesState}
+                  selectedPeriod={selectedPeriod}
+                  updatedItems={updatedItems.crypto}
+                  assetType="Crypto"
+                  isSubtabView={false} // Keep original styling for "All" view
+                />
+              </div>
+
+              {/* Stocks & ETFs */}
+              <div className="transition-all duration-300 ease-in-out">
+                <MarketAssets
+                  assets={sortedStocks}
+                  limit={showMore ? 20 : 10}
+                  watchlist={
+                    Array.isArray(settings?.watchlist) ? settings.watchlist : []
+                  }
+                  onToggleWatchlist={handleToggleWatchlist}
+                  selectedCurrency={currency}
+                  currencyRates={currencyRatesState}
+                  selectedPeriod={selectedPeriod}
+                  updatedItems={updatedItems.stocks}
+                  assetType="Stocks & Indexes"
+                  isSubtabView={false}
+                />
+              </div>
+
+              {/* Metals and Currencies */}
+              <div className="space-y-7 transition-all duration-300 ease-in-out">
+                <MarketAssets
+                  assets={sortedMetals}
+                  limit={showMore ? 4 : 2}
+                  watchlist={
+                    Array.isArray(settings?.watchlist) ? settings.watchlist : []
+                  }
+                  onToggleWatchlist={handleToggleWatchlist}
+                  selectedCurrency={currency}
+                  currencyRates={currencyRatesState}
+                  selectedPeriod={selectedPeriod}
+                  updatedItems={updatedItems.metals}
+                  assetType="Precious Metals"
+                  isSubtabView={false}
+                />
+                <MarketAssets
+                  assets={filteredCurrencies}
+                  limit={showMore ? 15 : 7}
+                  watchlist={
+                    Array.isArray(settings?.watchlist) ? settings.watchlist : []
+                  }
+                  onToggleWatchlist={handleToggleWatchlist}
+                  selectedCurrency={currency}
+                  currencyRates={currencyRatesState}
+                  selectedPeriod={selectedPeriod}
+                  updatedItems={updatedItems.currencies}
+                  assetType="Cash"
+                  isSubtabView={false}
+                />
+              </div>
+            </div>
+            
+            {/* Show More/Less Button centered across all columns */}
+            <div className="flex justify-center pt-6">
+              <button
+                className="flex items-center gap-2 text-sm text-[var(--text-secondary)] hover:text-[var(--text-primary)] transition-colors"
+                onClick={() => handleShowMore(!showMore)}
+              >
+                {showMore ? "Show Less" : "Show More"}
+                <span
+                  className={`inline-block transition-transform ${
+                    showMore ? "rotate-180" : ""
+                  }`}
+                >
+                  ▼
+                </span>
+              </button>
+            </div>
+          </>
         ) : (
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-10">
-            {/* Crypto Assets */}
-            <div className="transition-all duration-300 ease-in-out">
+          // Individual category subtab views - enhanced styling
+          <div className="space-y-6">
+            {activeCategory === "crypto" && (
               <MarketAssets
                 assets={sortedCrypto}
-                limit={showMore ? 20 : 10}
+                limit={showMore ? 50 : 20}
                 watchlist={
                   Array.isArray(settings?.watchlist) ? settings.watchlist : []
                 }
@@ -479,14 +571,14 @@ export function MarketRates({
                 selectedPeriod={selectedPeriod}
                 updatedItems={updatedItems.crypto}
                 assetType="Crypto"
+                isSubtabView={true} // Enhanced styling for crypto subtab
               />
-            </div>
+            )}
 
-            {/* Stocks & ETFs */}
-            <div className="transition-all duration-300 ease-in-out">
+            {activeCategory === "stocks" && (
               <MarketAssets
                 assets={sortedStocks}
-                limit={showMore ? 20 : 10}
+                limit={showMore ? 50 : 20}
                 watchlist={
                   Array.isArray(settings?.watchlist) ? settings.watchlist : []
                 }
@@ -496,14 +588,14 @@ export function MarketRates({
                 selectedPeriod={selectedPeriod}
                 updatedItems={updatedItems.stocks}
                 assetType="Stocks & Indexes"
+                isSubtabView={true}
               />
-            </div>
+            )}
 
-            {/* Metals and Currencies */}
-            <div className="space-y-7 transition-all duration-300 ease-in-out">
+            {activeCategory === "metals" && (
               <MarketAssets
                 assets={sortedMetals}
-                limit={showMore ? 4 : 2}
+                limit={showMore ? 10 : 5}
                 watchlist={
                   Array.isArray(settings?.watchlist) ? settings.watchlist : []
                 }
@@ -513,10 +605,14 @@ export function MarketRates({
                 selectedPeriod={selectedPeriod}
                 updatedItems={updatedItems.metals}
                 assetType="Precious Metals"
+                isSubtabView={true}
               />
+            )}
+
+            {activeCategory === "currencies" && (
               <MarketAssets
-                assets={filteredCurrencies}
-                limit={showMore ? 15 : 7}
+                assets={sortedCurrencies}
+                limit={showMore ? 30 : 15}
                 watchlist={
                   Array.isArray(settings?.watchlist) ? settings.watchlist : []
                 }
@@ -526,30 +622,29 @@ export function MarketRates({
                 selectedPeriod={selectedPeriod}
                 updatedItems={updatedItems.currencies}
                 assetType="Cash"
+                isSubtabView={true}
               />
+            )}
+
+            {/* Show More/Less Button for subtab views */}
+            <div className="flex justify-center pt-4">
+              <button
+                className="flex items-center gap-2 text-sm text-[var(--text-secondary)] hover:text-[var(--text-primary)] transition-colors"
+                onClick={() => handleShowMore(!showMore)}
+              >
+                {showMore ? "Show Less" : "Show More"}
+                <span
+                  className={`inline-block transition-transform ${
+                    showMore ? "rotate-180" : ""
+                  }`}
+                >
+                  ▼
+                </span>
+              </button>
             </div>
           </div>
         )}
       </div>
-
-      {/* Show More/Less Button */}
-      {view === "market" && (
-        <div className="sm:flex hidden justify-center py-3 border-t border-gray-800/50">
-          <button
-            className="flex items-center gap-2 text-sm text-[var(--text-secondary)] hover:text-[var(--text-primary)] transition-colors"
-            onClick={() => handleShowMore(!showMore)}
-          >
-            {showMore ? "Show Less" : "Show More"}
-            <span
-              className={`inline-block transition-transform ${
-                showMore ? "rotate-180" : ""
-              }`}
-            >
-              ▼
-            </span>
-          </button>
-        </div>
-      )}
     </div>
   );
 }
