@@ -1,4 +1,4 @@
-// hooks/use-user-settings.ts
+// hooks/useUserSettings.ts
 'use client'
 
 import { useState, useEffect, useRef, useCallback } from 'react'
@@ -15,7 +15,7 @@ export type WatchlistItem = {
 
 // Layout and tab types
 export type LayoutType = 'cards' | 'list' | 'detailed';
-export type ActiveTabType = 'portfolio' | 'market' | 'debt' | 'budget';
+export type ActiveTabType = 'markets' | 'portfolios' | 'transactions' | 'debt' | 'analytics' | 'real-estate' | 'budget';
 
 // UserSettings interface
 export interface UserSettings {
@@ -38,7 +38,7 @@ const defaultSettings: UserSettings = {
   watchlist: [],
   theme_preference: 'blue',
   layout: 'cards', 
-  lastActiveTab: 'portfolio',
+  lastActiveTab: 'markets', // Changed from 'portfolio' to 'markets'
   expandedPortfolioCategories: []
 }
 
@@ -231,8 +231,6 @@ export function useUserSettings() {
           }
         }
       }
-      
-      // Other settings that might need updating in the future can be added here
       
       console.log('Settings saved successfully')
     } catch (err) {

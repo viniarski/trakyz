@@ -24,7 +24,7 @@ import FinancialSummary from "@/components/FinancialSummary";
 // Define valid tab names
 const validTabs = [
   "budget",
-  "markets",
+  "markets", 
   "debt",
   "real-estate",
   "portfolios",
@@ -33,19 +33,9 @@ const validTabs = [
 ];
 
 // Create a direct export page function
-// In Next.js, this special export can work around some type issues
 export default async function Page(props: any) {
   // Use the props in a type-safe way
   const searchParams = (await props.searchParams) || {};
-
-  // Get the current tab from URL, default to 'budget' if not set or invalid
-  const tabParam = searchParams.tab;
-  const tabValue = Array.isArray(tabParam) ? tabParam[0] : tabParam;
-  const currentTab = validTabs.includes(tabValue || "") ? tabValue : "budget";
-
-  // Check for checkout success
-  const checkoutSuccessParam = searchParams.checkout_success;
-  const hasCheckoutSuccess = checkoutSuccessParam === "true";
 
   const supabase = await createClient();
 
@@ -58,6 +48,47 @@ export default async function Page(props: any) {
   if (!user) {
     return redirect("/sign-in");
   }
+
+  // Get user's last active tab from their profile
+  const { data: userProfile } = await supabase
+    .from("user_profiles")
+    .select("last_active_tab, selected_currency")
+    .eq("id", user.id)
+    .single();
+
+  // Get the current tab from URL, with smart fallback logic
+  const tabParam = searchParams.tab;
+  const tabValue = Array.isArray(tabParam) ? tabParam[0] : tabParam;
+  
+  let currentTab: string;
+  
+  if (tabValue && validTabs.includes(tabValue)) {
+    // URL has a valid tab parameter - use it
+    currentTab = tabValue;
+  } else if (userProfile?.last_active_tab && validTabs.includes(userProfile.last_active_tab)) {
+    // No URL tab, but user has a saved preference - use it
+    currentTab = userProfile.last_active_tab;
+  } else {
+    // No URL tab and no saved preference - use "markets" as default
+    currentTab = "markets";
+  }
+
+  // Update user's last active tab if it's different (async, don't await)
+  if (currentTab !== userProfile?.last_active_tab) {
+    supabase
+      .from("user_profiles")
+      .update({ last_active_tab: currentTab })
+      .eq("id", user.id)
+      .then(({ error }) => {
+        if (error) {
+          console.error("Error updating last active tab:", error);
+        }
+      });
+  }
+
+  // Check for checkout success
+  const checkoutSuccessParam = searchParams.checkout_success;
+  const hasCheckoutSuccess = checkoutSuccessParam === "true";
 
   // Fetch user subscription status
   const { data: subscriptionData } = await supabase
@@ -94,13 +125,6 @@ export default async function Page(props: any) {
         .order("date", { ascending: false }),
       supabase.from("stocks").select("*").order("date", { ascending: false }),
     ]);
-
-    // Also fetch the user's selected currency from their profile
-    const { data: userProfile } = await supabase
-      .from("user_profiles")
-      .select("selected_currency")
-      .eq("id", user.id)
-      .single();
 
     marketData = {
       metals: metals || [],
@@ -165,35 +189,35 @@ export default async function Page(props: any) {
         { data: loans, error: loanError },
         { data: cards, error: cardsError },
       ] = await Promise.all([
-        supabase.from("loans").select("*").eq("user_id", user.id),
-        supabase.from("credit_cards").select("*").eq("user_id", user.id),
+        supabase
+          .from("loans")
+          .select("*")
+          .eq("user_id", user.id)
+          .order("created_at", { ascending: false }),
+        supabase
+          .from("credit_cards")
+          .select("*")
+          .eq("user_id", user.id)
+          .order("created_at", { ascending: false }),
       ]);
 
       debtData = {
         loans: loans || [],
         creditCards: cards || [],
       };
-
-      // Log any debt data errors
-      if (loanError) {
-        console.error("Error fetching loan data:", loanError);
-      }
-      if (cardsError) {
-        console.error("Error fetching credit card data:", cardsError);
-      }
+      if (loanError) console.error("Error fetching loan data:", loanError);
+      if (cardsError) console.error("Error fetching credit card data:", cardsError);
       break;
 
     case "real-estate":
       const { data: realEstate, error: realEstateError } = await supabase
-        .from("real_estate_properties")
+        .from("real_estate")
         .select("*")
-        .eq("user_id", user.id);
+        .eq("user_id", user.id)
+        .order("created_at", { ascending: false });
 
       realEstateData = realEstate || [];
-
-      if (realEstateError) {
-        console.error("Error fetching real estate data:", realEstateError);
-      }
+      if (realEstateError) console.error("Error fetching real estate data:", realEstateError);
       break;
 
     case "portfolios":
@@ -204,85 +228,66 @@ export default async function Page(props: any) {
         .order("created_at", { ascending: false });
 
       portfoliosData = portfolios || [];
-
-      if (portfolioError) {
-        console.error("Error fetching portfolio data:", portfolioError);
-      }
+      if (portfolioError) console.error("Error fetching portfolio data:", portfolioError);
       break;
 
     case "transactions":
-      const { data: transactions, error: transactionsError } = await supabase
+      const { data: transactions, error: transactionError } = await supabase
         .from("transactions")
         .select("*")
         .eq("user_id", user.id)
-        .order("date", { ascending: false });
+        .order("date", { ascending: false })
+        .limit(1000);
 
       transactionsData = transactions || [];
-
-      if (transactionsError) {
-        console.error("Error fetching transactions data:", transactionsError);
-      }
+      if (transactionError) console.error("Error fetching transaction data:", transactionError);
       break;
 
     case "analytics":
-      // Fetch all required data for analytics
+      // Analytics needs multiple data sources
       const [
-        { data: portfolioAnalytics, error: portfolioAnalyticsError },
-        { data: transactionsAnalytics, error: transactionsAnalyticsError },
-        { data: loansAnalytics, error: loansAnalyticsError },
-        { data: cardsAnalytics, error: cardsAnalyticsError },
+        { data: analyticsDebt },
+        { data: analyticsTransactions },
+        { data: analyticsPortfolios },
       ] = await Promise.all([
-        supabase.from("portfolios").select("*").eq("user_id", user.id),
-        supabase.from("transactions").select("*").eq("user_id", user.id),
-        supabase.from("loans").select("*").eq("user_id", user.id),
-        supabase.from("credit_cards").select("*").eq("user_id", user.id),
+        supabase
+          .from("loans")
+          .select("*")
+          .eq("user_id", user.id),
+        supabase
+          .from("transactions")
+          .select("*")
+          .eq("user_id", user.id)
+          .order("date", { ascending: false })
+          .limit(1000),
+        supabase
+          .from("portfolios")
+          .select("*")
+          .eq("user_id", user.id),
       ]);
 
-      // Log errors
-      if (portfolioAnalyticsError)
-        console.error(
-          "Error fetching portfolio data for analytics:",
-          portfolioAnalyticsError
-        );
-      if (transactionsAnalyticsError)
-        console.error(
-          "Error fetching transactions data for analytics:",
-          transactionsAnalyticsError
-        );
-      if (loansAnalyticsError)
-        console.error(
-          "Error fetching loans data for analytics:",
-          loansAnalyticsError
-        );
-      if (cardsAnalyticsError)
-        console.error(
-          "Error fetching credit cards data for analytics:",
-          cardsAnalyticsError
-        );
-
-      portfoliosData = portfolioAnalytics || [];
-      transactionsData = transactionsAnalytics || [];
       debtData = {
-        loans: loansAnalytics || [],
-        creditCards: cardsAnalytics || [],
+        loans: analyticsDebt || [],
+        creditCards: [],
       };
+      transactionsData = analyticsTransactions || [];
+      portfoliosData = analyticsPortfolios || [];
+      break;
+
+    default:
+      // For markets tab, we already fetched the data above
       break;
   }
 
   return (
-    <div className="flex-1 w-full flex flex-col min-h-screen">
-      <Header
-        userEmail={user.email}
-        userRole={user.user_metadata?.role || null}
-        isSubscribed={isSubscribed}
-      />
+    <div className="min-h-screen flex flex-col bg-[var(--bg-primary)]">
+      <Header isSubscribed={isSubscribed} />
 
+      {/* Success message for checkout */}
       {hasCheckoutSuccess && (
-        <div className="bg-green-100 border-l-4 border-green-500 text-green-700 p-4 mx-auto w-[90%] my-2">
-          <p className="font-bold">Success!</p>
-          <p>
-            Your subscription has been activated. Thank you for subscribing to
-            Trakyz!
+        <div className="bg-green-600/20 border border-green-600/30 text-green-400 p-4 rounded-lg mb-6 mx-4">
+          <p className="text-center font-medium">
+            🎉 Success! Thank you for subscribing to Trakyz!
           </p>
         </div>
       )}
