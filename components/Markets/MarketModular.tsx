@@ -211,17 +211,63 @@ export const MarketAssets = memo(
       );
     }
 
-    // Mini chart component
-    const MiniChart = ({ symbol, priceChange }: { symbol: string; priceChange: { isPositive: boolean } }) => {
-      const chartColor = priceChange.isPositive ? "#10b981" : "#ef4444";
+    // Updated Mini chart component with real historical data
+    const MiniChart = ({ 
+      symbol, 
+      priceChange, 
+      assets: allAssets 
+    }: { 
+      symbol: string; 
+      priceChange: { isPositive: boolean }; 
+      assets: Asset[] 
+    }) => {
       
-      // Generate some random data points for the sparkline
-      const points = Array.from({ length: 10 }, (_, i) => {
-        const baseValue = 50;
-        const trend = priceChange.isPositive ? 1 : -1;
-        const randomVariation = Math.random() * 20 - 10;
-        return baseValue + (trend * i * 3) + randomVariation;
-      });
+      // Get historical data for the last 30 days for this specific crypto symbol
+      const getHistoricalData = () => {
+        if (assetType !== "Crypto") return [];
+        
+        // Filter all price data for this symbol
+        const allPricesForSymbol = (allAssets as CryptoType[])
+          .filter(asset => asset.symbol === symbol)
+          .sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime());
+
+        if (!allPricesForSymbol || allPricesForSymbol.length === 0) return [];
+
+        // Get last 30 days of data
+        const thirtyDaysAgo = new Date();
+        thirtyDaysAgo.setDate(thirtyDaysAgo.getDate() - 30);
+        
+        const last30Days = allPricesForSymbol
+          .filter(asset => new Date(asset.date) >= thirtyDaysAgo)
+          .sort((a, b) => new Date(a.date).getTime() - new Date(b.date).getTime()) // Sort ascending for chart
+          .slice(-30); // Get last 30 entries
+        
+        return last30Days.map(asset => asset.price);
+      };
+
+      const points = getHistoricalData();
+      
+      // Calculate 30-day trend for chart color (independent of the "Change" column)
+      const calculate30DayTrend = () => {
+        if (points.length < 2) return true; // Default to positive if no data
+        
+        const firstPrice = points[0]; // 30 days ago price
+        const lastPrice = points[points.length - 1]; // Current/latest price
+        
+        return lastPrice >= firstPrice; // True if price went up over 30 days
+      };
+      
+      const is30DayPositive = calculate30DayTrend();
+      const chartColor = is30DayPositive ? "#10b981" : "#ef4444";
+      
+      // If we don't have enough historical data, don't render the chart
+      if (points.length < 2) {
+        return (
+          <div className="w-20 h-6 flex items-center justify-center">
+            <span className="text-xs text-[var(--text-tertiary)]">No data</span>
+          </div>
+        );
+      }
 
       // Create SVG path
       const width = 80;
@@ -270,7 +316,7 @@ export const MarketAssets = memo(
               <div className="text-right">Change</div>
               <div className="text-right">Market Cap</div>
               <div className="text-right">Volume 24h</div>
-              <div className="text-right">7 Days</div>
+              <div className="text-right">30 Days</div>
             </div>
             
             {/* Crypto rows */}
@@ -372,9 +418,13 @@ export const MarketAssets = memo(
                     </span>
                   </div>
 
-                  {/* Mini Chart */}
+                  {/* Mini Chart - Updated to use real data */}
                   <div className="flex justify-end">
-                    <MiniChart symbol={symbol} priceChange={priceChange} />
+                    <MiniChart 
+                      symbol={symbol} 
+                      priceChange={priceChange} 
+                      assets={assets || []} 
+                    />
                   </div>
                 </div>
               );
@@ -432,17 +482,16 @@ export const MarketAssets = memo(
                   >
                     {symbol}
                   </span>
-                  {name && assetType !== "Precious Metals" && (
+                  {name && name !== symbol && (
                     <span className="text-[var(--text-tertiary)] text-xs">
                       ({name})
                     </span>
                   )}
                 </div>
-
                 <div className="flex items-center gap-2">
                   <span
                     className={`text-[var(--text-primary)] font-medium ${
-                      hasRecentUpdate ? "bg-green-500/10 rounded px-1.5 py-0.5" : ""
+                      hasRecentUpdate ? "bg-green-500/10 rounded px-2 py-1" : ""
                     }`}
                   >
                     {displayPrice}
@@ -454,21 +503,27 @@ export const MarketAssets = memo(
                       <TrendingDown className="h-3 w-3 text-red-500" />
                     )}
                     <span
-                      className={`text-xs ${
+                      className={`text-xs font-medium ${
                         priceChange.isPositive
                           ? "text-green-500"
                           : "text-red-500"
                       }`}
                     >
-                      {priceChange.isPositive ? '+' : ''}{priceChange.changePercent.toFixed(2)}%
+                      {priceChange.changePercent.toFixed(2)}%
                     </span>
                   </div>
-                  <AssetContextMenu
-                    isInWatchlist={isInWatchlist}
-                    onToggleWatchlist={() =>
-                      onToggleWatchlist(assetType, symbol)
-                    }
-                  />
+                  <button
+                    onClick={() => onToggleWatchlist(assetType, symbol)}
+                    className="p-1 text-[var(--text-secondary)] hover:text-[var(--text-primary)] transition-colors"
+                  >
+                    <Star
+                      className={`h-4 w-4 ${
+                        isInWatchlist
+                          ? "fill-[var(--accent-primary)] text-[var(--accent-primary)]"
+                          : ""
+                      }`}
+                    />
+                  </button>
                 </div>
               </div>
             );
