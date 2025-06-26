@@ -10,7 +10,6 @@ import {
   LineChart,
   TrendingUp,
   TrendingDown,
-  Star,
 } from "lucide-react";
 import {
   Metal,
@@ -23,6 +22,12 @@ import {
 } from "@/types";
 import { useCurrencyConverter } from "@/hooks/useCurrencyConverter";
 import { AssetContextMenu } from "../ui/ContextMenu";
+import { 
+  CryptoEnhancedView, 
+  StocksEnhancedView, 
+  MetalsEnhancedView, 
+  CurrenciesEnhancedView 
+} from "./EnhancedSubTabs";
 
 type Asset = Currency | CryptoType | Metal | Stock;
 
@@ -40,7 +45,7 @@ interface MarketAssetsProps {
   selectedPeriod: "24H" | "7D";
   updatedItems?: Set<string>;
   assetType: AssetCategory;
-  isSubtabView?: boolean; // New prop to determine if this is a subtab view
+  isSubtabView?: boolean;
 }
 
 // Helper function for formatting large numbers
@@ -162,7 +167,7 @@ export const MarketAssets = memo(
       return uniqueAssets;
     }, [assets, limit, assetType]);
 
-    // asset type specific configurations
+    // Asset type specific configurations
     const config = useMemo(() => {
       switch (assetType) {
         case "Crypto":
@@ -211,364 +216,47 @@ export const MarketAssets = memo(
       );
     }
 
-    // Updated Mini chart component with real historical data
-    const MiniChart = ({ 
-      symbol, 
-      priceChange, 
-      assets: allAssets 
-    }: { 
-      symbol: string; 
-      priceChange: { isPositive: boolean }; 
-      assets: Asset[] 
-    }) => {
+    // Enhanced sub-tab views
+    if (isSubtabView) {
+      console.log("🔥 Enhanced view requested for:", assetType, "with", displayAssets.length, "assets");
+      console.log("🔥 IsSubtabView:", isSubtabView);
+      console.log("🔥 Full assets array length:", assets?.length);
       
-      // Get historical data for the last 30 days for this specific symbol
-      const getHistoricalData = () => {
-        if (assetType !== "Crypto" && assetType !== "Stocks & Indexes") return [];
-        
-        // Filter all price data for this symbol
-        let allPricesForSymbol;
-        
-        if (assetType === "Crypto") {
-          allPricesForSymbol = (allAssets as CryptoType[])
-            .filter(asset => asset.symbol === symbol)
-            .sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime());
-        } else if (assetType === "Stocks & Indexes") {
-          allPricesForSymbol = (allAssets as Stock[])
-            .filter(asset => asset.symbol === symbol)
-            .sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime());
-        }
-
-        if (!allPricesForSymbol || allPricesForSymbol.length === 0) return [];
-
-        // Get last 30 days of data
-        const thirtyDaysAgo = new Date();
-        thirtyDaysAgo.setDate(thirtyDaysAgo.getDate() - 30);
-        
-        const last30Days = allPricesForSymbol
-          .filter(asset => new Date(asset.date) >= thirtyDaysAgo)
-          .sort((a, b) => new Date(a.date).getTime() - new Date(b.date).getTime()) // Sort ascending for chart
-          .slice(-30); // Get last 30 entries
-        
-        return last30Days.map(asset => asset.price);
+      const enhancedProps = {
+        assets: displayAssets,
+        fullAssets: assets || [], // Pass full assets array for charts
+        assetType,
+        config,
+        watchlist,
+        onToggleWatchlist,
+        currencyRates,
+        calculatePriceChange,
+        updatedItems,
+        formatLargeNumber
       };
 
-      const points = getHistoricalData();
-      
-      // Calculate 30-day trend for chart color (independent of the "Change" column)
-      const calculate30DayTrend = () => {
-        if (points.length < 2) return true; // Default to positive if no data
-        
-        const firstPrice = points[0]; // 30 days ago price
-        const lastPrice = points[points.length - 1]; // Current/latest price
-        
-        return lastPrice >= firstPrice; // True if price went up over 30 days
-      };
-      
-      const is30DayPositive = calculate30DayTrend();
-      const chartColor = is30DayPositive ? "#10b981" : "#ef4444";
-      
-      // If we don't have enough historical data, don't render the chart
-      if (points.length < 2) {
-        return (
-          <div className="w-20 h-6 flex items-center justify-center">
-            <span className="text-xs text-[var(--text-tertiary)]">No data</span>
-          </div>
-        );
+      switch (assetType) {
+        case "Crypto":
+          console.log("🚀 Rendering Crypto enhanced view");
+          return <CryptoEnhancedView {...enhancedProps} assets={displayAssets as CryptoType[]} />;
+        case "Stocks & Indexes":
+          console.log("📈 Rendering Stocks enhanced view");
+          return <StocksEnhancedView {...enhancedProps} assets={displayAssets as Stock[]} />;
+        case "Precious Metals":
+          console.log("🥇 Rendering Metals enhanced view");
+          return <MetalsEnhancedView {...enhancedProps} assets={displayAssets as Metal[]} />;
+        case "Cash":
+          console.log("💰 Rendering Currencies enhanced view");
+          return <CurrenciesEnhancedView {...enhancedProps} assets={displayAssets as Currency[]} />;
+        default:
+          console.log("❌ No enhanced view for asset type:", assetType);
+          break;
       }
-
-      // Create SVG path
-      const width = 80;
-      const height = 24;
-      const max = Math.max(...points);
-      const min = Math.min(...points);
-      const range = max - min || 1;
-
-      const path = points
-        .map((point, i) => {
-          const x = (i / (points.length - 1)) * width;
-          const y = height - ((point - min) / range) * height;
-          return `${i === 0 ? 'M' : 'L'} ${x} ${y}`;
-        })
-        .join(' ');
-
-      return (
-        <div className="w-20 h-6 flex items-center justify-center">
-          <svg width={width} height={height} className="overflow-visible">
-            <path
-              d={path}
-              stroke={chartColor}
-              strokeWidth="1.5"
-              fill="none"
-              strokeLinecap="round"
-              strokeLinejoin="round"
-            />
-          </svg>
-        </div>
-      );
-    };
-
-    // Render enhanced crypto view for subtab
-    if (assetType === "Crypto" && isSubtabView) {
-      console.log("Rendering enhanced crypto view with", displayAssets.length, "assets");
-      return (
-        <div className="space-y-4 transition-all duration-300 ease-in-out">
-          {/* Enhanced crypto table */}
-          <div className="space-y-3">
-            {/* Header */}
-            <div className="grid grid-cols-[auto,auto,2fr,1.2fr,1fr,1.2fr,1.2fr,1.2fr] gap-4 px-4 py-3 text-sm font-medium text-[var(--text-tertiary)] border-b border-gray-700/30">
-              <div className="text-center"></div>
-              <div className="text-center">#</div>
-              <div>Name</div>
-              <div className="text-right">Price</div>
-              <div className="text-right">Change</div>
-              <div className="text-right">Market Cap</div>
-              <div className="text-right">Volume 24h</div>
-              <div className="text-right">30 Days</div>
-            </div>
-            
-            {/* Crypto rows */}
-            {displayAssets.map((asset, index) => {
-              const cryptoAsset = asset as CryptoType;
-              const symbol = config.getSymbol(asset);
-              const name = config.getName(asset);
-
-              const isInWatchlist = watchlist.some(
-                (item) => item.category === assetType && item.symbol === symbol
-              );
-
-              const priceChange = calculatePriceChange(symbol);
-              const rawPrice = convertValue(asset.price, currencyRates, symbol);
-              const displayPrice = formatPreciseValue(rawPrice);
-              
-              const hasRecentUpdate = updatedItems.has(symbol);
-
-              return (
-                <div
-                  key={symbol}
-                  className="grid grid-cols-[auto,auto,2fr,1.2fr,1fr,1.2fr,1.2fr,1.2fr] gap-4 items-center px-4 py-3 text-sm transition-all duration-300 ease-in-out hover:bg-[var(--bg-tertiary)]/20 rounded-lg"
-                >
-                  {/* Star/Watchlist Icon */}
-                  <div className="flex justify-center">
-                    <button
-                      onClick={() => onToggleWatchlist(assetType, symbol)}
-                      className="p-1 text-[var(--text-secondary)] hover:text-[var(--text-primary)] transition-colors"
-                    >
-                      <Star
-                        className={`h-4 w-4 ${
-                          isInWatchlist
-                            ? "fill-[var(--accent-primary)] text-[var(--accent-primary)]"
-                            : ""
-                        }`}
-                      />
-                    </button>
-                  </div>
-
-                  {/* Row Number */}
-                  <div className="text-center text-[var(--text-secondary)]">
-                    {index + 1}
-                  </div>
-
-                  {/* Asset Info */}
-                  <div className="flex items-center gap-3">
-                    <span className="text-[var(--text-primary)] font-medium text-base">
-                      {symbol}
-                    </span>
-                    {name && (
-                      <span className="text-[var(--text-secondary)] text-sm">
-                        ({name})
-                      </span>
-                    )}
-                  </div>
-
-                  {/* Price */}
-                  <div className="text-right">
-                    <span
-                      className={`text-[var(--text-primary)] font-medium text-base ${
-                        hasRecentUpdate ? "bg-green-500/10 rounded px-2 py-1" : ""
-                      }`}
-                    >
-                      {displayPrice}
-                    </span>
-                  </div>
-
-                  {/* Change % */}
-                  <div className="text-right">
-                    <div className="flex items-center justify-end gap-1">
-                      {priceChange.isPositive ? (
-                        <TrendingUp className="h-4 w-4 text-green-500" />
-                      ) : (
-                        <TrendingDown className="h-4 w-4 text-red-500" />
-                      )}
-                      <span
-                        className={`font-medium ${
-                          priceChange.isPositive
-                            ? "text-green-500"
-                            : "text-red-500"
-                        }`}
-                      >
-                        {priceChange.changePercent.toFixed(2)}%
-                      </span>
-                    </div>
-                  </div>
-
-                  {/* Market Cap */}
-                  <div className="text-right">
-                    <span className="text-[var(--text-primary)] font-medium">
-                      {cryptoAsset.market_cap ? formatLargeNumber(cryptoAsset.market_cap) : 'N/A'}
-                    </span>
-                  </div>
-
-                  {/* Volume 24h */}
-                  <div className="text-right">
-                    <span className="text-[var(--text-primary)] font-medium">
-                      {cryptoAsset.volume_24h ? formatLargeNumber(cryptoAsset.volume_24h) : 'N/A'}
-                    </span>
-                  </div>
-
-                  {/* Mini Chart - Updated to use real data */}
-                  <div className="flex justify-end">
-                    <MiniChart 
-                      symbol={symbol} 
-                      priceChange={priceChange} 
-                      assets={assets || []} 
-                    />
-                  </div>
-                </div>
-              );
-            })}
-          </div>
-        </div>
-      );
     }
 
-    // Render enhanced stocks view for subtab
-    if (assetType === "Stocks & Indexes" && isSubtabView) {
-      console.log("Rendering enhanced stocks view with", displayAssets.length, "assets");
-      return (
-        <div className="space-y-4 transition-all duration-300 ease-in-out">
-          {/* Enhanced stocks table */}
-          <div className="space-y-3">
-            {/* Header */}
-            <div className="grid grid-cols-[auto,auto,2fr,1.2fr,1fr,1.2fr,1.2fr] gap-4 px-4 py-3 text-sm font-medium text-[var(--text-tertiary)] border-b border-gray-700/30">
-              <div className="text-center"></div>
-              <div className="text-center">#</div>
-              <div>Name</div>
-              <div className="text-right">Price</div>
-              <div className="text-right">Change</div>
-              <div className="text-right">Volume</div>
-              <div className="text-right">30 Days</div>
-            </div>
-            
-            {/* Stock rows */}
-            {displayAssets.map((asset, index) => {
-              const stockAsset = asset as Stock;
-              const symbol = config.getSymbol(asset);
-              const name = config.getName(asset);
+    console.log("📝 Rendering original 'All' view for:", assetType);
 
-              const isInWatchlist = watchlist.some(
-                (item) => item.category === assetType && item.symbol === symbol
-              );
-
-              const priceChange = calculatePriceChange(symbol);
-              const rawPrice = convertValue(asset.price, currencyRates, symbol);
-              const displayPrice = formatPreciseValue(rawPrice);
-              
-              const hasRecentUpdate = updatedItems.has(symbol);
-
-              return (
-                <div
-                  key={symbol}
-                  className="grid grid-cols-[auto,auto,2fr,1.2fr,1fr,1.2fr,1.2fr] gap-4 items-center px-4 py-3 text-sm transition-all duration-300 ease-in-out hover:bg-[var(--bg-tertiary)]/20 rounded-lg"
-                >
-                  {/* Star/Watchlist Icon */}
-                  <div className="flex justify-center">
-                    <button
-                      onClick={() => onToggleWatchlist(assetType, symbol)}
-                      className="p-1 text-[var(--text-secondary)] hover:text-[var(--text-primary)] transition-colors"
-                    >
-                      <Star
-                        className={`h-4 w-4 ${
-                          isInWatchlist
-                            ? "fill-[var(--accent-primary)] text-[var(--accent-primary)]"
-                            : ""
-                        }`}
-                      />
-                    </button>
-                  </div>
-
-                  {/* Row Number */}
-                  <div className="text-center text-[var(--text-secondary)]">
-                    {index + 1}
-                  </div>
-
-                  {/* Asset Info */}
-                  <div className="flex items-center gap-3">
-                    <span className="text-[var(--text-primary)] font-medium text-base">
-                      {symbol}
-                    </span>
-                    {name && (
-                      <span className="text-[var(--text-secondary)] text-sm">
-                        ({name})
-                      </span>
-                    )}
-                  </div>
-
-                  {/* Price */}
-                  <div className="text-right">
-                    <span
-                      className={`text-[var(--text-primary)] font-medium text-base ${
-                        hasRecentUpdate ? "bg-green-500/10 rounded px-2 py-1" : ""
-                      }`}
-                    >
-                      {displayPrice}
-                    </span>
-                  </div>
-
-                  {/* Change % */}
-                  <div className="text-right">
-                    <div className="flex items-center justify-end gap-1">
-                      {priceChange.isPositive ? (
-                        <TrendingUp className="h-4 w-4 text-green-500" />
-                      ) : (
-                        <TrendingDown className="h-4 w-4 text-red-500" />
-                      )}
-                      <span
-                        className={`font-medium ${
-                          priceChange.isPositive
-                            ? "text-green-500"
-                            : "text-red-500"
-                        }`}
-                      >
-                        {priceChange.changePercent.toFixed(2)}%
-                      </span>
-                    </div>
-                  </div>
-
-                  {/* Volume */}
-                  <div className="text-right">
-                    <span className="text-[var(--text-primary)] font-medium">
-                      {stockAsset.volume ? formatLargeNumber(stockAsset.volume) : 'N/A'}
-                    </span>
-                  </div>
-
-                  {/* Mini Chart - Updated to use real data */}
-                  <div className="flex justify-end">
-                    <MiniChart 
-                      symbol={symbol} 
-                      priceChange={priceChange} 
-                      assets={assets || []} 
-                    />
-                  </div>
-                </div>
-              );
-            })}
-          </div>
-        </div>
-      );
-    }
-
-    // Original style for all other cases (including "All" view)
+    // Original "All" view with 3-dots context menu
     return (
       <div className="space-y-3 transition-all duration-300 ease-in-out">
         <div className="flex items-center gap-2">
@@ -646,18 +334,10 @@ export const MarketAssets = memo(
                       {priceChange.changePercent.toFixed(2)}%
                     </span>
                   </div>
-                  <button
-                    onClick={() => onToggleWatchlist(assetType, symbol)}
-                    className="p-1 text-[var(--text-secondary)] hover:text-[var(--text-primary)] transition-colors"
-                  >
-                    <Star
-                      className={`h-4 w-4 ${
-                        isInWatchlist
-                          ? "fill-[var(--accent-primary)] text-[var(--accent-primary)]"
-                          : ""
-                      }`}
-                    />
-                  </button>
+                  <AssetContextMenu 
+                    isInWatchlist={isInWatchlist}
+                    onToggleWatchlist={() => onToggleWatchlist(assetType, symbol)}
+                  />
                 </div>
               </div>
             );
