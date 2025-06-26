@@ -222,14 +222,22 @@ export const MarketAssets = memo(
       assets: Asset[] 
     }) => {
       
-      // Get historical data for the last 30 days for this specific crypto symbol
+      // Get historical data for the last 30 days for this specific symbol
       const getHistoricalData = () => {
-        if (assetType !== "Crypto") return [];
+        if (assetType !== "Crypto" && assetType !== "Stocks & Indexes") return [];
         
         // Filter all price data for this symbol
-        const allPricesForSymbol = (allAssets as CryptoType[])
-          .filter(asset => asset.symbol === symbol)
-          .sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime());
+        let allPricesForSymbol;
+        
+        if (assetType === "Crypto") {
+          allPricesForSymbol = (allAssets as CryptoType[])
+            .filter(asset => asset.symbol === symbol)
+            .sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime());
+        } else if (assetType === "Stocks & Indexes") {
+          allPricesForSymbol = (allAssets as Stock[])
+            .filter(asset => asset.symbol === symbol)
+            .sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime());
+        }
 
         if (!allPricesForSymbol || allPricesForSymbol.length === 0) return [];
 
@@ -415,6 +423,132 @@ export const MarketAssets = memo(
                   <div className="text-right">
                     <span className="text-[var(--text-primary)] font-medium">
                       {cryptoAsset.volume_24h ? formatLargeNumber(cryptoAsset.volume_24h) : 'N/A'}
+                    </span>
+                  </div>
+
+                  {/* Mini Chart - Updated to use real data */}
+                  <div className="flex justify-end">
+                    <MiniChart 
+                      symbol={symbol} 
+                      priceChange={priceChange} 
+                      assets={assets || []} 
+                    />
+                  </div>
+                </div>
+              );
+            })}
+          </div>
+        </div>
+      );
+    }
+
+    // Render enhanced stocks view for subtab
+    if (assetType === "Stocks & Indexes" && isSubtabView) {
+      console.log("Rendering enhanced stocks view with", displayAssets.length, "assets");
+      return (
+        <div className="space-y-4 transition-all duration-300 ease-in-out">
+          {/* Enhanced stocks table */}
+          <div className="space-y-3">
+            {/* Header */}
+            <div className="grid grid-cols-[auto,auto,2fr,1.2fr,1fr,1.2fr,1.2fr] gap-4 px-4 py-3 text-sm font-medium text-[var(--text-tertiary)] border-b border-gray-700/30">
+              <div className="text-center"></div>
+              <div className="text-center">#</div>
+              <div>Name</div>
+              <div className="text-right">Price</div>
+              <div className="text-right">Change</div>
+              <div className="text-right">Volume</div>
+              <div className="text-right">30 Days</div>
+            </div>
+            
+            {/* Stock rows */}
+            {displayAssets.map((asset, index) => {
+              const stockAsset = asset as Stock;
+              const symbol = config.getSymbol(asset);
+              const name = config.getName(asset);
+
+              const isInWatchlist = watchlist.some(
+                (item) => item.category === assetType && item.symbol === symbol
+              );
+
+              const priceChange = calculatePriceChange(symbol);
+              const rawPrice = convertValue(asset.price, currencyRates, symbol);
+              const displayPrice = formatPreciseValue(rawPrice);
+              
+              const hasRecentUpdate = updatedItems.has(symbol);
+
+              return (
+                <div
+                  key={symbol}
+                  className="grid grid-cols-[auto,auto,2fr,1.2fr,1fr,1.2fr,1.2fr] gap-4 items-center px-4 py-3 text-sm transition-all duration-300 ease-in-out hover:bg-[var(--bg-tertiary)]/20 rounded-lg"
+                >
+                  {/* Star/Watchlist Icon */}
+                  <div className="flex justify-center">
+                    <button
+                      onClick={() => onToggleWatchlist(assetType, symbol)}
+                      className="p-1 text-[var(--text-secondary)] hover:text-[var(--text-primary)] transition-colors"
+                    >
+                      <Star
+                        className={`h-4 w-4 ${
+                          isInWatchlist
+                            ? "fill-[var(--accent-primary)] text-[var(--accent-primary)]"
+                            : ""
+                        }`}
+                      />
+                    </button>
+                  </div>
+
+                  {/* Row Number */}
+                  <div className="text-center text-[var(--text-secondary)]">
+                    {index + 1}
+                  </div>
+
+                  {/* Asset Info */}
+                  <div className="flex items-center gap-3">
+                    <span className="text-[var(--text-primary)] font-medium text-base">
+                      {symbol}
+                    </span>
+                    {name && (
+                      <span className="text-[var(--text-secondary)] text-sm">
+                        ({name})
+                      </span>
+                    )}
+                  </div>
+
+                  {/* Price */}
+                  <div className="text-right">
+                    <span
+                      className={`text-[var(--text-primary)] font-medium text-base ${
+                        hasRecentUpdate ? "bg-green-500/10 rounded px-2 py-1" : ""
+                      }`}
+                    >
+                      {displayPrice}
+                    </span>
+                  </div>
+
+                  {/* Change % */}
+                  <div className="text-right">
+                    <div className="flex items-center justify-end gap-1">
+                      {priceChange.isPositive ? (
+                        <TrendingUp className="h-4 w-4 text-green-500" />
+                      ) : (
+                        <TrendingDown className="h-4 w-4 text-red-500" />
+                      )}
+                      <span
+                        className={`font-medium ${
+                          priceChange.isPositive
+                            ? "text-green-500"
+                            : "text-red-500"
+                        }`}
+                      >
+                        {priceChange.changePercent.toFixed(2)}%
+                      </span>
+                    </div>
+                  </div>
+
+                  {/* Volume */}
+                  <div className="text-right">
+                    <span className="text-[var(--text-primary)] font-medium">
+                      {stockAsset.volume ? formatLargeNumber(stockAsset.volume) : 'N/A'}
                     </span>
                   </div>
 
