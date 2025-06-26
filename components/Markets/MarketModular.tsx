@@ -229,6 +229,7 @@ export const MarketAssets = memo(
         config,
         watchlist,
         onToggleWatchlist,
+        selectedCurrency, // Add selectedCurrency prop
         currencyRates,
         calculatePriceChange,
         updatedItems,

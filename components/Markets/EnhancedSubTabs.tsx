@@ -28,6 +28,7 @@ interface EnhancedSubTabProps {
   };
   watchlist: WatchlistItem[];
   onToggleWatchlist: (category: AssetCategory, symbol: string) => void;
+  selectedCurrency: CurrencyCode; // Add selectedCurrency prop
   currencyRates: {
     currencies: Currency[] | null;
     crypto: CryptoType[] | null;
@@ -61,11 +62,14 @@ export const CryptoEnhancedView = memo(function CryptoEnhancedView({
   config,
   watchlist,
   onToggleWatchlist,
+  selectedCurrency,
   currencyRates,
   calculatePriceChange,
   updatedItems
 }: EnhancedSubTabProps & { assets: CryptoType[]; fullAssets: Asset[] }) {
   const { convertValue, formatPreciseValue } = useCurrencyConverter();
+  
+  console.log("CryptoEnhancedView - Selected Currency:", selectedCurrency);
 
   return (
     <div className="space-y-4 transition-all duration-300 ease-in-out">
@@ -206,11 +210,14 @@ export const StocksEnhancedView = memo(function StocksEnhancedView({
   config,
   watchlist,
   onToggleWatchlist,
+  selectedCurrency,
   currencyRates,
   calculatePriceChange,
   updatedItems
 }: EnhancedSubTabProps & { assets: Stock[]; fullAssets: Asset[] }) {
   const { convertValue, formatPreciseValue } = useCurrencyConverter();
+  
+  console.log("StocksEnhancedView - Selected Currency:", selectedCurrency);
 
   return (
     <div className="space-y-4 transition-all duration-300 ease-in-out">
@@ -343,11 +350,14 @@ export const MetalsEnhancedView = memo(function MetalsEnhancedView({
   config,
   watchlist,
   onToggleWatchlist,
+  selectedCurrency,
   currencyRates,
   calculatePriceChange,
   updatedItems
 }: EnhancedSubTabProps & { assets: Metal[]; fullAssets: Asset[] }) {
   const { convertValue, formatPreciseValue } = useCurrencyConverter();
+  
+  console.log("MetalsEnhancedView - Selected Currency:", selectedCurrency);
 
   return (
     <div className="space-y-4 transition-all duration-300 ease-in-out">
@@ -498,11 +508,14 @@ export const CurrenciesEnhancedView = memo(function CurrenciesEnhancedView({
   config,
   watchlist,
   onToggleWatchlist,
+  selectedCurrency,
   currencyRates,
   calculatePriceChange,
   updatedItems
 }: EnhancedSubTabProps & { assets: Currency[]; fullAssets: Asset[] }) {
   const { convertValue, formatPreciseValue } = useCurrencyConverter();
+  
+  console.log("CurrenciesEnhancedView - Selected Currency:", selectedCurrency);
 
   console.log("Rendering enhanced currencies view with", assets.length, "assets");
   
