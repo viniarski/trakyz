@@ -182,52 +182,33 @@ export function useUserSettings() {
       
       // Update watchlist if it's changed
       if (updates.watchlist) {
-        // Get current watchlist from DB for comparison
-        const { data: currentWatchlist, error: fetchError } = await supabase
+        // Delete all existing watchlist items for this user first
+        const { error: deleteError } = await supabase
           .from('watchlist')
-          .select('*')
+          .delete()
           .eq('user_id', userId)
         
-        if (fetchError) {
-          console.error('Error fetching current watchlist:', fetchError)
+        if (deleteError) {
+          console.error('Error deleting existing watchlist:', deleteError)
           return
         }
         
-        // Identify items to add, update, or delete
-        const existingItemIds = new Set(currentWatchlist?.map(item => item.id) || [])
-        const newItemIds = new Set(updates.watchlist.map(item => item.id))
-        
-        // Items to add or update
-        const upsertItems = updates.watchlist.map(item => ({
-          id: item.id,
-          user_id: userId,
-          category: item.category,
-          symbol: item.symbol,
-          order_index: item.order
-        }))
-        
-        // Items to delete (in current DB but not in new list)
-        const idsToDelete = currentWatchlist?.filter(item => !newItemIds.has(item.id)).map(item => item.id) || []
-        
-        // Perform operations if needed
-        if (upsertItems.length > 0) {
-          const { error: upsertError } = await supabase
-            .from('watchlist')
-            .upsert(upsertItems)
+        // Insert new watchlist items if any exist
+        if (updates.watchlist.length > 0) {
+          // Don't include the id field - let the database generate it
+          const watchlistItems = updates.watchlist.map((item, index) => ({
+            user_id: userId,
+            category: item.category,
+            symbol: item.symbol,
+            order_index: index // Use index for order
+          }))
           
-          if (upsertError) {
-            console.error('Error updating watchlist items:', upsertError)
-          }
-        }
-        
-        if (idsToDelete.length > 0) {
-          const { error: deleteError } = await supabase
+          const { error: insertError } = await supabase
             .from('watchlist')
-            .delete()
-            .in('id', idsToDelete)
+            .insert(watchlistItems)
           
-          if (deleteError) {
-            console.error('Error deleting watchlist items:', deleteError)
+          if (insertError) {
+            console.error('Error inserting watchlist items:', insertError)
           }
         }
       }

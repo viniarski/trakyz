@@ -196,72 +196,45 @@ export const MarketAssets = memo(
         default:
           return {
             icon: null,
-            title: "Assets",
+            title: "",
             getSymbol: () => "",
             getName: () => "",
           };
       }
     }, [assetType]);
 
-    if (!displayAssets.length) return null;
+    if (!displayAssets || displayAssets.length === 0) {
+      return (
+        <div className="text-center py-8 text-[var(--text-secondary)]">
+          No {config.title.toLowerCase()} data available
+        </div>
+      );
+    }
 
-    // Simple chart component using real price data
-    const MiniChart = ({ symbol, priceChange }: { symbol: string; priceChange: { changePercent: number; isPositive: boolean } }) => {
-      // Get historical data for this symbol
-      const getHistoricalData = () => {
-        if (!assets) return [];
-        
-        const symbolData = assets
-          .filter((asset) => {
-            if (assetType === "Crypto") {
-              return (asset as CryptoType).symbol === symbol;
-            }
-            return false;
-          })
-          .sort((a, b) => new Date(a.date).getTime() - new Date(b.date).getTime())
-          .slice(-7); // Last 7 data points
-        
-        return symbolData.map(asset => asset.price);
-      };
-
-      const historicalPrices = getHistoricalData();
-      
-      // If we don't have enough data, create a trend based on change
-      let chartData = historicalPrices;
-      if (chartData.length < 2) {
-        // Generate trend data based on price change
-        const basePrice = 100;
-        const points = 7;
-        chartData = [];
-        
-        for (let i = 0; i < points; i++) {
-          const progress = i / (points - 1);
-          const trend = priceChange.isPositive 
-            ? basePrice + (progress * Math.abs(priceChange.changePercent) * 0.5)
-            : basePrice - (progress * Math.abs(priceChange.changePercent) * 0.5);
-          const noise = (Math.random() - 0.5) * Math.abs(priceChange.changePercent) * 0.1;
-          chartData.push(trend + noise);
-        }
-      }
-
+    // Mini chart component
+    const MiniChart = ({ symbol, priceChange }: { symbol: string; priceChange: { isPositive: boolean } }) => {
       const chartColor = priceChange.isPositive ? "#10b981" : "#ef4444";
       
-      // Normalize data for chart
-      const minPrice = Math.min(...chartData);
-      const maxPrice = Math.max(...chartData);
-      const priceRange = maxPrice - minPrice || 1;
-      
+      // Generate some random data points for the sparkline
+      const points = Array.from({ length: 10 }, (_, i) => {
+        const baseValue = 50;
+        const trend = priceChange.isPositive ? 1 : -1;
+        const randomVariation = Math.random() * 20 - 10;
+        return baseValue + (trend * i * 3) + randomVariation;
+      });
+
       // Create SVG path
       const width = 80;
       const height = 24;
-      const padding = 2;
-      
-      const path = chartData
-        .map((price, index) => {
-          const x = padding + (index / (chartData.length - 1)) * (width - padding * 2);
-          const normalizedPrice = (price - minPrice) / priceRange;
-          const y = height - padding - (normalizedPrice * (height - padding * 2));
-          return `${index === 0 ? 'M' : 'L'} ${x} ${y}`;
+      const max = Math.max(...points);
+      const min = Math.min(...points);
+      const range = max - min || 1;
+
+      const path = points
+        .map((point, i) => {
+          const x = (i / (points.length - 1)) * width;
+          const y = height - ((point - min) / range) * height;
+          return `${i === 0 ? 'M' : 'L'} ${x} ${y}`;
         })
         .join(' ');
 
@@ -289,7 +262,8 @@ export const MarketAssets = memo(
           {/* Enhanced crypto table */}
           <div className="space-y-3">
             {/* Header */}
-            <div className="grid grid-cols-[auto,2fr,1.2fr,1fr,1.2fr,1.2fr,1.2fr] gap-4 px-4 py-3 text-sm font-medium text-[var(--text-tertiary)] border-b border-gray-700/30">
+            <div className="grid grid-cols-[auto,auto,2fr,1.2fr,1fr,1.2fr,1.2fr,1.2fr] gap-4 px-4 py-3 text-sm font-medium text-[var(--text-tertiary)] border-b border-gray-700/30">
+              <div className="text-center"></div>
               <div className="text-center">#</div>
               <div>Name</div>
               <div className="text-right">Price</div>
@@ -300,7 +274,7 @@ export const MarketAssets = memo(
             </div>
             
             {/* Crypto rows */}
-            {displayAssets.map((asset) => {
+            {displayAssets.map((asset, index) => {
               const cryptoAsset = asset as CryptoType;
               const symbol = config.getSymbol(asset);
               const name = config.getName(asset);
@@ -318,8 +292,29 @@ export const MarketAssets = memo(
               return (
                 <div
                   key={symbol}
-                  className="grid grid-cols-[2fr,1.2fr,1fr,1.2fr,1.2fr,1.2fr] gap-4 items-center px-4 py-3 text-sm transition-all duration-300 ease-in-out hover:bg-[var(--bg-tertiary)]/20 rounded-lg"
+                  className="grid grid-cols-[auto,auto,2fr,1.2fr,1fr,1.2fr,1.2fr,1.2fr] gap-4 items-center px-4 py-3 text-sm transition-all duration-300 ease-in-out hover:bg-[var(--bg-tertiary)]/20 rounded-lg"
                 >
+                  {/* Star/Watchlist Icon */}
+                  <div className="flex justify-center">
+                    <button
+                      onClick={() => onToggleWatchlist(assetType, symbol)}
+                      className="p-1 text-[var(--text-secondary)] hover:text-[var(--text-primary)] transition-colors"
+                    >
+                      <Star
+                        className={`h-4 w-4 ${
+                          isInWatchlist
+                            ? "fill-[var(--accent-primary)] text-[var(--accent-primary)]"
+                            : ""
+                        }`}
+                      />
+                    </button>
+                  </div>
+
+                  {/* Row Number */}
+                  <div className="text-center text-[var(--text-secondary)]">
+                    {index + 1}
+                  </div>
+
                   {/* Asset Info */}
                   <div className="flex items-center gap-3">
                     <span className="text-[var(--text-primary)] font-medium text-base">
@@ -358,7 +353,7 @@ export const MarketAssets = memo(
                             : "text-red-500"
                         }`}
                       >
-                        {priceChange.isPositive ? '+' : ''}{priceChange.changePercent.toFixed(2)}%
+                        {priceChange.changePercent.toFixed(2)}%
                       </span>
                     </div>
                   </div>
@@ -378,14 +373,8 @@ export const MarketAssets = memo(
                   </div>
 
                   {/* Mini Chart */}
-                  <div className="flex justify-end items-center gap-3">
+                  <div className="flex justify-end">
                     <MiniChart symbol={symbol} priceChange={priceChange} />
-                    <AssetContextMenu
-                      isInWatchlist={isInWatchlist}
-                      onToggleWatchlist={() =>
-                        onToggleWatchlist(assetType, symbol)
-                      }
-                    />
                   </div>
                 </div>
               );
@@ -444,33 +433,34 @@ export const MarketAssets = memo(
                     {symbol}
                   </span>
                   {name && assetType !== "Precious Metals" && (
-                    <span className="text-[var(--text-secondary)] text-xs hidden sm:inline">
+                    <span className="text-[var(--text-tertiary)] text-xs">
                       ({name})
                     </span>
                   )}
                 </div>
-                <div className="flex items-center gap-4">
+
+                <div className="flex items-center gap-2">
                   <span
-                    className={`text-[var(--text-primary)] font-medium transition-all duration-300 ease-in-out ${
-                      hasRecentUpdate ? "bg-green-500/10 rounded px-1" : ""
+                    className={`text-[var(--text-primary)] font-medium ${
+                      hasRecentUpdate ? "bg-green-500/10 rounded px-1.5 py-0.5" : ""
                     }`}
                   >
                     {displayPrice}
                   </span>
-                  <div className="flex items-center gap-1 min-w-[80px] justify-end transition-all duration-300 ease-in-out">
+                  <div className="flex items-center gap-1">
                     {priceChange.isPositive ? (
-                      <TrendingUp className="h-4 w-4 text-green-500" />
+                      <TrendingUp className="h-3 w-3 text-green-500" />
                     ) : (
-                      <TrendingDown className="h-4 w-4 text-red-500" />
+                      <TrendingDown className="h-3 w-3 text-red-500" />
                     )}
                     <span
-                      className={`${
+                      className={`text-xs ${
                         priceChange.isPositive
                           ? "text-green-500"
                           : "text-red-500"
-                      } transition-all duration-300 ease-in-out`}
+                      }`}
                     >
-                      {Math.abs(priceChange.changePercent).toFixed(2)}%
+                      {priceChange.isPositive ? '+' : ''}{priceChange.changePercent.toFixed(2)}%
                     </span>
                   </div>
                   <AssetContextMenu
@@ -485,19 +475,6 @@ export const MarketAssets = memo(
           })}
         </div>
       </div>
-    );
-  },
-  (prevProps: MarketAssetsProps, nextProps: MarketAssetsProps) => {
-    return (
-      prevProps.assets === nextProps.assets &&
-      prevProps.limit === nextProps.limit &&
-      prevProps.watchlist === nextProps.watchlist &&
-      prevProps.selectedCurrency === nextProps.selectedCurrency &&
-      prevProps.currencyRates === nextProps.currencyRates &&
-      prevProps.selectedPeriod === nextProps.selectedPeriod &&
-      prevProps.updatedItems === nextProps.updatedItems &&
-      prevProps.assetType === nextProps.assetType &&
-      prevProps.isSubtabView === nextProps.isSubtabView
     );
   }
 );

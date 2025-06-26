@@ -211,7 +211,7 @@ export default async function Page(props: any) {
 
     case "real-estate":
       const { data: realEstate, error: realEstateError } = await supabase
-        .from("real_estate")
+        .from("real_estate_properties") // Changed from "real_estate" to "real_estate_properties"
         .select("*")
         .eq("user_id", user.id)
         .order("created_at", { ascending: false });
