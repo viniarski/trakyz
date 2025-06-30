@@ -79,45 +79,45 @@ export function TransactionsList({
     <div className="hidden md:block p-4 overflow-x-auto">
       <table className="w-full">
         <thead>
-          <tr className="border-b border-gray-700">
+          <tr className="">
             <th
-              className="p-2 text-left text-[var(--text-secondary)] font-medium cursor-pointer hover:text-[var(--text-primary)]"
+              className="px-2 py-0 text-left text-[var(--text-secondary)] text-xs font-medium cursor-pointer hover:text-[var(--text-primary)]"
               onClick={() => handleSort("date")}
             >
               Date <SortArrow columnKey="date" />
             </th>
             <th
-              className="p-2 text-left text-[var(--text-secondary)] font-medium cursor-pointer hover:text-[var(--text-primary)]"
+              className="px-2 py-0 text-left text-[var(--text-secondary)] text-xs font-medium cursor-pointer hover:text-[var(--text-primary)]"
               onClick={() => handleSort("transaction_type")}
             >
               Type <SortArrow columnKey="transaction_type" />
             </th>
             <th
-              className="p-2 text-left text-[var(--text-secondary)] font-medium cursor-pointer hover:text-[var(--text-primary)]"
+              className="px-2 py-0 text-left text-[var(--text-secondary)] text-xs font-medium cursor-pointer hover:text-[var(--text-primary)]"
               onClick={() => handleSort("category")}
             >
               Category <SortArrow columnKey="category" />
             </th>
             <th
-              className="p-2 text-left text-[var(--text-secondary)] font-medium cursor-pointer hover:text-[var(--text-primary)]"
+              className="px-2 py-0 text-left text-[var(--text-secondary)] text-xs font-medium cursor-pointer hover:text-[var(--text-primary)]"
               onClick={() => handleSort("asset_type")}
             >
               Asset <SortArrow columnKey="asset_type" />
             </th>
             <th
-              className="p-2 text-right text-[var(--text-secondary)] font-medium cursor-pointer hover:text-[var(--text-primary)]"
+              className="px-2 py-0 text-right text-[var(--text-secondary)] text-xs font-medium cursor-pointer hover:text-[var(--text-primary)]"
               onClick={() => handleSort("quantity")}
             >
               Quantity <SortArrow columnKey="quantity" />
             </th>
             <th
-              className="p-2 text-right text-[var(--text-secondary)] font-medium cursor-pointer hover:text-[var(--text-primary)]"
+              className="px-2 py-0 text-right text-[var(--text-secondary)] text-xs font-medium cursor-pointer hover:text-[var(--text-primary)]"
               onClick={() => handleSort("price")}
             >
               Price <SortArrow columnKey="price" />
             </th>
             <th
-              className="p-2 text-right text-[var(--text-secondary)] font-medium cursor-pointer hover:text-[var(--text-primary)]"
+              className="px-2 py-0 text-right text-[var(--text-secondary)] text-xs font-medium cursor-pointer hover:text-[var(--text-primary)]"
               onClick={() => handleSort("total")}
             >
               Total <SortArrow columnKey="total" />
@@ -130,16 +130,16 @@ export function TransactionsList({
               key={transaction.id}
               className="border-b border-gray-700 hover:bg-[var(--bg-hover)]/50"
             >
-              <td className="p-2 text-[var(--text-primary)]">
+              <td className="px-2 py-0 text-[var(--text-primary)] text-xs">
                 {formatDate(transaction.date)}
               </td>
               <td
-                className={`p-2 ${transaction.transaction_type === "BUY" ?
+                className={`px-2 py-0 text-xs ${transaction.transaction_type === "BUY" ?
                   "text-green-500" : "text-red-500"}`}
               >
                 {transaction.transaction_type}
               </td>
-              <td className="p-2">
+              <td className="px-2 py-0 text-xs">
                 <div className="flex items-center gap-2">
                   <CategoryIcon type={transaction.category} />
                   <span className="text-[var(--text-primary)]">
@@ -147,16 +147,16 @@ export function TransactionsList({
                   </span>
                 </div>
               </td>
-              <td className="p-2 text-[var(--text-primary)]">
+              <td className="px-2 py-0 text-[var(--text-primary)] text-xs">
                 {transaction.asset_type}
               </td>
-              <td className="p-2 text-right text-[var(--text-primary)]">
+              <td className="px-2 py-0 text-right text-[var(--text-primary)] text-xs">
                 {transaction.quantity.toLocaleString()}
               </td>
-              <td className="p-2 text-right text-[var(--text-primary)]">
+              <td className="px-2 py-0 text-right text-[var(--text-primary)] text-xs">
                 {formatCurrency(transaction.price, currency)}
               </td>
-              <td className="p-2 text-right text-[var(--text-primary)]">
+              <td className="px-2 py-0 text-right text-[var(--text-primary)] text-xs">
                 {formatCurrency(
                   transaction.quantity * transaction.price,
                   currency
@@ -194,7 +194,7 @@ export function TransactionsList({
             {dateTransactions.map((transaction) => (
               <div
                 key={transaction.id}
-                className="p-3 bg-[var(--bg-secondary)] hover:bg-[var(--bg-hover)]/30"
+                className="p-2 bg-[var(--bg-secondary)] hover:bg-[var(--bg-hover)]/30"
               >
                 <div className="flex justify-between items-center">
                   <div className="flex items-center gap-2">

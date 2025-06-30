@@ -13,6 +13,8 @@ import { TransactionsHeader } from "@/components/Transactions/components/Transac
 import { useTransactions } from "@/hooks/useTransactions";
 import { Notification, useNotification } from "@/components/ui/Notification";
 import { LoadingState } from "@/components/ui/LoadingState";
+import { ImportModal } from "@/components/Transactions/modals/ImportModal";
+import { ExportModal } from "@/components/Transactions/modals/ExportModal";
 
 interface TransactionsProps {
   transactions: Transaction[];
@@ -34,6 +36,12 @@ const Transactions: React.FC<TransactionsProps> = ({
   const [showAddTransaction, setShowAddTransaction] = useState(false);
   const [deleteAllConfirm, setDeleteAllConfirm] = useState(false);
   
+  // Import/Export modal states
+  const [showImportModal, setShowImportModal] = useState(false);
+  const [showExportModal, setShowExportModal] = useState(false);
+  const [importType, setImportType] = useState<'csv' | 'xlsx' | 'json' | null>(null);
+  const [exportType, setExportType] = useState<'csv' | 'xlsx' | 'json' | 'pdf' | null>(null);
+  
   // Use the transactions hook for data fetching and management
   const {
     transactions,
@@ -51,14 +59,6 @@ const Transactions: React.FC<TransactionsProps> = ({
     deleteAllTransactions,
     fetchTransactions
   } = useTransactions(userId, initialTransactions);
-  
-  // Fetch market data for currency conversion (simplified for this example)
-  const [currencyRates, setCurrencyRates] = useState({
-    currencies: null,
-    crypto: null,
-    metals: null,
-    stocks: null
-  });
   
   // Handle adding a new transaction
   const handleAddTransaction = () => {
@@ -86,14 +86,42 @@ const Transactions: React.FC<TransactionsProps> = ({
   
   // Handle import functionality
   const handleImport = (type: string) => {
-    showNotification('success', `Import ${type.toUpperCase()} would be handled here`);
-    // Additional import logic would go here
+    setImportType(type as 'csv' | 'xlsx' | 'json');
+    setShowImportModal(true);
   };
   
   // Handle export functionality
   const handleExport = (type: string) => {
-    showNotification('success', `Export ${type.toUpperCase()} would be handled here`);
-    // Additional export logic would go here
+    setExportType(type as 'csv' | 'xlsx' | 'json' | 'pdf');
+    setShowExportModal(true);
+  };
+  
+  // Handle import success
+  const handleImportSuccess = () => {
+    // Refresh transactions after successful import
+    if (selectedPortfolio) {
+      fetchTransactions(selectedPortfolio);
+    }
+    showNotification('success', 'Transactions imported successfully');
+    setShowImportModal(false);
+    setImportType(null);
+  };
+  
+  // Handle import error
+  const handleImportError = (message: string) => {
+    showNotification('error', message);
+  };
+  
+  // Handle export success
+  const handleExportSuccess = () => {
+    showNotification('success', 'Transactions exported successfully');
+    setShowExportModal(false);
+    setExportType(null);
+  };
+  
+  // Handle export error
+  const handleExportError = (message: string) => {
+    showNotification('error', message);
   };
 
   // Handle deleting all transactions
@@ -150,7 +178,7 @@ const Transactions: React.FC<TransactionsProps> = ({
 
       {/* Transactions List */}
       {isLoading ? (
-        <LoadingState message="Loading transactions..." />
+        <LoadingState />
       ) : (
         <TransactionsList
           transactions={filteredTransactions}
@@ -161,38 +189,68 @@ const Transactions: React.FC<TransactionsProps> = ({
         />
       )}
 
-      {/* Notification */}
-      {notification && (
-        <Notification
-          type={notification.type}
-          message={notification.message}
-          onClose={clearNotification}
+      {/* Add Transaction Modal */}
+      {showAddTransaction && (
+        <AddAsset
+          onClose={() => setShowAddTransaction(false)}
+          onAddTransaction={handleTransactionSubmit}
+          marketData={{
+            metals: [],
+            crypto: [],
+            currencies: [],
+            stocks: [],
+          }}
+          portfolios={availablePortfolios}
+          selectedPortfolioId={selectedPortfolio}
+          title="Add Transaction"
+        />
+      )}
+
+      {/* Import Modal */}
+      {showImportModal && (
+        <ImportModal
+          isOpen={showImportModal}
+          onClose={() => {
+            setShowImportModal(false);
+            setImportType(null);
+          }}
+          fileType={importType}
+          portfolioId={selectedPortfolio || undefined}
+          onSuccess={handleImportSuccess}
+          onError={handleImportError}
+        />
+      )}
+
+      {/* Export Modal */}
+      {showExportModal && (
+        <ExportModal
+          isOpen={showExportModal}
+          onClose={() => {
+            setShowExportModal(false);
+            setExportType(null);
+          }}
+          transactions={filteredTransactions}
+          fileType={exportType}
+          onSuccess={handleExportSuccess}
+          onError={handleExportError}
         />
       )}
 
       {/* Delete All Confirmation Modal */}
       {deleteAllConfirm && (
         <DeleteAll
-          isLoading={isLoading}
           onConfirm={confirmDeleteAll}
           onCancel={cancelDeleteAll}
+          isLoading={isLoading}
         />
       )}
-      
-      {/* Add Transaction - AddAsset Modal */}
-      {showAddTransaction && (
-        <AddAsset
-          onClose={() => setShowAddTransaction(false)}
-          onAddTransaction={handleTransactionSubmit}
-          marketData={{
-            metals: currencyRates.metals,
-            crypto: currencyRates.crypto,
-            stocks: currencyRates.stocks,
-            currencies: currencyRates.currencies
-          }}
-          portfolios={availablePortfolios}
-          selectedPortfolioId={selectedPortfolio}
-          title="Add Transaction"
+
+      {/* Notification */}
+      {notification && (
+        <Notification
+          type={notification.type}
+          message={notification.message}
+          onClose={clearNotification}
         />
       )}
     </div>

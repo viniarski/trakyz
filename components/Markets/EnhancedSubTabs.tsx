@@ -28,7 +28,7 @@ interface EnhancedSubTabProps {
   };
   watchlist: WatchlistItem[];
   onToggleWatchlist: (category: AssetCategory, symbol: string) => void;
-  selectedCurrency: CurrencyCode; // Add selectedCurrency prop
+  selectedCurrency: CurrencyCode;
   currencyRates: {
     currencies: Currency[] | null;
     crypto: CryptoType[] | null;
@@ -68,14 +68,12 @@ export const CryptoEnhancedView = memo(function CryptoEnhancedView({
   updatedItems
 }: EnhancedSubTabProps & { assets: CryptoType[]; fullAssets: Asset[] }) {
   const { convertValue, formatPreciseValue } = useCurrencyConverter();
-  
-  console.log("CryptoEnhancedView - Selected Currency:", selectedCurrency);
 
   return (
-    <div className="space-y-4 transition-all duration-300 ease-in-out">
-      <div className="space-y-3">
+    <div className="space-y-2 transition-all duration-300 ease-in-out">
+      <div className="space-y-1">
         {/* Header */}
-        <div className="grid grid-cols-[auto,auto,2fr,1.2fr,1fr,1.2fr,1.2fr,1.2fr] gap-4 px-4 py-3 text-sm font-medium text-[var(--text-tertiary)] border-b border-gray-700/30">
+        <div className="grid grid-cols-[auto,auto,2fr,1.2fr,1fr,1.2fr,1.2fr,1.2fr] gap-4 px-2 py-0 text-xs font-medium text-[var(--text-tertiary)]">
           <div className="text-center"></div>
           <div className="text-center">#</div>
           <div>Name</div>
@@ -105,7 +103,7 @@ export const CryptoEnhancedView = memo(function CryptoEnhancedView({
           return (
             <div
               key={symbol}
-              className="grid grid-cols-[auto,auto,2fr,1.2fr,1fr,1.2fr,1.2fr,1.2fr] gap-4 items-center px-4 py-3 text-sm transition-all duration-300 ease-in-out hover:bg-[var(--bg-tertiary)]/20 rounded-lg"
+              className="grid grid-cols-[auto,auto,2fr,1.2fr,1fr,1.2fr,1.2fr,1.2fr] gap-4 items-center px-2 py-2 text-xs transition-all duration-300 ease-in-out hover:bg-[var(--bg-tertiary)]/20 border-b border-gray-700"
             >
               {/* Star/Watchlist Icon */}
               <div className="flex justify-center">
@@ -114,7 +112,7 @@ export const CryptoEnhancedView = memo(function CryptoEnhancedView({
                   className="p-1 text-[var(--text-secondary)] hover:text-[var(--text-primary)] transition-colors"
                 >
                   <Star
-                    className={`h-4 w-4 ${
+                    className={`h-3 w-3 ${
                       isInWatchlist
                         ? "fill-[var(--accent-primary)] text-[var(--accent-primary)]"
                         : ""
@@ -129,12 +127,12 @@ export const CryptoEnhancedView = memo(function CryptoEnhancedView({
               </div>
 
               {/* Asset Info */}
-              <div className="flex items-center gap-3">
-                <span className="text-[var(--text-primary)] font-medium text-base">
+              <div className="flex items-center gap-2">
+                <span className="text-[var(--text-primary)] font-medium text-xs">
                   {symbol}
                 </span>
                 {name && (
-                  <span className="text-[var(--text-secondary)] text-sm">
+                  <span className="text-[var(--text-secondary)] text-xs">
                     ({name})
                   </span>
                 )}
@@ -143,8 +141,8 @@ export const CryptoEnhancedView = memo(function CryptoEnhancedView({
               {/* Price */}
               <div className="text-right">
                 <span
-                  className={`text-[var(--text-primary)] font-medium text-base ${
-                    hasRecentUpdate ? "bg-green-500/10 rounded px-2 py-1" : ""
+                  className={`text-[var(--text-primary)] font-medium text-xs ${
+                    hasRecentUpdate ? "bg-green-500/10 rounded px-1 py-0.5" : ""
                   }`}
                 >
                   {displayPrice}
@@ -155,12 +153,12 @@ export const CryptoEnhancedView = memo(function CryptoEnhancedView({
               <div className="text-right">
                 <div className="flex items-center justify-end gap-1">
                   {priceChange.isPositive ? (
-                    <TrendingUp className="h-4 w-4 text-green-500" />
+                    <TrendingUp className="h-3 w-3 text-green-500" />
                   ) : (
-                    <TrendingDown className="h-4 w-4 text-red-500" />
+                    <TrendingDown className="h-3 w-3 text-red-500" />
                   )}
                   <span
-                    className={`font-medium ${
+                    className={`font-medium text-xs ${
                       priceChange.isPositive
                         ? "text-green-500"
                         : "text-red-500"
@@ -173,14 +171,14 @@ export const CryptoEnhancedView = memo(function CryptoEnhancedView({
 
               {/* Market Cap */}
               <div className="text-right">
-                <span className="text-[var(--text-primary)] font-medium">
+                <span className="text-[var(--text-primary)] font-medium text-xs">
                   {cryptoAsset.market_cap ? formatLargeNumber(cryptoAsset.market_cap) : 'N/A'}
                 </span>
               </div>
 
               {/* Volume 24h */}
               <div className="text-right">
-                <span className="text-[var(--text-primary)] font-medium">
+                <span className="text-[var(--text-primary)] font-medium text-xs">
                   {cryptoAsset.volume_24h ? formatLargeNumber(cryptoAsset.volume_24h) : 'N/A'}
                 </span>
               </div>
@@ -216,14 +214,12 @@ export const StocksEnhancedView = memo(function StocksEnhancedView({
   updatedItems
 }: EnhancedSubTabProps & { assets: Stock[]; fullAssets: Asset[] }) {
   const { convertValue, formatPreciseValue } = useCurrencyConverter();
-  
-  console.log("StocksEnhancedView - Selected Currency:", selectedCurrency);
 
   return (
-    <div className="space-y-4 transition-all duration-300 ease-in-out">
-      <div className="space-y-3">
+    <div className="space-y-2 transition-all duration-300 ease-in-out">
+      <div className="space-y-1">
         {/* Header */}
-        <div className="grid grid-cols-[auto,auto,2fr,1.2fr,1fr,1.2fr,1.2fr] gap-4 px-4 py-3 text-sm font-medium text-[var(--text-tertiary)] border-b border-gray-700/30">
+        <div className="grid grid-cols-[auto,auto,2fr,1.2fr,1fr,1.2fr,1.2fr] gap-4 px-2 py-0 text-xs font-medium text-[var(--text-tertiary)]">
           <div className="text-center"></div>
           <div className="text-center">#</div>
           <div>Name</div>
@@ -252,7 +248,7 @@ export const StocksEnhancedView = memo(function StocksEnhancedView({
           return (
             <div
               key={symbol}
-              className="grid grid-cols-[auto,auto,2fr,1.2fr,1fr,1.2fr,1.2fr] gap-4 items-center px-4 py-3 text-sm transition-all duration-300 ease-in-out hover:bg-[var(--bg-tertiary)]/20 rounded-lg"
+              className="grid grid-cols-[auto,auto,2fr,1.2fr,1fr,1.2fr,1.2fr] gap-4 items-center px-2 py-2 text-xs transition-all duration-300 ease-in-out hover:bg-[var(--bg-tertiary)]/20 border-b border-gray-700"
             >
               {/* Star/Watchlist Icon */}
               <div className="flex justify-center">
@@ -261,7 +257,7 @@ export const StocksEnhancedView = memo(function StocksEnhancedView({
                   className="p-1 text-[var(--text-secondary)] hover:text-[var(--text-primary)] transition-colors"
                 >
                   <Star
-                    className={`h-4 w-4 ${
+                    className={`h-3 w-3 ${
                       isInWatchlist
                         ? "fill-[var(--accent-primary)] text-[var(--accent-primary)]"
                         : ""
@@ -276,12 +272,12 @@ export const StocksEnhancedView = memo(function StocksEnhancedView({
               </div>
 
               {/* Asset Info */}
-              <div className="flex items-center gap-3">
-                <span className="text-[var(--text-primary)] font-medium text-base">
+              <div className="flex items-center gap-2">
+                <span className="text-[var(--text-primary)] font-medium text-xs">
                   {symbol}
                 </span>
                 {name && (
-                  <span className="text-[var(--text-secondary)] text-sm">
+                  <span className="text-[var(--text-secondary)] text-xs">
                     ({name})
                   </span>
                 )}
@@ -290,8 +286,8 @@ export const StocksEnhancedView = memo(function StocksEnhancedView({
               {/* Price */}
               <div className="text-right">
                 <span
-                  className={`text-[var(--text-primary)] font-medium text-base ${
-                    hasRecentUpdate ? "bg-green-500/10 rounded px-2 py-1" : ""
+                  className={`text-[var(--text-primary)] font-medium text-xs ${
+                    hasRecentUpdate ? "bg-green-500/10 rounded px-1 py-0.5" : ""
                   }`}
                 >
                   {displayPrice}
@@ -302,12 +298,12 @@ export const StocksEnhancedView = memo(function StocksEnhancedView({
               <div className="text-right">
                 <div className="flex items-center justify-end gap-1">
                   {priceChange.isPositive ? (
-                    <TrendingUp className="h-4 w-4 text-green-500" />
+                    <TrendingUp className="h-3 w-3 text-green-500" />
                   ) : (
-                    <TrendingDown className="h-4 w-4 text-red-500" />
+                    <TrendingDown className="h-3 w-3 text-red-500" />
                   )}
                   <span
-                    className={`font-medium ${
+                    className={`font-medium text-xs ${
                       priceChange.isPositive
                         ? "text-green-500"
                         : "text-red-500"
@@ -320,7 +316,7 @@ export const StocksEnhancedView = memo(function StocksEnhancedView({
 
               {/* Volume */}
               <div className="text-right">
-                <span className="text-[var(--text-primary)] font-medium">
+                <span className="text-[var(--text-primary)] font-medium text-xs">
                   {stockAsset.volume ? formatLargeNumber(stockAsset.volume) : 'N/A'}
                 </span>
               </div>
@@ -356,14 +352,12 @@ export const MetalsEnhancedView = memo(function MetalsEnhancedView({
   updatedItems
 }: EnhancedSubTabProps & { assets: Metal[]; fullAssets: Asset[] }) {
   const { convertValue, formatPreciseValue } = useCurrencyConverter();
-  
-  console.log("MetalsEnhancedView - Selected Currency:", selectedCurrency);
 
   return (
-    <div className="space-y-4 transition-all duration-300 ease-in-out">
-      <div className="space-y-3">
+    <div className="space-y-2 transition-all duration-300 ease-in-out">
+      <div className="space-y-1">
         {/* Header */}
-        <div className="grid grid-cols-[auto,auto,2fr,1fr,1fr,1fr,1fr,1.2fr] gap-4 px-4 py-3 text-sm font-medium text-[var(--text-tertiary)] border-b border-gray-700/30">
+        <div className="grid grid-cols-[auto,auto,2fr,1fr,1fr,1fr,1fr,1.2fr] gap-4 px-2 py-0 text-xs font-medium text-[var(--text-tertiary)]">
           <div className="text-center"></div>
           <div className="text-center">#</div>
           <div>Name</div>
@@ -388,19 +382,15 @@ export const MetalsEnhancedView = memo(function MetalsEnhancedView({
           
           // Convert prices for different units (assuming base price is per ounce)
           const pricePerOz = convertValue(asset.price, currencyRates, symbol);
-          const pricePerGram = pricePerOz / 31.1035; // 1 troy ounce = 31.1035 grams
-          const pricePerKg = pricePerOz * 32.15; // 1 kg = 32.15 troy ounces
-          
-          const displayPricePerGram = formatPreciseValue(pricePerGram);
-          const displayPricePerOz = formatPreciseValue(pricePerOz);
-          const displayPricePerKg = formatPreciseValue(pricePerKg);
+          const pricePerGram = pricePerOz / 31.1035; // Convert from oz to grams
+          const pricePerKg = pricePerOz * 32.1507; // Convert from oz to kg
           
           const hasRecentUpdate = updatedItems.has(symbol.toLowerCase());
 
           return (
             <div
               key={symbol}
-              className="grid grid-cols-[auto,auto,2fr,1fr,1fr,1fr,1fr,1.2fr] gap-4 items-center px-4 py-3 text-sm transition-all duration-300 ease-in-out hover:bg-[var(--bg-tertiary)]/20 rounded-lg"
+              className="grid grid-cols-[auto,auto,2fr,1fr,1fr,1fr,1fr,1.2fr] gap-4 items-center px-2 py-2 text-xs transition-all duration-300 ease-in-out hover:bg-[var(--bg-tertiary)]/20 border-b border-gray-700"
             >
               {/* Star/Watchlist Icon */}
               <div className="flex justify-center">
@@ -409,7 +399,7 @@ export const MetalsEnhancedView = memo(function MetalsEnhancedView({
                   className="p-1 text-[var(--text-secondary)] hover:text-[var(--text-primary)] transition-colors"
                 >
                   <Star
-                    className={`h-4 w-4 ${
+                    className={`h-3 w-3 ${
                       isInWatchlist
                         ? "fill-[var(--accent-primary)] text-[var(--accent-primary)]"
                         : ""
@@ -424,42 +414,34 @@ export const MetalsEnhancedView = memo(function MetalsEnhancedView({
               </div>
 
               {/* Asset Info */}
-              <div className="flex items-center gap-3">
-                <span className="text-[var(--text-primary)] font-medium text-base capitalize">
+              <div className="flex items-center gap-2">
+                <span className="text-[var(--text-primary)] font-medium text-xs capitalize">
                   {symbol}
                 </span>
               </div>
 
-              {/* Price per Gram */}
+              {/* Price per gram */}
               <div className="text-right">
-                <span
-                  className={`text-[var(--text-primary)] font-medium text-sm ${
-                    hasRecentUpdate ? "bg-green-500/10 rounded px-2 py-1" : ""
-                  }`}
-                >
-                  {displayPricePerGram}
+                <span className="text-[var(--text-primary)] font-medium text-xs">
+                  {formatPreciseValue(pricePerGram)}
                 </span>
               </div>
 
-              {/* Price per Ounce */}
+              {/* Price per oz */}
               <div className="text-right">
                 <span
-                  className={`text-[var(--text-primary)] font-medium text-sm ${
-                    hasRecentUpdate ? "bg-green-500/10 rounded px-2 py-1" : ""
+                  className={`text-[var(--text-primary)] font-medium text-xs ${
+                    hasRecentUpdate ? "bg-green-500/10 rounded px-1 py-0.5" : ""
                   }`}
                 >
-                  {displayPricePerOz}
+                  {formatPreciseValue(pricePerOz)}
                 </span>
               </div>
 
-              {/* Price per Kg */}
+              {/* Price per kg */}
               <div className="text-right">
-                <span
-                  className={`text-[var(--text-primary)] font-medium text-sm ${
-                    hasRecentUpdate ? "bg-green-500/10 rounded px-2 py-1" : ""
-                  }`}
-                >
-                  {displayPricePerKg}
+                <span className="text-[var(--text-primary)] font-medium text-xs">
+                  {formatPreciseValue(pricePerKg)}
                 </span>
               </div>
 
@@ -467,12 +449,12 @@ export const MetalsEnhancedView = memo(function MetalsEnhancedView({
               <div className="text-right">
                 <div className="flex items-center justify-end gap-1">
                   {priceChange.isPositive ? (
-                    <TrendingUp className="h-4 w-4 text-green-500" />
+                    <TrendingUp className="h-3 w-3 text-green-500" />
                   ) : (
-                    <TrendingDown className="h-4 w-4 text-red-500" />
+                    <TrendingDown className="h-3 w-3 text-red-500" />
                   )}
                   <span
-                    className={`font-medium ${
+                    className={`font-medium text-xs ${
                       priceChange.isPositive
                         ? "text-green-500"
                         : "text-red-500"
@@ -514,16 +496,12 @@ export const CurrenciesEnhancedView = memo(function CurrenciesEnhancedView({
   updatedItems
 }: EnhancedSubTabProps & { assets: Currency[]; fullAssets: Asset[] }) {
   const { convertValue, formatPreciseValue } = useCurrencyConverter();
-  
-  console.log("CurrenciesEnhancedView - Selected Currency:", selectedCurrency);
 
-  console.log("Rendering enhanced currencies view with", assets.length, "assets");
-  
   return (
-    <div className="space-y-4 transition-all duration-300 ease-in-out">
-      <div className="space-y-3">
+    <div className="space-y-2 transition-all duration-300 ease-in-out">
+      <div className="space-y-1">
         {/* Header */}
-        <div className="grid grid-cols-[auto,auto,2fr,1.2fr,1fr,1.2fr] gap-4 px-4 py-3 text-sm font-medium text-[var(--text-tertiary)] border-b border-gray-700/30">
+        <div className="grid grid-cols-[auto,auto,2fr,1.2fr,1fr,1.2fr] gap-4 px-2 py-0 text-xs font-medium text-[var(--text-tertiary)]">
           <div className="text-center"></div>
           <div className="text-center">#</div>
           <div>Name</div>
@@ -551,7 +529,7 @@ export const CurrenciesEnhancedView = memo(function CurrenciesEnhancedView({
           return (
             <div
               key={symbol}
-              className="grid grid-cols-[auto,auto,2fr,1.2fr,1fr,1.2fr] gap-4 items-center px-4 py-3 text-sm transition-all duration-300 ease-in-out hover:bg-[var(--bg-tertiary)]/20 rounded-lg"
+              className="grid grid-cols-[auto,auto,2fr,1.2fr,1fr,1.2fr] gap-4 items-center px-2 py-2 text-xs transition-all duration-300 ease-in-out hover:bg-[var(--bg-tertiary)]/20 border-b border-gray-700"
             >
               {/* Star/Watchlist Icon */}
               <div className="flex justify-center">
@@ -560,7 +538,7 @@ export const CurrenciesEnhancedView = memo(function CurrenciesEnhancedView({
                   className="p-1 text-[var(--text-secondary)] hover:text-[var(--text-primary)] transition-colors"
                 >
                   <Star
-                    className={`h-4 w-4 ${
+                    className={`h-3 w-3 ${
                       isInWatchlist
                         ? "fill-[var(--accent-primary)] text-[var(--accent-primary)]"
                         : ""
@@ -575,12 +553,12 @@ export const CurrenciesEnhancedView = memo(function CurrenciesEnhancedView({
               </div>
 
               {/* Asset Info */}
-              <div className="flex items-center gap-3">
-                <span className="text-[var(--text-primary)] font-medium text-base">
+              <div className="flex items-center gap-2">
+                <span className="text-[var(--text-primary)] font-medium text-xs">
                   {symbol}
                 </span>
-                {name && (
-                  <span className="text-[var(--text-secondary)] text-sm">
+                {name && name !== symbol && (
+                  <span className="text-[var(--text-secondary)] text-xs">
                     ({name})
                   </span>
                 )}
@@ -589,8 +567,8 @@ export const CurrenciesEnhancedView = memo(function CurrenciesEnhancedView({
               {/* Price */}
               <div className="text-right">
                 <span
-                  className={`text-[var(--text-primary)] font-medium text-base ${
-                    hasRecentUpdate ? "bg-green-500/10 rounded px-2 py-1" : ""
+                  className={`text-[var(--text-primary)] font-medium text-xs ${
+                    hasRecentUpdate ? "bg-green-500/10 rounded px-1 py-0.5" : ""
                   }`}
                 >
                   {displayPrice}
@@ -601,12 +579,12 @@ export const CurrenciesEnhancedView = memo(function CurrenciesEnhancedView({
               <div className="text-right">
                 <div className="flex items-center justify-end gap-1">
                   {priceChange.isPositive ? (
-                    <TrendingUp className="h-4 w-4 text-green-500" />
+                    <TrendingUp className="h-3 w-3 text-green-500" />
                   ) : (
-                    <TrendingDown className="h-4 w-4 text-red-500" />
+                    <TrendingDown className="h-3 w-3 text-red-500" />
                   )}
                   <span
-                    className={`font-medium ${
+                    className={`font-medium text-xs ${
                       priceChange.isPositive
                         ? "text-green-500"
                         : "text-red-500"
