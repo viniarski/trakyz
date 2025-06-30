@@ -24,6 +24,15 @@ interface TransactionsListProps {
   currency: CurrencyCode;
 }
 
+// Helper function to format date consistently (no locale dependency)
+const formatDate = (dateString: string): string => {
+  const date = new Date(dateString);
+  const year = date.getFullYear();
+  const month = String(date.getMonth() + 1).padStart(2, '0');
+  const day = String(date.getDate()).padStart(2, '0');
+  return `${month}/${day}/${year}`;
+};
+
 export function TransactionsList({ 
   transactions, 
   sortKey, 
@@ -51,7 +60,7 @@ export function TransactionsList({
     const groups: Record<string, Transaction[]> = {};
 
     transactions.forEach((transaction) => {
-      const dateStr = new Date(transaction.date).toLocaleDateString();
+      const dateStr = formatDate(transaction.date);  // Fixed: use formatDate instead of toLocaleDateString
       if (!groups[dateStr]) {
         groups[dateStr] = [];
       }
@@ -122,10 +131,11 @@ export function TransactionsList({
               className="border-b border-gray-700 hover:bg-[var(--bg-hover)]/50"
             >
               <td className="p-2 text-[var(--text-primary)]">
-                {new Date(transaction.date).toLocaleDateString()}
+                {formatDate(transaction.date)}
               </td>
               <td
-                className={`p-2 ${transaction.transaction_type === "BUY" ? "text-green-500" : "text-red-500"}`}
+                className={`p-2 ${transaction.transaction_type === "BUY" ?
+                  "text-green-500" : "text-red-500"}`}
               >
                 {transaction.transaction_type}
               </td>

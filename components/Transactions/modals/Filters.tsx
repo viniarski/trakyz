@@ -63,7 +63,7 @@ const Filters: React.FC<FiltersProps> = ({ filters, setFilters, showFilters }) =
                 name="startDate"
                 value={filters.startDate}
                 onChange={handleFilterChange}
-                className="w-full px-3 py-2 bg-[var(--bg-primary)] rounded-md border border-[var(--border-primary)] text-[var(--text-primary)] focus:outline-none focus:ring-2 focus:ring-[var(--accent-primary)]"
+                className="w-full px-3 py-2 bg-[var(--bg-primary)] rounded-md border-0 text-[var(--text-primary)] focus:outline-none focus:ring-2 focus:ring-[var(--accent-primary)]"
               />
             </div>
             <div>
@@ -75,7 +75,7 @@ const Filters: React.FC<FiltersProps> = ({ filters, setFilters, showFilters }) =
                 name="endDate"
                 value={filters.endDate}
                 onChange={handleFilterChange}
-                className="w-full px-3 py-2 bg-[var(--bg-primary)] rounded-md border border-[var(--border-primary)] text-[var(--text-primary)] focus:outline-none focus:ring-2 focus:ring-[var(--accent-primary)]"
+                className="w-full px-3 py-2 bg-[var(--bg-primary)] rounded-md border-0 text-[var(--text-primary)] focus:outline-none focus:ring-2 focus:ring-[var(--accent-primary)]"
               />
             </div>
             <div>
@@ -86,7 +86,7 @@ const Filters: React.FC<FiltersProps> = ({ filters, setFilters, showFilters }) =
                 name="type"
                 value={filters.type}
                 onChange={handleFilterChange}
-                className="w-full px-3 py-2 bg-[var(--bg-primary)] rounded-md border border-[var(--border-primary)] text-[var(--text-primary)] focus:outline-none focus:ring-2 focus:ring-[var(--accent-primary)]"
+                className="w-full px-3 py-2 bg-[var(--bg-primary)] rounded-md border-0 text-[var(--text-primary)] focus:outline-none focus:ring-2 focus:ring-[var(--accent-primary)]"
               >
                 <option value="ALL">All</option>
                 <option value="BUY">Buy</option>
@@ -103,7 +103,7 @@ const Filters: React.FC<FiltersProps> = ({ filters, setFilters, showFilters }) =
                 value={filters.category}
                 onChange={handleFilterChange}
                 placeholder="e.g., Crypto, Stocks"
-                className="w-full px-3 py-2 bg-[var(--bg-primary)] rounded-md border border-[var(--border-primary)] text-[var(--text-primary)] focus:outline-none focus:ring-2 focus:ring-[var(--accent-primary)]"
+                className="w-full px-3 py-2 bg-[var(--bg-primary)] rounded-md border-0 text-[var(--text-primary)] focus:outline-none focus:ring-2 focus:ring-[var(--accent-primary)]"
               />
             </div>
             <div>
@@ -116,7 +116,7 @@ const Filters: React.FC<FiltersProps> = ({ filters, setFilters, showFilters }) =
                 value={filters.assetType}
                 onChange={handleFilterChange}
                 placeholder="e.g., BTC, AAPL"
-                className="w-full px-3 py-2 bg-[var(--bg-primary)] rounded-md border border-[var(--border-primary)] text-[var(--text-primary)] focus:outline-none focus:ring-2 focus:ring-[var(--accent-primary)]"
+                className="w-full px-3 py-2 bg-[var(--bg-primary)] rounded-md border-0 text-[var(--text-primary)] focus:outline-none focus:ring-2 focus:ring-[var(--accent-primary)]"
               />
             </div>
           </div>
