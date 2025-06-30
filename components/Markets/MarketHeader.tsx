@@ -2,8 +2,9 @@
 
 "use client";
 
-import { Bitcoin, LineChart, Banknote, ShoppingBag, Star } from "lucide-react";
+import { Star, BarChart2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import { CategoryIcon } from "@/components/ui/CategoryIcon";
 import { SelectedPeriod, MarketCategory } from "@/types";
 
 interface MarketHeaderProps {
@@ -33,7 +34,7 @@ export function MarketHeader({
           size="sm"
           className="flex items-center gap-1.5"
         >
-          <LineChart className="h-3.5 w-3.5" />
+          <BarChart2 className="h-3.5 w-3.5" />
           <span>All</span>
         </Button>
         
@@ -43,7 +44,7 @@ export function MarketHeader({
           size="sm"
           className="flex items-center gap-1.5"
         >
-          <Bitcoin className="h-3.5 w-3.5" />
+          <CategoryIcon type="Crypto" size={3.5} useTextColor />
           <span>Crypto</span>
         </Button>
         
@@ -53,7 +54,7 @@ export function MarketHeader({
           size="sm"
           className="flex items-center gap-1.5"
         >
-          <LineChart className="h-3.5 w-3.5" />
+          <CategoryIcon type="Stocks & Indexes" size={3.5} useTextColor />
           <span>Stocks</span>
         </Button>
         
@@ -63,7 +64,7 @@ export function MarketHeader({
           size="sm"
           className="flex items-center gap-1.5"
         >
-          <ShoppingBag className="h-3.5 w-3.5" />
+          <CategoryIcon type="Precious Metals" size={3.5} useTextColor />
           <span>Metals</span>
         </Button>
         
@@ -73,7 +74,7 @@ export function MarketHeader({
           size="sm"
           className="flex items-center gap-1.5"
         >
-          <Banknote className="h-3.5 w-3.5" />
+          <CategoryIcon type="Cash" size={3.5} useTextColor />
           <span>Currencies</span>
         </Button>
       </div>

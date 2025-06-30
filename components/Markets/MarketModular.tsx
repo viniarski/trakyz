@@ -4,10 +4,6 @@
 
 import { useMemo, memo } from "react";
 import {
-  Bitcoin,
-  DollarSign,
-  Coins,
-  LineChart,
   TrendingUp,
   TrendingDown,
 } from "lucide-react";
@@ -22,6 +18,7 @@ import {
 } from "@/types";
 import { useCurrencyConverter } from "@/hooks/useCurrencyConverter";
 import { AssetContextMenu } from "../ui/ContextMenu";
+import { CategoryIcon } from "@/components/ui/CategoryIcon";
 import { 
   CryptoEnhancedView, 
   StocksEnhancedView, 
@@ -167,33 +164,33 @@ export const MarketAssets = memo(
       return uniqueAssets;
     }, [assets, limit, assetType]);
 
-    // Asset type specific configurations
+    // Asset type specific configurations - NOW USING CategoryIcon
     const config = useMemo(() => {
       switch (assetType) {
         case "Crypto":
           return {
-            icon: <Bitcoin className="h-5 w-5 text-orange-500" />,
+            icon: <CategoryIcon type="Crypto" size={5} />,
             title: "Crypto",
             getSymbol: (asset: Asset) => (asset as CryptoType).symbol,
             getName: (asset: Asset) => (asset as CryptoType).name,
           };
         case "Cash":
           return {
-            icon: <DollarSign className="h-5 w-5 text-green-500" />,
+            icon: <CategoryIcon type="Cash" size={5} />,
             title: "Currencies",
             getSymbol: (asset: Asset) => (asset as Currency).symbol,
             getName: (asset: Asset) => (asset as Currency).name,
           };
         case "Precious Metals":
           return {
-            icon: <Coins className="h-5 w-5 text-yellow-500" />,
+            icon: <CategoryIcon type="Precious Metals" size={5} />,
             title: "Precious Metals",
             getSymbol: (asset: Asset) => (asset as Metal).metal,
             getName: (asset: Asset) => (asset as Metal).metal,
           };
         case "Stocks & Indexes":
           return {
-            icon: <LineChart className="h-5 w-5 text-blue-500" />,
+            icon: <CategoryIcon type="Stocks & Indexes" size={5} />,
             title: "Stocks & ETFs",
             getSymbol: (asset: Asset) => (asset as Stock).symbol,
             getName: (asset: Asset) => (asset as Stock).name,
@@ -294,7 +291,7 @@ export const MarketAssets = memo(
 
             return (
               <div
-                key={`${symbol}`}
+                key={`${assetType}-${symbol}`}
                 className="flex justify-between items-center text-sm py-1.5 transition-all duration-300 ease-in-out"
               >
                 <div className="flex items-center gap-1">
