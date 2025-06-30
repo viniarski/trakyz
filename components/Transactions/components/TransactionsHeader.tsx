@@ -80,7 +80,7 @@ export function TransactionsHeader({
           onClick={handleAddTransaction}
           variant="subtle"
           size="sm"
-          className="flex items-center gap-1.5"
+          className="flex items-center gap-1.5 bg-[var(--accent-primary-10)] hover:bg-[var(--accent-primary-20)]"
         >
           <Plus className="h-3.5 w-3.5" />
           <span className="hidden xs:inline">Add Transaction</span>
@@ -109,7 +109,7 @@ export function TransactionsHeader({
           onClick={() => setShowFilters(!showFilters)}
           variant={showFilters ? "subtle" : "ghost"}
           size="sm"
-          className="flex items-center gap-1.5"
+          className={`flex items-center gap-1.5 ${showFilters ? "hover:bg-[var(--accent-primary-20)]" : "text-[var(--text-secondary)]"}`}
         >
           <Filter className="h-3.5 w-3.5" />
           <span className="hidden xs:inline">Filters</span>
@@ -121,7 +121,7 @@ export function TransactionsHeader({
             onClick={toggleImportMenu}
             variant={activeMenu === 'import' ? "subtle" : "ghost"}
             size="sm"
-            className="flex items-center gap-1.5"
+            className={`flex items-center gap-1.5 ${activeMenu === 'import' ? "hover:bg-[var(--accent-primary)]/20" : "text-[var(--text-secondary)]"}`}
           >
             <Upload className="h-3.5 w-3.5" />
             <span className="hidden xs:inline">Import</span>
@@ -158,7 +158,7 @@ export function TransactionsHeader({
             onClick={toggleExportMenu}
             variant={activeMenu === 'export' ? "subtle" : "ghost"}
             size="sm"
-            className="flex items-center gap-1.5"
+            className={`flex items-center gap-1.5 ${activeMenu === 'export' ? "hover:bg-[var(--accent-primary)]/20" : "text-[var(--text-secondary)]"}`}
           >
             <Download className="h-3.5 w-3.5" />
             <span className="hidden xs:inline">Export</span>
