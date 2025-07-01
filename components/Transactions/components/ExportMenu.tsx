@@ -5,19 +5,17 @@
 import { useState, useRef, useEffect } from 'react'
 import { Download, ChevronDown, FileSpreadsheet, FileJson, FileText, File } from 'lucide-react'
 import { ExportModal } from '@/components/Transactions/modals/ExportModal'
-import { CurrencyCode, Currency, Crypto } from '@/types'
+import { Transaction } from '@/types'
 
 interface ExportMenuProps {
+  transactions: Transaction[]
   onNotification: (type: 'success' | 'error', message: string) => void
-  selectedCurrency: CurrencyCode
-  currencyRates: { currencies: Currency[] | null; crypto: Crypto[] | null }
-  selectedPortfolio?: string // Added this property
+  selectedPortfolio?: string
 }
 
 export function ExportMenu({ 
+  transactions,
   onNotification, 
-  selectedCurrency, 
-  currencyRates,
   selectedPortfolio
 }: ExportMenuProps) {
   const [isOpen, setIsOpen] = useState(false)
@@ -41,6 +39,16 @@ export function ExportMenu({
     setIsOpen(false)
   }
 
+  const handleSuccess = () => {
+    onNotification('success', 'Transactions exported successfully')
+    setShowModal(false)
+    setExportFormat(null)
+  }
+
+  const handleError = (message: string) => {
+    onNotification('error', message)
+  }
+
   // Use the same style as the Filter button (inactiveButtonClass)
   const baseButtonClass = "text-sm px-3 py-1.5 rounded-md transition-colors font-medium";
   const inactiveButtonClass = "bg-transparent text-[var(--text-secondary)] hover:bg-[var(--bg-hover)] hover:text-[var(--text-primary)]";
@@ -50,56 +58,61 @@ export function ExportMenu({
       <button
         onClick={() => setIsOpen(!isOpen)}
         className={`${baseButtonClass} ${inactiveButtonClass} flex items-center gap-1.5`}
+        disabled={transactions.length === 0}
       >
         <Download className="h-3.5 w-3.5" />
         <span className="hidden xs:inline">Export</span>
         <ChevronDown className={`h-3.5 w-3.5 transition-transform hidden xs:block ${isOpen ? 'rotate-180' : ''}`} />
       </button>
 
-      {/* Desktop Dropdown (md and above) */}
       {isOpen && (
-        <div className="hidden md:block absolute right-0 mt-2 w-48 bg-[var(--bg-secondary)] rounded-lg shadow-lg border border-[var(--bg-hover)] overflow-hidden z-10">
-          <button
-            onClick={() => handleExportClick('csv')}
-            className="w-full px-4 py-2 flex items-center gap-2 text-[var(--text-secondary)] hover:text-[var(--text-primary)] hover:bg-[var(--bg-hover)] transition-colors"
-          >
-            <FileText className="h-4 w-4" />
-            CSV
-          </button>
-          <button
-            onClick={() => handleExportClick('xlsx')}
-            className="w-full px-4 py-2 flex items-center gap-2 text-[var(--text-secondary)] hover:text-[var(--text-primary)] hover:bg-[var(--bg-hover)] transition-colors"
-          >
-            <FileSpreadsheet className="h-4 w-4" />
-            Excel (XLSX)
-          </button>
-          <button
-            onClick={() => handleExportClick('json')}
-            className="w-full px-4 py-2 flex items-center gap-2 text-[var(--text-secondary)] hover:text-[var(--text-primary)] hover:bg-[var(--bg-hover)] transition-colors"
-          >
-            <FileJson className="h-4 w-4" />
-            JSON
-          </button>
-          <button
-            onClick={() => handleExportClick('pdf')}
-            className="w-full px-4 py-2 flex items-center gap-2 text-[var(--text-secondary)] hover:text-[var(--text-primary)] hover:bg-[var(--bg-hover)] transition-colors"
-          >
-            <File className="h-4 w-4" />
-            PDF (Report)
-          </button>
+        <div className="absolute right-0 mt-1 bg-[var(--bg-secondary)] rounded-lg shadow-lg border border-[var(--bg-hover)] overflow-hidden z-10">
+          <div className="py-1">
+            <button
+              onClick={() => handleExportClick('csv')}
+              className="w-full px-4 py-2 text-left text-[var(--text-secondary)] hover:text-[var(--text-primary)] hover:bg-[var(--bg-hover)] flex items-center gap-2"
+            >
+              <FileText className="h-4 w-4" />
+              CSV
+            </button>
+            <button
+              onClick={() => handleExportClick('xlsx')}
+              className="w-full px-4 py-2 text-left text-[var(--text-secondary)] hover:text-[var(--text-primary)] hover:bg-[var(--bg-hover)] flex items-center gap-2"
+            >
+              <FileSpreadsheet className="h-4 w-4" />
+              Excel (XLSX)
+            </button>
+            <button
+              onClick={() => handleExportClick('json')}
+              className="w-full px-4 py-2 text-left text-[var(--text-secondary)] hover:text-[var(--text-primary)] hover:bg-[var(--bg-hover)] flex items-center gap-2"
+            >
+              <FileJson className="h-4 w-4" />
+              JSON
+            </button>
+            <button
+              onClick={() => handleExportClick('pdf')}
+              className="w-full px-4 py-2 text-left text-[var(--text-secondary)] hover:text-[var(--text-primary)] hover:bg-[var(--bg-hover)] flex items-center gap-2"
+            >
+              <File className="h-4 w-4" />
+              PDF (Report)
+            </button>
+          </div>
         </div>
       )}
 
-      {/* Mobile Bottom-Up Menu (below md) */}
+      {/* Mobile bottom sheet menu */}
       {isOpen && (
-        <div className="md:hidden fixed inset-0 z-50 flex flex-col justify-end" onClick={() => setIsOpen(false)}>
-          <div className="bg-black bg-opacity-25 flex-grow" />
+        <div 
+          className="fixed inset-0 bg-black/50 z-50 md:hidden"
+          onClick={() => setIsOpen(false)}
+        >
           <div 
-            className="bg-[var(--bg-secondary)] rounded-t-xl p-4 shadow-lg"
+            className="fixed bottom-0 left-0 right-0 bg-[var(--bg-secondary)] rounded-t-2xl shadow-xl"
             onClick={(e) => e.stopPropagation()}
           >
-            <div className="w-12 h-1 bg-gray-500 rounded-full mx-auto mb-4"></div>
-            <div className="flex flex-col">
+            <div className="p-4">
+              <div className="w-12 h-1 bg-gray-600 rounded-full mx-auto mb-4" />
+              <h3 className="text-lg font-semibold text-[var(--text-primary)] mb-4">Export Format</h3>
               <button
                 onClick={() => handleExportClick('csv')}
                 className="w-full py-3 text-center text-[var(--text-primary)] text-lg border-b border-gray-700"
@@ -132,12 +145,14 @@ export function ExportMenu({
       {showModal && (
         <ExportModal
           isOpen={showModal}
-          onClose={() => setShowModal(false)}
-          exportFormat={exportFormat}
-          onNotification={onNotification}
-          selectedCurrency={selectedCurrency}
-          currencyRates={currencyRates}
-          initialPortfolioId={selectedPortfolio}
+          onClose={() => {
+            setShowModal(false)
+            setExportFormat(null)
+          }}
+          transactions={transactions}
+          fileType={exportFormat}
+          onSuccess={handleSuccess}
+          onError={handleError}
         />
       )}
     </div>
