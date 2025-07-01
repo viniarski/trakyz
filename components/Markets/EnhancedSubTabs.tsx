@@ -11,7 +11,7 @@ import {
   CurrencyCode,
   AssetCategory,
   Crypto as CryptoType,
-  WatchlistItem
+  LegacyWatchlistItem  // ONLY CHANGE: Changed from WatchlistItem to LegacyWatchlistItem
 } from "@/types";
 import { useCurrencyConverter } from "@/hooks/useCurrencyConverter";
 import { MiniChart } from "./MiniChart";
@@ -26,7 +26,7 @@ interface EnhancedSubTabProps {
     getSymbol: (asset: Asset) => string;
     getName: (asset: Asset) => string;
   };
-  watchlist: WatchlistItem[];
+  watchlist: LegacyWatchlistItem[];  // ONLY CHANGE: Changed from WatchlistItem[] to LegacyWatchlistItem[]
   onToggleWatchlist: (category: AssetCategory, symbol: string) => void;
   selectedCurrency: CurrencyCode;
   currencyRates: {
@@ -382,10 +382,10 @@ export const MetalsEnhancedView = memo(function MetalsEnhancedView({
           
           // Convert prices for different units (assuming base price is per ounce)
           const pricePerOz = convertValue(asset.price, currencyRates, symbol);
-          const pricePerGram = pricePerOz / 31.1035; // Convert from oz to grams
-          const pricePerKg = pricePerOz * 32.1507; // Convert from oz to kg
+          const pricePerG = pricePerOz / 31.1035; // 1 oz = 31.1035 grams
+          const pricePerKg = pricePerG * 1000;
           
-          const hasRecentUpdate = updatedItems.has(symbol.toLowerCase());
+          const hasRecentUpdate = updatedItems.has(symbol);
 
           return (
             <div
@@ -422,18 +422,18 @@ export const MetalsEnhancedView = memo(function MetalsEnhancedView({
 
               {/* Price per gram */}
               <div className="text-right">
-                <span className="text-[var(--text-primary)] font-medium text-xs">
-                  {formatPreciseValue(pricePerGram)}
-                </span>
-              </div>
-
-              {/* Price per oz */}
-              <div className="text-right">
                 <span
                   className={`text-[var(--text-primary)] font-medium text-xs ${
                     hasRecentUpdate ? "bg-green-500/10 rounded px-1 py-0.5" : ""
                   }`}
                 >
+                  {formatPreciseValue(pricePerG)}
+                </span>
+              </div>
+
+              {/* Price per ounce */}
+              <div className="text-right">
+                <span className="text-[var(--text-primary)] font-medium text-xs">
                   {formatPreciseValue(pricePerOz)}
                 </span>
               </div>
@@ -557,7 +557,7 @@ export const CurrenciesEnhancedView = memo(function CurrenciesEnhancedView({
                 <span className="text-[var(--text-primary)] font-medium text-xs">
                   {symbol}
                 </span>
-                {name && name !== symbol && (
+                {name && (
                   <span className="text-[var(--text-secondary)] text-xs">
                     ({name})
                   </span>

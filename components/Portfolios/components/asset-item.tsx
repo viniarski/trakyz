@@ -1,4 +1,4 @@
-// app/dashboard/components/portfolio/asset-item.tsx
+// components/Portfolios/components/asset-item.tsx
 
 import { Plus, Minus, TrendingUp, TrendingDown } from 'lucide-react'
 import { formatCurrency } from '@/lib/utils'
@@ -31,7 +31,7 @@ export function AssetItem({
         </div>
         <div className="text-right">
           <p className="text-sm text-[var(--text-primary)]">
-            {hideBalances ? '******' : formatCurrency(asset.current_value || 0, selectedCurrency)}
+            {hideBalances ? '******' : formatCurrency(asset.total_value || 0, selectedCurrency)}
           </p>
           {!hideBalances && (
             <div className="flex items-center justify-end gap-1">
@@ -48,7 +48,7 @@ export function AssetItem({
         </div>
         <div className="col-span-2 flex justify-between text-xs text-[var(--text-secondary)]">
           <p>Price: {hideBalances ? '******' : formatCurrency(asset.current_price || 0, selectedCurrency)}</p>
-          <p>Avg: {hideBalances ? '******' : formatCurrency(asset.avg_purchase_price || 0, selectedCurrency)}</p>
+          <p>Avg: {hideBalances ? '******' : formatCurrency(asset.average_cost || 0, selectedCurrency)}</p>
         </div>
         <div className="col-span-2 flex gap-2 justify-end">
           <button
@@ -76,10 +76,10 @@ export function AssetItem({
           {hideBalances ? '******' : formatCurrency(asset.current_price || 0, selectedCurrency)}
         </div>
         <div className="text-[var(--text-primary)] text-right">
-          {hideBalances ? '******' : formatCurrency(asset.avg_purchase_price || 0, selectedCurrency)}
+          {hideBalances ? '******' : formatCurrency(asset.average_cost || 0, selectedCurrency)}
         </div>
         <div className="text-[var(--text-primary)] text-right">
-          {hideBalances ? '******' : formatCurrency(asset.current_value || 0, selectedCurrency)}
+          {hideBalances ? '******' : formatCurrency(asset.total_value || 0, selectedCurrency)}
         </div>
         <div className="flex flex-col items-end">
           {!hideBalances && (
@@ -94,16 +94,13 @@ export function AssetItem({
                   {asset.profit_loss_percentage?.toFixed(2)}%
                 </span>
               </div>
-              <span className={`${(asset.profit_loss || 0) >= 0 ? 'text-green-500/80' : 'text-red-500/80'} text-xs`}>
+              <span className={`${(asset.profit_loss || 0) >= 0 ? 'text-green-500' : 'text-red-500'}`}>
                 {formatCurrency(Math.abs(asset.profit_loss || 0), selectedCurrency)}
               </span>
             </>
           )}
-          {hideBalances && (
-            <span className="text-[var(--text-primary)]">******</span>
-          )}
         </div>
-        <div className="flex gap-1 justify-end">
+        <div className="flex gap-2">
           <button
             onClick={onBuy}
             className="p-1 text-green-500 hover:bg-green-500/20 rounded"

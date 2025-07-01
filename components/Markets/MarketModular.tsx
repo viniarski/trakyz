@@ -14,7 +14,7 @@ import {
   CurrencyCode,
   AssetCategory,
   Crypto as CryptoType,
-  WatchlistItem
+  LegacyWatchlistItem  // ONLY CHANGE: Changed from WatchlistItem to LegacyWatchlistItem
 } from "@/types";
 import { useCurrencyConverter } from "@/hooks/useCurrencyConverter";
 import { AssetContextMenu } from "../ui/ContextMenu";
@@ -31,7 +31,7 @@ type Asset = Currency | CryptoType | Metal | Stock;
 interface MarketAssetsProps {
   assets: Asset[] | null;
   limit: number;
-  watchlist: WatchlistItem[];
+  watchlist: LegacyWatchlistItem[];  // ONLY CHANGE: Changed from WatchlistItem[] to LegacyWatchlistItem[]
   onToggleWatchlist: (category: AssetCategory, symbol: string) => void;
   selectedCurrency: CurrencyCode;
   currencyRates: {
@@ -286,7 +286,8 @@ export const MarketAssets = memo(
             const displayPrice = formatPreciseValue(rawPrice);
             
             const hasRecentUpdate = updatedItems.has(
-              assetType === "Precious Metals" ? symbol.toLowerCase() : symbol
+              assetType === "Precious Metals" ?
+                symbol.toLowerCase() : symbol
             );
 
             return (
