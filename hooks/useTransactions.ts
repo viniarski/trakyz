@@ -3,6 +3,7 @@
 import { useState, useEffect, useCallback } from 'react';
 import { Transaction } from '@/types';
 import { createClient } from '@/lib/supabase/client';
+import { useTransactionValidation } from './useTransactionValidation';
 
 type SortKey = 
   | "date"
@@ -49,6 +50,9 @@ export function useTransactions(
   // Portfolio state
   const [selectedPortfolio, setSelectedPortfolio] = useState<string | null>(null);
   const [availablePortfolios, setAvailablePortfolios] = useState<{ id: string, name: string }[]>([]);
+
+  // Use validation hook
+  const { validateTransaction } = useTransactionValidation(transactions);
   
   // Fetch available portfolios for filtering
   const fetchPortfolios = useCallback(async () => {
@@ -88,28 +92,37 @@ export function useTransactions(
         .eq('user_id', userId)
         .eq('portfolio_id', portfolioId);
       
-      // Handle date filtering
+      // Handle date filters
       if (filters.startDate) {
         query = query.gte('date', filters.startDate);
       }
       if (filters.endDate) {
         query = query.lte('date', filters.endDate);
       }
-      if (filters.type !== "ALL") {
+      
+      // Handle type filter
+      if (filters.type && filters.type !== 'ALL') {
         query = query.eq('transaction_type', filters.type);
       }
+      
+      // Handle category filter
       if (filters.category) {
-        query = query.ilike('category', `%${filters.category}%`);
+        query = query.eq('category', filters.category);
       }
+      
+      // Handle asset type filter
       if (filters.assetType) {
-        query = query.ilike('asset_type', `%${filters.assetType}%`);
+        query = query.eq('asset_type', filters.assetType);
       }
       
       // Apply sorting
-      if (sortKey === 'date') {
-        query = query.order('date', { ascending: sortOrder === 'asc' });
-      } else if (sortKey) {
-        query = query.order(sortKey, { ascending: sortOrder === 'asc' });
+      const isAscending = sortOrder === 'asc';
+      if (sortKey === 'total') {
+        // For total, we need to sort by calculated value (quantity * price)
+        query = query.order('quantity', { ascending: isAscending })
+                    .order('price', { ascending: isAscending });
+      } else {
+        query = query.order(sortKey, { ascending: isAscending });
       }
       
       const { data, error } = await query;
@@ -117,16 +130,16 @@ export function useTransactions(
       if (error) throw error;
       
       setTransactions(data || []);
-      return data;
+      return data || [];
     } catch (error) {
       console.error('Error fetching transactions:', error);
       throw error;
     } finally {
       setIsLoading(false);
     }
-  }, [filters, sortKey, sortOrder, supabase, userId]);
+  }, [userId, filters, sortKey, sortOrder, supabase]);
 
-  // Handle sort column click
+  // Handle sorting
   const handleSort = useCallback((key: SortKey) => {
     if (sortKey === key) {
       setSortOrder(sortOrder === "asc" ? "desc" : "asc");
@@ -136,7 +149,7 @@ export function useTransactions(
     }
   }, [sortKey, sortOrder]);
 
-  // Add a transaction
+  // Add a transaction with validation
   const addTransaction = useCallback(async (transaction: {
     transaction_type: 'BUY' | 'SELL';
     category: string;
@@ -149,6 +162,20 @@ export function useTransactions(
     try {
       setIsLoading(true);
       
+      // Validate transaction before adding
+      const validation = validateTransaction(
+        transaction.transaction_type,
+        transaction.category as any,
+        transaction.asset_type,
+        transaction.quantity,
+        transaction.price,
+        transaction.date
+      );
+
+      if (!validation.isValid) {
+        throw new Error(validation.error || 'Transaction validation failed');
+      }
+
       const { error } = await supabase
         .from('transactions')
         .insert({
@@ -176,7 +203,97 @@ export function useTransactions(
     } finally {
       setIsLoading(false);
     }
-  }, [fetchTransactions, selectedPortfolio, supabase, userId]);
+  }, [fetchTransactions, selectedPortfolio, supabase, userId, validateTransaction]);
+
+  // Update an existing transaction with validation
+  const updateTransaction = useCallback(async (
+    transactionId: string,
+    updates: {
+      transaction_type?: 'BUY' | 'SELL';
+      category?: string;
+      asset_type?: string;
+      quantity?: number;
+      price?: number;
+      date?: string;
+    }
+  ) => {
+    try {
+      setIsLoading(true);
+
+      // Get the original transaction
+      const originalTransaction = transactions.find(t => t.id === transactionId);
+      if (!originalTransaction) {
+        throw new Error('Transaction not found');
+      }
+
+      // Create the updated transaction object
+      const updatedTransaction = {
+        ...originalTransaction,
+        ...updates
+      };
+
+      // Validate the updated transaction
+      const validation = validateTransaction(
+        updatedTransaction.transaction_type,
+        updatedTransaction.category as any,
+        updatedTransaction.asset_type,
+        updatedTransaction.quantity,
+        updatedTransaction.price,
+        updatedTransaction.date
+      );
+
+      if (!validation.isValid) {
+        throw new Error(validation.error || 'Transaction validation failed');
+      }
+
+      const { error } = await supabase
+        .from('transactions')
+        .update(updates)
+        .eq('id', transactionId)
+        .eq('user_id', userId);
+      
+      if (error) throw error;
+      
+      // Refresh the transactions list
+      if (selectedPortfolio) {
+        await fetchTransactions(selectedPortfolio);
+      }
+      
+      return true;
+    } catch (error) {
+      console.error('Error updating transaction:', error);
+      throw error;
+    } finally {
+      setIsLoading(false);
+    }
+  }, [transactions, validateTransaction, supabase, userId, selectedPortfolio, fetchTransactions]);
+
+  // Delete a transaction
+  const deleteTransaction = useCallback(async (transactionId: string) => {
+    try {
+      setIsLoading(true);
+      
+      const { error } = await supabase
+        .from('transactions')
+        .delete()
+        .eq('id', transactionId)
+        .eq('user_id', userId);
+      
+      if (error) throw error;
+      
+      // Refresh the transactions list
+      if (selectedPortfolio) {
+        await fetchTransactions(selectedPortfolio);
+      }
+      
+      return true;
+    } catch (error) {
+      console.error('Error deleting transaction:', error);
+      throw error;
+    } finally {
+      setIsLoading(false);
+    }
+  }, [supabase, userId, selectedPortfolio, fetchTransactions]);
 
   // Delete all transactions for a portfolio
   const deleteAllTransactions = useCallback(async (portfolioId: string) => {
@@ -208,65 +325,77 @@ export function useTransactions(
       const startDate = filters.startDate ? new Date(filters.startDate) : null;
       const endDate = filters.endDate ? new Date(filters.endDate) : null;
 
-      return (
-        (!startDate || date >= startDate) &&
-        (!endDate || date <= endDate) &&
-        (filters.type === "ALL" || tx.transaction_type === filters.type) &&
-        (!filters.category ||
-          tx.category.toLowerCase().includes(filters.category.toLowerCase())) &&
-        (!filters.assetType ||
-          tx.asset_type.toLowerCase().includes(filters.assetType.toLowerCase()))
-      );
+      // Date filters
+      if (startDate && date < startDate) return false;
+      if (endDate && date > endDate) return false;
+
+      // Type filter
+      if (filters.type && filters.type !== "ALL" && tx.transaction_type !== filters.type) {
+        return false;
+      }
+
+      // Category filter
+      if (filters.category && tx.category !== filters.category) {
+        return false;
+      }
+
+      // Asset type filter
+      if (filters.assetType && tx.asset_type !== filters.assetType) {
+        return false;
+      }
+
+      return true;
     });
 
-    // Sort transactions
-    return [...filteredTransactions].sort((a, b) => {
-      let comparison = 0;
+    // Apply sorting
+    const sortedTransactions = [...filteredTransactions].sort((a, b) => {
+      let aValue: any;
+      let bValue: any;
+
       switch (sortKey) {
         case "date":
-          comparison = new Date(a.date).getTime() - new Date(b.date).getTime();
-          break;
-        case "transaction_type":
-          comparison = a.transaction_type.localeCompare(b.transaction_type);
-          break;
-        case "category":
-          comparison = a.category.localeCompare(b.category);
-          break;
-        case "asset_type":
-          comparison = a.asset_type.localeCompare(b.asset_type);
-          break;
-        case "quantity":
-          comparison = a.quantity - b.quantity;
-          break;
-        case "price":
-          comparison = a.price - b.price;
+          aValue = new Date(a.date);
+          bValue = new Date(b.date);
           break;
         case "total":
-          comparison = a.quantity * a.price - b.quantity * b.price;
+          aValue = a.quantity * a.price;
+          bValue = b.quantity * b.price;
+          break;
+        case "quantity":
+        case "price":
+          aValue = a[sortKey];
+          bValue = b[sortKey];
+          break;
+        default:
+          aValue = a[sortKey];
+          bValue = b[sortKey];
           break;
       }
-      return sortOrder === "asc" ? comparison : -comparison;
-    });
-  }, [transactions, sortKey, sortOrder, filters]);
 
-  // Fetch portfolios on initial load
-  useEffect(() => {
-    fetchPortfolios().catch(error => {
-      console.error('Failed to fetch portfolios:', error);
+      if (aValue < bValue) return sortOrder === "asc" ? -1 : 1;
+      if (aValue > bValue) return sortOrder === "asc" ? 1 : -1;
+      return 0;
     });
+
+    return sortedTransactions;
+  }, [transactions, filters, sortKey, sortOrder]);
+
+  // Get filtered transactions
+  const filteredTransactions = getFilteredAndSortedTransactions();
+
+  // Fetch portfolios on mount
+  useEffect(() => {
+    fetchPortfolios();
   }, [fetchPortfolios]);
 
-  // Fetch transactions when selected portfolio or filters change
+  // Fetch transactions when portfolio changes
   useEffect(() => {
     if (selectedPortfolio) {
-      fetchTransactions(selectedPortfolio).catch(error => {
-        console.error('Failed to fetch transactions:', error);
-      });
+      fetchTransactions(selectedPortfolio);
     }
   }, [selectedPortfolio, fetchTransactions]);
 
   return {
-    // State
     transactions,
     isLoading,
     sortKey,
@@ -274,19 +403,15 @@ export function useTransactions(
     filters,
     selectedPortfolio,
     availablePortfolios,
-    
-    // Derived state
-    filteredTransactions: getFilteredAndSortedTransactions(),
-    
-    // Actions
+    filteredTransactions,
     setFilters,
-    setSortKey,
-    setSortOrder,
-    setSelectedPortfolio,
     handleSort,
-    fetchPortfolios,
-    fetchTransactions,
+    setSelectedPortfolio,
     addTransaction,
+    updateTransaction,
+    deleteTransaction,
     deleteAllTransactions,
+    fetchTransactions,
+    fetchPortfolios
   };
 }

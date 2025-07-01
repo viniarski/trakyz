@@ -32,7 +32,9 @@ export function MarketHeader({
           onClick={() => setActiveCategory("all")}
           variant={activeCategory === "all" ? "subtle" : "ghost"}
           size="sm"
-          className="flex items-center gap-1.5"
+          className={`flex items-center gap-1.5 ${
+            activeCategory === "all" ? "hover:bg-[var(--accent-primary-20)]" : "text-[var(--text-secondary)]"
+          }`}
         >
           <BarChart2 className="h-3.5 w-3.5" />
           <span>All</span>
@@ -42,7 +44,9 @@ export function MarketHeader({
           onClick={() => setActiveCategory("crypto")}
           variant={activeCategory === "crypto" ? "subtle" : "ghost"}
           size="sm"
-          className="flex items-center gap-1.5"
+          className={`flex items-center gap-1.5 ${
+            activeCategory === "crypto" ? "hover:bg-[var(--accent-primary-20)]" : "text-[var(--text-secondary)]"
+          }`}
         >
           <CategoryIcon type="Crypto" size={3.5} useTextColor />
           <span>Crypto</span>
@@ -52,7 +56,9 @@ export function MarketHeader({
           onClick={() => setActiveCategory("stocks")}
           variant={activeCategory === "stocks" ? "subtle" : "ghost"}
           size="sm"
-          className="flex items-center gap-1.5"
+          className={`flex items-center gap-1.5 ${
+            activeCategory === "stocks" ? "hover:bg-[var(--accent-primary-20)]" : "text-[var(--text-secondary)]"
+          }`}
         >
           <CategoryIcon type="Stocks & Indexes" size={3.5} useTextColor />
           <span>Stocks</span>
@@ -62,7 +68,9 @@ export function MarketHeader({
           onClick={() => setActiveCategory("metals")}
           variant={activeCategory === "metals" ? "subtle" : "ghost"}
           size="sm"
-          className="flex items-center gap-1.5"
+          className={`flex items-center gap-1.5 ${
+            activeCategory === "metals" ? "hover:bg-[var(--accent-primary-20)]" : "text-[var(--text-secondary)]"
+          }`}
         >
           <CategoryIcon type="Precious Metals" size={3.5} useTextColor />
           <span>Metals</span>
@@ -72,7 +80,9 @@ export function MarketHeader({
           onClick={() => setActiveCategory("currencies")}
           variant={activeCategory === "currencies" ? "subtle" : "ghost"}
           size="sm"
-          className="flex items-center gap-1.5"
+          className={`flex items-center gap-1.5 ${
+            activeCategory === "currencies" ? "hover:bg-[var(--accent-primary-20)]" : "text-[var(--text-secondary)]"
+          }`}
         >
           <CategoryIcon type="Cash" size={3.5} useTextColor />
           <span>Currencies</span>
@@ -85,6 +95,7 @@ export function MarketHeader({
           onClick={() => setSelectedPeriod("24H")}
           variant={selectedPeriod === "24H" ? "subtle" : "ghost"}
           size="sm"
+          className={selectedPeriod === "24H" ? "hover:bg-[var(--accent-primary-20)]" : "text-[var(--text-secondary)]"}
         >
           24H
         </Button>
@@ -92,6 +103,7 @@ export function MarketHeader({
           onClick={() => setSelectedPeriod("7D")}
           variant={selectedPeriod === "7D" ? "subtle" : "ghost"}
           size="sm"
+          className={selectedPeriod === "7D" ? "hover:bg-[var(--accent-primary-20)]" : "text-[var(--text-secondary)]"}
         >
           7D
         </Button>
@@ -99,7 +111,9 @@ export function MarketHeader({
           onClick={() => setView(view === "market" ? "watchlist" : "market")}
           variant={view === "watchlist" ? "subtle" : "ghost"}
           size="sm"
-          className="flex items-center gap-1.5"
+          className={`flex items-center gap-1.5 ${
+            view === "watchlist" ? "hover:bg-[var(--accent-primary-20)]" : "text-[var(--text-secondary)]"
+          }`}
         >
           <Star className="h-3.5 w-3.5" />
           <span>Watchlist</span>

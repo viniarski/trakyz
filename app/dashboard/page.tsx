@@ -175,19 +175,20 @@ export default async function Page(props: any) {
             expense_options (name),
             is_selected
           )
-          `
+        `
         )
         .eq("user_id", user.id)
-        .order("month", { ascending: false });
-      // log budget errors
+        .order("month", { ascending: false })
+        .limit(12);
+
       budgetData = budgets || [];
-      if (budgetError) console.error("Error fetching budget data", budgetError);
+      if (budgetError) console.error("Error fetching budget data:", budgetError);
       break;
 
     case "debt":
       const [
-        { data: loans, error: loanError },
-        { data: cards, error: cardsError },
+        { data: loans, error: loansError },
+        { data: creditCards, error: creditCardsError },
       ] = await Promise.all([
         supabase
           .from("loans")
@@ -203,15 +204,15 @@ export default async function Page(props: any) {
 
       debtData = {
         loans: loans || [],
-        creditCards: cards || [],
+        creditCards: creditCards || [],
       };
-      if (loanError) console.error("Error fetching loan data:", loanError);
-      if (cardsError) console.error("Error fetching credit card data:", cardsError);
+      if (loansError) console.error("Error fetching loans data:", loansError);
+      if (creditCardsError) console.error("Error fetching credit cards data:", creditCardsError);
       break;
 
     case "real-estate":
       const { data: realEstate, error: realEstateError } = await supabase
-        .from("real_estate_properties") // Changed from "real_estate" to "real_estate_properties"
+        .from("real_estate_properties")
         .select("*")
         .eq("user_id", user.id)
         .order("created_at", { ascending: false });
@@ -221,14 +222,28 @@ export default async function Page(props: any) {
       break;
 
     case "portfolios":
-      const { data: portfolios, error: portfolioError } = await supabase
-        .from("portfolios")
-        .select("*")
-        .eq("user_id", user.id)
-        .order("created_at", { ascending: false });
+      // For portfolios, we need both portfolios and transactions
+      const [
+        { data: portfolios, error: portfolioError },
+        { data: portfolioTransactions, error: portfolioTransactionError },
+      ] = await Promise.all([
+        supabase
+          .from("portfolios")
+          .select("*")
+          .eq("user_id", user.id)
+          .order("created_at", { ascending: false }),
+        supabase
+          .from("transactions")
+          .select("*")
+          .eq("user_id", user.id)
+          .order("date", { ascending: false })
+          .limit(1000),
+      ]);
 
       portfoliosData = portfolios || [];
+      transactionsData = portfolioTransactions || [];
       if (portfolioError) console.error("Error fetching portfolio data:", portfolioError);
+      if (portfolioTransactionError) console.error("Error fetching portfolio transactions:", portfolioTransactionError);
       break;
 
     case "transactions":
@@ -316,7 +331,12 @@ export default async function Page(props: any) {
           )}
 
           {currentTab === "portfolios" && (
-            <Portfolios userId={user.id} portfolios={portfoliosData} />
+            <Portfolios 
+              userId={user.id} 
+              portfolios={portfoliosData}
+              transactions={transactionsData}
+              marketData={marketData}
+            />
           )}
 
           {currentTab === "transactions" && (

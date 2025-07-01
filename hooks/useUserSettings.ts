@@ -3,33 +3,15 @@
 
 import { useState, useEffect, useRef, useCallback } from 'react'
 import { createClient } from '@/lib/supabase/client'
-import type { CurrencyCode, AssetCategory } from '@/types'
-
-// Watchlist item type for easier reference
-export type WatchlistItem = {
-  id: string;
-  category: AssetCategory;
-  symbol: string;
-  order: number;
-}
-
-// Layout and tab types
-export type LayoutType = 'cards' | 'list' | 'detailed';
-export type ActiveTabType = 'markets' | 'portfolios' | 'transactions' | 'debt' | 'analytics' | 'real-estate' | 'budget';
-
-// UserSettings interface
-export interface UserSettings {
-  marketRatesShowMore: boolean;
-  selectedPeriod: '24H' | '7D';
-  selectedCurrency: CurrencyCode;
-  watchlist: WatchlistItem[];
-  theme_preference: 'blue' | 'dark' | 'light';
-  layout: LayoutType;
-  lastActiveTab: ActiveTabType;
-  expandedPortfolioCategories?: AssetCategory[];
-  language?: string;
-  notifications?: string[];
-}
+import type { 
+  CurrencyCode, 
+  AssetCategory, 
+  UserSettings, 
+  LegacyWatchlistItem,
+  ThemePreference,
+  LayoutType,
+  ActiveTabType 
+} from '@/types'
 
 const defaultSettings: UserSettings = {
   marketRatesShowMore: false,
@@ -38,7 +20,7 @@ const defaultSettings: UserSettings = {
   watchlist: [],
   theme_preference: 'blue',
   layout: 'cards', 
-  lastActiveTab: 'markets', // Changed from 'portfolio' to 'markets'
+  lastActiveTab: 'markets',
   expandedPortfolioCategories: []
 }
 
@@ -99,7 +81,7 @@ export function useUserSettings() {
           .select('*')
           .eq('id', userId)
           .single()
-        
+       
         if (profileError) {
           console.error('Error loading user profile:', profileError)
           throw profileError
@@ -117,8 +99,8 @@ export function useUserSettings() {
           throw watchlistError
         }
         
-        // Format watchlist data
-        const formattedWatchlist = watchlistData?.map(item => ({
+        // Format watchlist data to legacy format for UI compatibility
+        const formattedWatchlist: LegacyWatchlistItem[] = watchlistData?.map(item => ({
           id: item.id,
           category: item.category as AssetCategory,
           symbol: item.symbol,
@@ -130,7 +112,7 @@ export function useUserSettings() {
           ...defaultSettings,
           selectedCurrency: (profileData?.selected_currency as CurrencyCode) || defaultSettings.selectedCurrency,
           selectedPeriod: (profileData?.selected_period as '24H' | '7D') || defaultSettings.selectedPeriod,
-          theme_preference: (profileData?.theme_preference as 'blue' | 'dark' | 'light') || defaultSettings.theme_preference,
+          theme_preference: (profileData?.theme_preference as ThemePreference) || defaultSettings.theme_preference,
           lastActiveTab: (profileData?.last_active_tab as ActiveTabType) || defaultSettings.lastActiveTab,
           marketRatesShowMore: profileData?.market_show_more || defaultSettings.marketRatesShowMore,
           language: profileData?.language || 'en',
@@ -150,26 +132,39 @@ export function useUserSettings() {
     loadSettings()
   }, [userId])
   
-  // Function to save settings to Supabase
+  // Function to save settings to the server
   const saveSettingsToServer = useCallback(async (updates: PendingUpdates) => {
     if (!userId) return
     
     try {
       const supabase = createClient()
       
-      // Update user_profiles table
-      const profileUpdates: any = {}
+      // Prepare profile updates (exclude watchlist)
+      const profileUpdates: Record<string, any> = {}
       
-      // Map settings to DB column names
-      if (updates.selectedCurrency !== undefined) profileUpdates.selected_currency = updates.selectedCurrency
-      if (updates.selectedPeriod !== undefined) profileUpdates.selected_period = updates.selectedPeriod
-      if (updates.theme_preference !== undefined) profileUpdates.theme_preference = updates.theme_preference
-      if (updates.lastActiveTab !== undefined) profileUpdates.last_active_tab = updates.lastActiveTab
-      if (updates.marketRatesShowMore !== undefined) profileUpdates.market_show_more = updates.marketRatesShowMore
-      if (updates.language !== undefined) profileUpdates.language = updates.language
+      if (updates.selectedCurrency !== undefined) {
+        profileUpdates.selected_currency = updates.selectedCurrency
+      }
+      if (updates.selectedPeriod !== undefined) {
+        profileUpdates.selected_period = updates.selectedPeriod
+      }
+      if (updates.theme_preference !== undefined) {
+        profileUpdates.theme_preference = updates.theme_preference
+      }
+      if (updates.lastActiveTab !== undefined) {
+        profileUpdates.last_active_tab = updates.lastActiveTab
+      }
+      if (updates.marketRatesShowMore !== undefined) {
+        profileUpdates.market_show_more = updates.marketRatesShowMore
+      }
+      if (updates.language !== undefined) {
+        profileUpdates.language = updates.language
+      }
       
-      // Only update if we have profile changes
+      // Update profile if there are changes
       if (Object.keys(profileUpdates).length > 0) {
+        profileUpdates.updated_at = new Date().toISOString()
+        
         const { error: profileError } = await supabase
           .from('user_profiles')
           .update(profileUpdates)
@@ -180,9 +175,9 @@ export function useUserSettings() {
         }
       }
       
-      // Update watchlist if it's changed
-      if (updates.watchlist) {
-        // Delete all existing watchlist items for this user first
+      // Handle watchlist updates
+      if (updates.watchlist !== undefined) {
+        // Delete existing watchlist items
         const { error: deleteError } = await supabase
           .from('watchlist')
           .delete()
@@ -190,12 +185,8 @@ export function useUserSettings() {
         
         if (deleteError) {
           console.error('Error deleting existing watchlist:', deleteError)
-          return
-        }
-        
-        // Insert new watchlist items if any exist
-        if (updates.watchlist.length > 0) {
-          // Don't include the id field - let the database generate it
+        } else if (updates.watchlist.length > 0) {
+          // Insert new watchlist items
           const watchlistItems = updates.watchlist.map((item, index) => ({
             user_id: userId,
             category: item.category,
@@ -281,8 +272,8 @@ export function useUserSettings() {
       
       if (watchlistError) throw watchlistError
       
-      // Format watchlist data
-      const formattedWatchlist = watchlistData?.map(item => ({
+      // Format watchlist data to legacy format
+      const formattedWatchlist: LegacyWatchlistItem[] = watchlistData?.map(item => ({
         id: item.id,
         category: item.category as AssetCategory,
         symbol: item.symbol,
@@ -294,7 +285,7 @@ export function useUserSettings() {
         ...defaultSettings,
         selectedCurrency: (profileData?.selected_currency as CurrencyCode) || defaultSettings.selectedCurrency,
         selectedPeriod: (profileData?.selected_period as '24H' | '7D') || defaultSettings.selectedPeriod,
-        theme_preference: (profileData?.theme_preference as 'blue' | 'dark' | 'light') || defaultSettings.theme_preference,
+        theme_preference: (profileData?.theme_preference as ThemePreference) || defaultSettings.theme_preference,
         lastActiveTab: (profileData?.last_active_tab as ActiveTabType) || defaultSettings.lastActiveTab,
         marketRatesShowMore: profileData?.market_show_more || defaultSettings.marketRatesShowMore,
         language: profileData?.language || 'en',

@@ -3,7 +3,7 @@
 'use client'
 
 import React, { useState } from "react";
-import { Portfolio } from "@/types";
+import { Portfolio, Transaction, MarketData } from "@/types";
 import { formatCurrency } from "@/lib/utils";
 import { useCurrencyStore } from "@/lib/stores/useCurrencyStore";
 import { Plus, ChevronDown } from "lucide-react";
@@ -13,10 +13,17 @@ import { AddAsset } from "@/components/AddAsset";
 
 interface PortfoliosProps {
   portfolios: Portfolio[];
+  transactions: Transaction[];
+  marketData: MarketData;
   userId: string;
 }
 
-const Portfolios: React.FC<PortfoliosProps> = ({ portfolios, userId }) => {
+const Portfolios: React.FC<PortfoliosProps> = ({ 
+  portfolios, 
+  transactions, 
+  marketData, 
+  userId 
+}) => {
   // State for UI elements
   const [selectedPortfolio, setSelectedPortfolio] = useState<Portfolio | null>(
     portfolios.find(p => p.is_default) || portfolios[0] || null
@@ -27,6 +34,11 @@ const Portfolios: React.FC<PortfoliosProps> = ({ portfolios, userId }) => {
   
   // Get currency from store
   const { currency } = useCurrencyStore();
+
+  // Filter transactions for the selected portfolio
+  const portfolioTransactions = selectedPortfolio 
+    ? transactions.filter(t => t.portfolio_id === selectedPortfolio.id)
+    : [];
 
   // Handle portfolio creation
   const handleCreatePortfolio = async (name: string) => {
@@ -99,8 +111,8 @@ const Portfolios: React.FC<PortfoliosProps> = ({ portfolios, userId }) => {
     }
   };
 
-  // Mock market data for AddAsset
-  const marketData = {
+  // Mock market data for AddAsset if not provided
+  const defaultMarketData = marketData || {
     metals: [],
     crypto: [],
     stocks: [],
@@ -135,101 +147,84 @@ const Portfolios: React.FC<PortfoliosProps> = ({ portfolios, userId }) => {
                         }}
                         className={`w-full text-left px-3 py-2 rounded-md ${
                           selectedPortfolio?.id === portfolio.id
-                            ? "bg-[var(--accent-primary-10)] text-[var(--accent-primary)]"
-                            : "hover:bg-[var(--bg-hover)] text-[var(--text-primary)]"
+                            ? 'bg-[var(--accent-primary-10)] text-[var(--accent-primary)]'
+                            : 'text-[var(--text-secondary)] hover:bg-[var(--bg-hover)]'
                         }`}
                       >
                         {portfolio.name}
-                        {portfolio.is_default && (
-                          <span className="ml-1 text-xs text-[var(--text-secondary)]">
-                            (Default)
-                          </span>
-                        )}
                       </button>
                     ))}
-                  </div>
-                  <div className="border-t border-[var(--bg-hover)] p-2">
-                    <button
-                      onClick={() => {
-                        setIsPortfolioMenuOpen(false);
-                        setShowCreatePortfolio(true);
-                      }}
-                      className="w-full flex items-center gap-2 p-2 rounded-md hover:bg-[var(--bg-hover)] text-[var(--text-secondary)]"
-                    >
-                      <Plus className="h-4 w-4" />
-                      <span>New Portfolio</span>
-                    </button>
+                    <div className="border-t border-[var(--bg-hover)] mt-1 pt-1">
+                      <button
+                        onClick={() => {
+                          setShowCreatePortfolio(true);
+                          setIsPortfolioMenuOpen(false);
+                        }}
+                        className="w-full text-left px-3 py-2 rounded-md text-[var(--text-secondary)] hover:bg-[var(--bg-hover)] flex items-center gap-2"
+                      >
+                        <Plus className="h-4 w-4" />
+                        Create New
+                      </button>
+                    </div>
                   </div>
                 </div>
               )}
             </div>
 
             {/* Add Asset button */}
-            <button
-              onClick={() => setShowAddAsset(true)}
-              className="flex items-center justify-center gap-2 px-4 py-2 bg-[var(--accent-primary-10)] hover:bg-[var(--accent-primary-20)] text-[var(--accent-primary)] rounded-lg text-sm transition-colors"
-            >
-              <Plus className="h-4 w-4" />
-              Add Asset
-            </button>
+            {selectedPortfolio && (
+              <Button
+                onClick={() => setShowAddAsset(true)}
+                variant="subtle"
+                size="sm"
+                className="flex items-center gap-1.5 bg-[var(--accent-primary-10)] hover:bg-[var(--accent-primary-20)]"
+              >
+                <Plus className="h-3.5 w-3.5" />
+                <span className="hidden xs:inline">Add Asset</span>
+              </Button>
+            )}
           </div>
         </div>
 
         {/* Portfolio content */}
-        <div className="p-4">
-          {portfolios.length === 0 ? (
-            <div className="text-center py-8">
-              <p className="text-[var(--text-secondary)] mb-4">
-                You don't have any portfolios yet. Create your first portfolio to get started.
-              </p>
-              <Button
-                onClick={() => setShowCreatePortfolio(true)}
-                className="bg-[var(--accent-primary)] text-white"
-              >
-                Create Portfolio
-              </Button>
-            </div>
-          ) : selectedPortfolio ? (
-            <div>
-              {/* Portfolio summary */}
-              <div className="mb-6">
-                <h2 className="text-xl font-bold text-[var(--text-primary)] mb-2">
-                  {selectedPortfolio.name}
-                </h2>
-                <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                  <div className="bg-[var(--bg-hover)]/50 p-4 rounded-lg">
-                    <p className="text-sm text-[var(--text-secondary)]">Total Value</p>
-                    <p className="text-xl font-bold text-[var(--text-primary)]">
-                      {formatCurrency(selectedPortfolio.total_value, currency)}
-                    </p>
-                  </div>
-                  <div className="bg-[var(--bg-hover)]/50 p-4 rounded-lg">
-                    <p className="text-sm text-[var(--text-secondary)]">Total Cost</p>
-                    <p className="text-xl font-bold text-[var(--text-primary)]">
-                      {formatCurrency(selectedPortfolio.total_cost, currency)}
-                    </p>
-                  </div>
-                  <div className="bg-[var(--bg-hover)]/50 p-4 rounded-lg">
-                    <p className="text-sm text-[var(--text-secondary)]">Profit/Loss</p>
-                    <p className={`text-xl font-bold ${
-                      selectedPortfolio.total_profit_loss >= 0 
-                        ? "text-green-500" 
-                        : "text-red-500"
-                    }`}>
-                      {formatCurrency(selectedPortfolio.total_profit_loss, currency)}
-                      <span className="text-sm ml-1">
-                        ({selectedPortfolio.total_profit_loss_percentage.toFixed(2)}%)
-                      </span>
-                    </p>
+        <div className="border-t border-gray-800/50">
+          {selectedPortfolio ? (
+            <div className="p-4">
+              {portfolioTransactions.length > 0 ? (
+                <div className="text-center py-8">
+                  <p className="text-[var(--text-primary)] font-medium mb-2">
+                    {selectedPortfolio.name}
+                  </p>
+                  <p className="text-[var(--text-secondary)] mb-4">
+                    {portfolioTransactions.length} transaction{portfolioTransactions.length !== 1 ? 's' : ''}
+                  </p>
+                  <div className="grid grid-cols-1 md:grid-cols-3 gap-4 max-w-md mx-auto">
+                    <div className="text-center">
+                      <p className="text-xs text-[var(--text-secondary)]">Total Value</p>
+                      <p className="text-lg font-semibold text-[var(--text-primary)]">
+                        {formatCurrency(selectedPortfolio.total_value, currency)}
+                      </p>
+                    </div>
+                    <div className="text-center">
+                      <p className="text-xs text-[var(--text-secondary)]">Total Cost</p>
+                      <p className="text-lg font-semibold text-[var(--text-primary)]">
+                        {formatCurrency(selectedPortfolio.total_cost, currency)}
+                      </p>
+                    </div>
+                    <div className="text-center">
+                      <p className="text-xs text-[var(--text-secondary)]">P/L</p>
+                      <p className={`text-lg font-semibold ${
+                        selectedPortfolio.total_profit_loss >= 0 ? 'text-green-500' : 'text-red-500'
+                      }`}>
+                        {formatCurrency(selectedPortfolio.total_profit_loss, currency)}
+                      </p>
+                    </div>
                   </div>
                 </div>
-              </div>
-
-              {/* No assets message if needed */}
-              {selectedPortfolio.asset_count === 0 && (
-                <div className="text-center py-8 bg-[var(--bg-hover)]/30 rounded-lg">
+              ) : (
+                <div className="text-center py-8">
                   <p className="text-[var(--text-secondary)] mb-4">
-                    This portfolio is empty. Add your first asset to get started.
+                    Add your first asset to get started.
                   </p>
                   <Button
                     onClick={() => setShowAddAsset(true)}
@@ -263,9 +258,10 @@ const Portfolios: React.FC<PortfoliosProps> = ({ portfolios, userId }) => {
         <AddAsset
           onClose={() => setShowAddAsset(false)}
           onAddTransaction={handleAddTransaction}
-          marketData={marketData}
+          marketData={defaultMarketData}
           portfolios={[{ id: selectedPortfolio.id, name: selectedPortfolio.name }]}
           selectedPortfolioId={selectedPortfolio.id}
+          transactions={portfolioTransactions}
           title="Add New Asset"
           initialValues={{
             transactionType: 'BUY'

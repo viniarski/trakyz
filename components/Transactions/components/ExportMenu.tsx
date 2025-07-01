@@ -2,159 +2,66 @@
 
 'use client'
 
-import { useState, useRef, useEffect } from 'react'
-import { Download, ChevronDown, FileSpreadsheet, FileJson, FileText, File } from 'lucide-react'
-import { ExportModal } from '@/components/Transactions/modals/ExportModal'
-import { Transaction } from '@/types'
+import { Download, FileText, File, Database } from 'lucide-react'
 
 interface ExportMenuProps {
-  transactions: Transaction[]
-  onNotification: (type: 'success' | 'error', message: string) => void
-  selectedPortfolio?: string
+  onExport: (type: 'csv' | 'xlsx' | 'json' | 'pdf') => void
+  isOpen: boolean
 }
 
-export function ExportMenu({ 
-  transactions,
-  onNotification, 
-  selectedPortfolio
-}: ExportMenuProps) {
-  const [isOpen, setIsOpen] = useState(false)
-  const [showModal, setShowModal] = useState(false)
-  const [exportFormat, setExportFormat] = useState<'csv' | 'xlsx' | 'json' | 'pdf' | null>(null)
-  const menuRef = useRef<HTMLDivElement>(null)
+export function ExportMenu({ onExport, isOpen }: ExportMenuProps) {
+  if (!isOpen) return null
 
-  useEffect(() => {
-    const handleClickOutside = (event: MouseEvent) => {
-      if (menuRef.current && !menuRef.current.contains(event.target as Node)) {
-        setIsOpen(false)
-      }
+  const exportOptions = [
+    {
+      type: 'csv' as const,
+      label: 'CSV',
+      icon: <File className="h-4 w-4" />,
+      description: 'Spreadsheet format'
+    },
+    {
+      type: 'xlsx' as const,
+      label: 'Excel',
+      icon: <FileText className="h-4 w-4" />,
+      description: 'Excel workbook'
+    },
+    {
+      type: 'json' as const,
+      label: 'JSON',
+      icon: <Database className="h-4 w-4" />,
+      description: 'Data format'
+    },
+    {
+      type: 'pdf' as const,
+      label: 'PDF',
+      icon: <FileText className="h-4 w-4" />,
+      description: 'Report format'
     }
-    document.addEventListener('mousedown', handleClickOutside)
-    return () => document.removeEventListener('mousedown', handleClickOutside)
-  }, [])
-
-  const handleExportClick = (format: 'csv' | 'xlsx' | 'json' | 'pdf') => {
-    setExportFormat(format)
-    setShowModal(true)
-    setIsOpen(false)
-  }
-
-  const handleSuccess = () => {
-    onNotification('success', 'Transactions exported successfully')
-    setShowModal(false)
-    setExportFormat(null)
-  }
-
-  const handleError = (message: string) => {
-    onNotification('error', message)
-  }
-
-  // Use the same style as the Filter button (inactiveButtonClass)
-  const baseButtonClass = "text-sm px-3 py-1.5 rounded-md transition-colors font-medium";
-  const inactiveButtonClass = "bg-transparent text-[var(--text-secondary)] hover:bg-[var(--bg-hover)] hover:text-[var(--text-primary)]";
+  ]
 
   return (
-    <div className="relative" ref={menuRef}>
-      <button
-        onClick={() => setIsOpen(!isOpen)}
-        className={`${baseButtonClass} ${inactiveButtonClass} flex items-center gap-1.5`}
-        disabled={transactions.length === 0}
-      >
-        <Download className="h-3.5 w-3.5" />
-        <span className="hidden xs:inline">Export</span>
-        <ChevronDown className={`h-3.5 w-3.5 transition-transform hidden xs:block ${isOpen ? 'rotate-180' : ''}`} />
-      </button>
-
-      {isOpen && (
-        <div className="absolute right-0 mt-1 bg-[var(--bg-secondary)] rounded-lg shadow-lg border border-[var(--bg-hover)] overflow-hidden z-10">
-          <div className="py-1">
-            <button
-              onClick={() => handleExportClick('csv')}
-              className="w-full px-4 py-2 text-left text-[var(--text-secondary)] hover:text-[var(--text-primary)] hover:bg-[var(--bg-hover)] flex items-center gap-2"
-            >
-              <FileText className="h-4 w-4" />
-              CSV
-            </button>
-            <button
-              onClick={() => handleExportClick('xlsx')}
-              className="w-full px-4 py-2 text-left text-[var(--text-secondary)] hover:text-[var(--text-primary)] hover:bg-[var(--bg-hover)] flex items-center gap-2"
-            >
-              <FileSpreadsheet className="h-4 w-4" />
-              Excel (XLSX)
-            </button>
-            <button
-              onClick={() => handleExportClick('json')}
-              className="w-full px-4 py-2 text-left text-[var(--text-secondary)] hover:text-[var(--text-primary)] hover:bg-[var(--bg-hover)] flex items-center gap-2"
-            >
-              <FileJson className="h-4 w-4" />
-              JSON
-            </button>
-            <button
-              onClick={() => handleExportClick('pdf')}
-              className="w-full px-4 py-2 text-left text-[var(--text-secondary)] hover:text-[var(--text-primary)] hover:bg-[var(--bg-hover)] flex items-center gap-2"
-            >
-              <File className="h-4 w-4" />
-              PDF (Report)
-            </button>
-          </div>
-        </div>
-      )}
-
-      {/* Mobile bottom sheet menu */}
-      {isOpen && (
-        <div 
-          className="fixed inset-0 bg-black/50 z-50 md:hidden"
-          onClick={() => setIsOpen(false)}
-        >
-          <div 
-            className="fixed bottom-0 left-0 right-0 bg-[var(--bg-secondary)] rounded-t-2xl shadow-xl"
-            onClick={(e) => e.stopPropagation()}
+    <div className="absolute top-full right-0 mt-1 w-48 bg-[var(--bg-secondary)] rounded-lg shadow-lg border border-[var(--bg-hover)] z-50">
+      <div className="p-1">
+        {exportOptions.map((option) => (
+          <button
+            key={option.type}
+            onClick={() => onExport(option.type)}
+            className="w-full flex items-center gap-3 px-3 py-2 text-left hover:bg-[var(--bg-hover)] rounded-md transition-colors"
           >
-            <div className="p-4">
-              <div className="w-12 h-1 bg-gray-600 rounded-full mx-auto mb-4" />
-              <h3 className="text-lg font-semibold text-[var(--text-primary)] mb-4">Export Format</h3>
-              <button
-                onClick={() => handleExportClick('csv')}
-                className="w-full py-3 text-center text-[var(--text-primary)] text-lg border-b border-gray-700"
-              >
-                CSV
-              </button>
-              <button
-                onClick={() => handleExportClick('xlsx')}
-                className="w-full py-3 text-center text-[var(--text-primary)] text-lg border-b border-gray-700"
-              >
-                Excel (XLSX)
-              </button>
-              <button
-                onClick={() => handleExportClick('json')}
-                className="w-full py-3 text-center text-[var(--text-primary)] text-lg border-b border-gray-700"
-              >
-                JSON
-              </button>
-              <button
-                onClick={() => handleExportClick('pdf')}
-                className="w-full py-3 text-center text-[var(--text-primary)] text-lg"
-              >
-                PDF (Report)
-              </button>
+            <div className="text-[var(--text-secondary)]">
+              {option.icon}
             </div>
-          </div>
-        </div>
-      )}
-
-      {showModal && (
-        <ExportModal
-          isOpen={showModal}
-          onClose={() => {
-            setShowModal(false)
-            setExportFormat(null)
-          }}
-          transactions={transactions}
-          fileType={exportFormat}
-          onSuccess={handleSuccess}
-          onError={handleError}
-        />
-      )}
+            <div className="flex-1">
+              <div className="text-sm font-medium text-[var(--text-primary)]">
+                {option.label}
+              </div>
+              <div className="text-xs text-[var(--text-secondary)]">
+                {option.description}
+              </div>
+            </div>
+          </button>
+        ))}
+      </div>
     </div>
   )
 }

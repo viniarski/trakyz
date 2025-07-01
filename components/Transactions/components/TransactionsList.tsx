@@ -1,12 +1,11 @@
 // components/Transactions/components/TransactionsList.tsx
 
-import React from 'react';
-import { ChevronUp } from 'lucide-react';
-import { formatCurrency } from '@/lib/utils';
-import { CategoryIcon } from '@/components/ui/CategoryIcon';
-import { Transaction, CurrencyCode } from '@/types';
+'use client'
 
-type SortKey =
+import { Transaction, CurrencyCode } from '@/types'
+import { ArrowUpDown, ArrowUp, ArrowDown } from 'lucide-react'
+
+type SortKey = 
   | "date"
   | "transaction_type"
   | "category"
@@ -14,246 +13,180 @@ type SortKey =
   | "quantity"
   | "price"
   | "total";
+
 type SortOrder = "asc" | "desc";
 
 interface TransactionsListProps {
-  transactions: Transaction[];
-  sortKey: SortKey;
-  sortOrder: SortOrder;
-  handleSort: (key: SortKey) => void;
-  currency: CurrencyCode;
+  transactions: Transaction[]
+  sortKey: SortKey
+  sortOrder: SortOrder
+  onSort: (key: SortKey) => void
+  currency: CurrencyCode
 }
 
-// Helper function to format date consistently (no locale dependency)
-const formatDate = (dateString: string): string => {
-  const date = new Date(dateString);
-  const year = date.getFullYear();
-  const month = String(date.getMonth() + 1).padStart(2, '0');
-  const day = String(date.getDate()).padStart(2, '0');
-  return `${month}/${day}/${year}`;
-};
-
-export function TransactionsList({ 
-  transactions, 
-  sortKey, 
-  sortOrder, 
-  handleSort,
+export function TransactionsList({
+  transactions,
+  sortKey,
+  sortOrder,
+  onSort,
   currency
 }: TransactionsListProps) {
-  // Sort arrow component
-  const SortArrow = ({ columnKey }: { columnKey: SortKey }) => (
-    <span className="ml-1 inline-block">
-      <ChevronUp
-        className={`h-4 w-4 transition-transform ${
-          sortKey === columnKey
-            ? sortOrder === "asc"
-              ? "text-[var(--text-primary)]"
-              : "text-[var(--text-primary)] rotate-180"
-            : "text-[var(--text-secondary)]/50"
-        }`}
-      />
-    </span>
-  );
+  const formatCurrency = (value: number): string => {
+    return new Intl.NumberFormat('en-US', {
+      style: 'currency',
+      currency: 'USD',
+      minimumFractionDigits: 2,
+      maximumFractionDigits: 6
+    }).format(value)
+  }
 
-  // Group transactions by date for mobile view
-  const groupedTransactions = (() => {
-    const groups: Record<string, Transaction[]> = {};
+  const formatQuantity = (value: number): string => {
+    return value.toFixed(8).replace(/\.?0+$/, '')
+  }
 
-    transactions.forEach((transaction) => {
-      const dateStr = formatDate(transaction.date);  // Fixed: use formatDate instead of toLocaleDateString
-      if (!groups[dateStr]) {
-        groups[dateStr] = [];
-      }
-      groups[dateStr].push(transaction);
-    });
+  const formatDate = (dateString: string): string => {
+    return new Date(dateString).toLocaleDateString()
+  }
 
-    return Object.entries(groups).sort(([dateA], [dateB]) => {
-      const timeA = new Date(dateA).getTime();
-      const timeB = new Date(dateB).getTime();
-      return sortOrder === "asc" ? timeA - timeB : timeB - timeA;
-    });
-  })();
+  const getSortIcon = (column: SortKey) => {
+    if (sortKey !== column) {
+      return <ArrowUpDown className="h-3 w-3 text-[var(--text-tertiary)]" />
+    }
+    return sortOrder === 'asc' 
+      ? <ArrowUp className="h-3 w-3 text-[var(--accent-primary)]" />
+      : <ArrowDown className="h-3 w-3 text-[var(--accent-primary)]" />
+  }
 
-  // Desktop view - Table
-  const DesktopView = () => (
-    <div className="hidden md:block p-4 overflow-x-auto">
+  if (transactions.length === 0) {
+    return (
+      <div className="p-8 text-center">
+        <p className="text-[var(--text-secondary)]">No transactions found</p>
+        <p className="text-sm text-[var(--text-tertiary)] mt-1">
+          Add your first transaction to get started
+        </p>
+      </div>
+    )
+  }
+
+  return (
+    <div className="overflow-x-auto">
       <table className="w-full">
-        <thead>
-          <tr className="">
-            <th
-              className="px-2 py-0 text-left text-[var(--text-secondary)] text-xs font-medium cursor-pointer hover:text-[var(--text-primary)]"
-              onClick={() => handleSort("date")}
-            >
-              Date <SortArrow columnKey="date" />
+        <thead className="border-b border-[var(--bg-hover)]">
+          <tr>
+            <th className="text-left p-3">
+              <button
+                onClick={() => onSort('date')}
+                className="flex items-center gap-1 text-xs font-medium text-[var(--text-secondary)] hover:text-[var(--text-primary)] transition-colors"
+              >
+                Date
+                {getSortIcon('date')}
+              </button>
             </th>
-            <th
-              className="px-2 py-0 text-left text-[var(--text-secondary)] text-xs font-medium cursor-pointer hover:text-[var(--text-primary)]"
-              onClick={() => handleSort("transaction_type")}
-            >
-              Type <SortArrow columnKey="transaction_type" />
+            <th className="text-left p-3">
+              <button
+                onClick={() => onSort('transaction_type')}
+                className="flex items-center gap-1 text-xs font-medium text-[var(--text-secondary)] hover:text-[var(--text-primary)] transition-colors"
+              >
+                Type
+                {getSortIcon('transaction_type')}
+              </button>
             </th>
-            <th
-              className="px-2 py-0 text-left text-[var(--text-secondary)] text-xs font-medium cursor-pointer hover:text-[var(--text-primary)]"
-              onClick={() => handleSort("category")}
-            >
-              Category <SortArrow columnKey="category" />
+            <th className="text-left p-3">
+              <button
+                onClick={() => onSort('category')}
+                className="flex items-center gap-1 text-xs font-medium text-[var(--text-secondary)] hover:text-[var(--text-primary)] transition-colors"
+              >
+                Category
+                {getSortIcon('category')}
+              </button>
             </th>
-            <th
-              className="px-2 py-0 text-left text-[var(--text-secondary)] text-xs font-medium cursor-pointer hover:text-[var(--text-primary)]"
-              onClick={() => handleSort("asset_type")}
-            >
-              Asset <SortArrow columnKey="asset_type" />
+            <th className="text-left p-3">
+              <button
+                onClick={() => onSort('asset_type')}
+                className="flex items-center gap-1 text-xs font-medium text-[var(--text-secondary)] hover:text-[var(--text-primary)] transition-colors"
+              >
+                Asset
+                {getSortIcon('asset_type')}
+              </button>
             </th>
-            <th
-              className="px-2 py-0 text-right text-[var(--text-secondary)] text-xs font-medium cursor-pointer hover:text-[var(--text-primary)]"
-              onClick={() => handleSort("quantity")}
-            >
-              Quantity <SortArrow columnKey="quantity" />
+            <th className="text-right p-3">
+              <button
+                onClick={() => onSort('quantity')}
+                className="flex items-center gap-1 text-xs font-medium text-[var(--text-secondary)] hover:text-[var(--text-primary)] transition-colors ml-auto"
+              >
+                Quantity
+                {getSortIcon('quantity')}
+              </button>
             </th>
-            <th
-              className="px-2 py-0 text-right text-[var(--text-secondary)] text-xs font-medium cursor-pointer hover:text-[var(--text-primary)]"
-              onClick={() => handleSort("price")}
-            >
-              Price <SortArrow columnKey="price" />
+            <th className="text-right p-3">
+              <button
+                onClick={() => onSort('price')}
+                className="flex items-center gap-1 text-xs font-medium text-[var(--text-secondary)] hover:text-[var(--text-primary)] transition-colors ml-auto"
+              >
+                Price
+                {getSortIcon('price')}
+              </button>
             </th>
-            <th
-              className="px-2 py-0 text-right text-[var(--text-secondary)] text-xs font-medium cursor-pointer hover:text-[var(--text-primary)]"
-              onClick={() => handleSort("total")}
-            >
-              Total <SortArrow columnKey="total" />
+            <th className="text-right p-3">
+              <button
+                onClick={() => onSort('total')}
+                className="flex items-center gap-1 text-xs font-medium text-[var(--text-secondary)] hover:text-[var(--text-primary)] transition-colors ml-auto"
+              >
+                Total
+                {getSortIcon('total')}
+              </button>
             </th>
           </tr>
         </thead>
         <tbody>
           {transactions.map((transaction) => (
-            <tr
+            <tr 
               key={transaction.id}
-              className="border-b border-gray-700 hover:bg-[var(--bg-hover)]/50"
+              className="border-b border-[var(--bg-hover)] hover:bg-[var(--bg-hover)]/30 transition-colors"
             >
-              <td className="px-2 py-0 text-[var(--text-primary)] text-xs">
-                {formatDate(transaction.date)}
+              <td className="p-3">
+                <span className="text-sm text-[var(--text-primary)]">
+                  {formatDate(transaction.date)}
+                </span>
               </td>
-              <td
-                className={`px-2 py-0 text-xs ${transaction.transaction_type === "BUY" ?
-                  "text-green-500" : "text-red-500"}`}
-              >
-                {transaction.transaction_type}
+              <td className="p-3">
+                <span className={`inline-flex items-center px-2 py-1 rounded-full text-xs font-medium ${
+                  transaction.transaction_type === 'BUY'
+                    ? 'bg-green-500/10 text-green-500'
+                    : 'bg-red-500/10 text-red-500'
+                }`}>
+                  {transaction.transaction_type}
+                </span>
               </td>
-              <td className="px-2 py-0 text-xs">
-                <div className="flex items-center gap-2">
-                  <CategoryIcon type={transaction.category} />
-                  <span className="text-[var(--text-primary)]">
-                    {transaction.category}
-                  </span>
-                </div>
+              <td className="p-3">
+                <span className="text-sm text-[var(--text-primary)]">
+                  {transaction.category}
+                </span>
               </td>
-              <td className="px-2 py-0 text-[var(--text-primary)] text-xs">
-                {transaction.asset_type}
+              <td className="p-3">
+                <span className="text-sm font-medium text-[var(--text-primary)]">
+                  {transaction.asset_type}
+                </span>
               </td>
-              <td className="px-2 py-0 text-right text-[var(--text-primary)] text-xs">
-                {transaction.quantity.toLocaleString()}
+              <td className="p-3 text-right">
+                <span className="text-sm text-[var(--text-primary)]">
+                  {formatQuantity(transaction.quantity)}
+                </span>
               </td>
-              <td className="px-2 py-0 text-right text-[var(--text-primary)] text-xs">
-                {formatCurrency(transaction.price, currency)}
+              <td className="p-3 text-right">
+                <span className="text-sm text-[var(--text-primary)]">
+                  {formatCurrency(transaction.price)}
+                </span>
               </td>
-              <td className="px-2 py-0 text-right text-[var(--text-primary)] text-xs">
-                {formatCurrency(
-                  transaction.quantity * transaction.price,
-                  currency
-                )}
+              <td className="p-3 text-right">
+                <span className="text-sm font-medium text-[var(--text-primary)]">
+                  {formatCurrency(transaction.quantity * transaction.price)}
+                </span>
               </td>
             </tr>
           ))}
-          {transactions.length === 0 && (
-            <tr>
-              <td
-                colSpan={7}
-                className="p-8 text-center text-[var(--text-secondary)]"
-              >
-                No transactions yet
-              </td>
-            </tr>
-          )}
         </tbody>
       </table>
     </div>
-  );
-
-  // Mobile view - Date grouped transactions
-  const MobileView = () => (
-    <div className="md:hidden p-4">
-      {groupedTransactions.map(([dateStr, dateTransactions]) => (
-        <div key={dateStr} className="mb-4">
-          <div className="bg-[var(--bg-hover)]/50 px-3 py-2 rounded-t-lg">
-            <h3 className="text-[var(--text-primary)] font-medium">
-              {dateStr}
-            </h3>
-          </div>
-
-          <div className="divide-y divide-gray-700">
-            {dateTransactions.map((transaction) => (
-              <div
-                key={transaction.id}
-                className="p-2 bg-[var(--bg-secondary)] hover:bg-[var(--bg-hover)]/30"
-              >
-                <div className="flex justify-between items-center">
-                  <div className="flex items-center gap-2">
-                    <CategoryIcon
-                      type={transaction.category}
-                      className="h-5 w-5"
-                    />
-                    <div className="flex items-center gap-1.5">
-                      <span className="text-[var(--text-primary)] font-medium">
-                        {transaction.asset_type}
-                      </span>
-                      <span
-                        className={`text-xs px-1.5 py-0.5 rounded ${
-                          transaction.transaction_type === "BUY"
-                            ? "bg-green-500/10 text-green-500"
-                            : "bg-red-500/10 text-red-500"
-                        }`}
-                      >
-                        {transaction.transaction_type}
-                      </span>
-                    </div>
-                  </div>
-
-                  <div className="grid grid-cols-2 gap-x-2">
-                    <div className="flex items-center justify-end text-[10px] text-[var(--text-secondary)]">
-                      Qty
-                    </div>
-                    <div className="text-right text-[var(--text-primary)]">
-                      {transaction.quantity.toLocaleString()}
-                    </div>
-                    <div className="flex items-center justify-end text-[10px] text-[var(--text-secondary)]">
-                      Total
-                    </div>
-                    <div className="text-right text-[var(--text-primary)]">
-                      {formatCurrency(
-                        transaction.quantity * transaction.price,
-                        currency
-                      )}
-                    </div>
-                  </div>
-                </div>
-              </div>
-            ))}
-          </div>
-        </div>
-      ))}
-
-      {transactions.length === 0 && (
-        <div className="p-8 text-center text-[var(--text-secondary)] bg-[var(--bg-secondary)] rounded-lg">
-          No transactions yet
-        </div>
-      )}
-    </div>
-  );
-
-  return (
-    <>
-      <DesktopView />
-      <MobileView />
-    </>
-  );
+  )
 }
