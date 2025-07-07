@@ -61,7 +61,7 @@ export const metadata: Metadata = {
   ],
   authors: [{ name: 'TRAKYZ Team' }],
   icons: {
-    icon: '/assets/favicon.ico',
+    icon: '/favicon.ico',
     apple: '/assets/apple-touch-icon.png',
   },
   robots: {

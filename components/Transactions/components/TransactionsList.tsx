@@ -4,6 +4,7 @@
 
 import { Transaction, CurrencyCode } from '@/types'
 import { ArrowUpDown, ArrowUp, ArrowDown } from 'lucide-react'
+import { formatDate } from '@/lib/utils/format'
 
 type SortKey = 
   | "date"
@@ -44,9 +45,7 @@ export function TransactionsList({
     return value.toFixed(8).replace(/\.?0+$/, '')
   }
 
-  const formatDate = (dateString: string): string => {
-    return new Date(dateString).toLocaleDateString()
-  }
+  // Remove the local formatDate function - use the one from utils instead
 
   const getSortIcon = (column: SortKey) => {
     if (sortKey !== column) {
@@ -146,7 +145,7 @@ export function TransactionsList({
             >
               <td className="p-3">
                 <span className="text-sm text-[var(--text-primary)]">
-                  {formatDate(transaction.date)}
+                  {formatDate(transaction.date, "short")}
                 </span>
               </td>
               <td className="p-3">
