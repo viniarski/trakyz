@@ -80,7 +80,7 @@ export function PortfolioHeader({
           </div>
           
           {/* Portfolio Value - positioned to align with category Total Value */}
-          <div className="text-right mr-[145px]">
+          <div className="text-right mr-[140px]">
             <p className="text-xs text-[var(--text-secondary)]">Portfolio Value</p>
             <p className="text-lg font-bold text-[var(--text-primary)]">
               {hideBalances ? '******' : formatPreciseValue(summary.total_value)}
