@@ -72,141 +72,152 @@ export function TransactionsHeader({
   };
 
   return (
-    <div className="p-4 flex justify-between items-center flex-wrap gap-y-2">
-      {/* Left side */}
-      <div className="flex flex-wrap items-center gap-2">
-        {/* Add Transaction button */}
-        <Button
-          onClick={handleAddTransaction}
-          variant="subtle"
-          size="sm"
-          className="flex items-center gap-1.5 bg-[var(--accent-primary-10)] hover:bg-[var(--accent-primary-20)]"
-        >
-          <Plus className="h-3.5 w-3.5" />
-          <span className="hidden xs:inline">Add Transaction</span>
-        </Button>
-        
-        {/* Portfolio selector */}
-        {portfolios.length > 0 && (
-          <select
-            value={selectedPortfolio || ''}
-            onChange={(e) => setSelectedPortfolio(e.target.value)}
-            className="text-sm px-3 py-1.5 rounded-md transition-colors font-medium bg-transparent text-[var(--text-secondary)] hover:bg-[var(--bg-hover)] hover:text-[var(--text-primary)] focus:outline-none"
+    <div>
+      {/* Header with buttons - same styling as Markets */}
+      <div className="p-4 flex justify-between items-center flex-wrap gap-y-2">
+        {/* Left side */}
+        <div className="flex flex-wrap items-center gap-2">
+          {/* Add Transaction button */}
+          <Button
+            onClick={handleAddTransaction}
+            variant="subtle"
+            size="sm"
+            className="flex items-center gap-1.5 bg-[var(--accent-primary-10)] hover:bg-[var(--accent-primary-20)]"
           >
-            {portfolios.map(portfolio => (
-              <option key={portfolio.id} value={portfolio.id}>
-                {portfolio.name}
-              </option>
-            ))}
-          </select>
-        )}
+            <Plus className="h-3.5 w-3.5" />
+            <span className="hidden xs:inline">Add Transaction</span>
+          </Button>
+          
+          {/* Portfolio selector */}
+          {portfolios.length > 0 && (
+            <select
+              value={selectedPortfolio || ''}
+              onChange={(e) => setSelectedPortfolio(e.target.value)}
+              className="text-sm px-3 py-1.5 rounded-md transition-colors font-medium bg-transparent text-[var(--text-secondary)] hover:bg-[var(--bg-hover)] hover:text-[var(--text-primary)] focus:outline-none"
+            >
+              {portfolios.map(portfolio => (
+                <option key={portfolio.id} value={portfolio.id}>
+                  {portfolio.name}
+                </option>
+              ))}
+            </select>
+          )}
+        </div>
+        
+        {/* Right side */}
+        <div className="flex flex-wrap items-center gap-2">
+          {/* Filter button */}
+          <Button
+            onClick={() => setShowFilters(!showFilters)}
+            variant={showFilters ? "subtle" : "ghost"}
+            size="sm"
+            className={`flex items-center gap-1.5 ${showFilters ? "hover:bg-[var(--accent-primary-20)]" : "text-[var(--text-secondary)]"}`}
+          >
+            <Filter className="h-3.5 w-3.5" />
+            <span className="hidden xs:inline">Filters</span>
+          </Button>
+          
+          {/* Import button with dropdown */}
+          <div className="relative" ref={importMenuRef}>
+            <Button
+              onClick={toggleImportMenu}
+              variant={activeMenu === 'import' ? "subtle" : "ghost"}
+              size="sm"
+              className={`flex items-center gap-1.5 ${activeMenu === 'import' ? "hover:bg-[var(--accent-primary)]/20" : "text-[var(--text-secondary)]"}`}
+            >
+              <Upload className="h-3.5 w-3.5" />
+              <span className="hidden xs:inline">Import</span>
+              <ChevronDown className={`h-3.5 w-3.5 transition-transform hidden xs:inline-block ${activeMenu === 'import' ? 'rotate-180' : ''}`} />
+            </Button>
+            
+            {/* Import dropdown menu */}
+            {activeMenu === 'import' && (
+              <div className="absolute right-0 mt-2 w-48 bg-[var(--bg-secondary)] rounded-md shadow-lg border border-[var(--bg-hover)] z-10">
+                <div className="py-1">
+                  <button
+                    onClick={() => { handleImport('csv'); setActiveMenu(null); }}
+                    className="w-full text-left px-4 py-2 text-sm text-[var(--text-primary)] hover:bg-[var(--bg-hover)] transition-colors"
+                  >
+                    Import CSV
+                  </button>
+                  <button
+                    onClick={() => { handleImport('xlsx'); setActiveMenu(null); }}
+                    className="w-full text-left px-4 py-2 text-sm text-[var(--text-primary)] hover:bg-[var(--bg-hover)] transition-colors"
+                  >
+                    Import Excel
+                  </button>
+                  <button
+                    onClick={() => { handleImport('json'); setActiveMenu(null); }}
+                    className="w-full text-left px-4 py-2 text-sm text-[var(--text-primary)] hover:bg-[var(--bg-hover)] transition-colors"
+                  >
+                    Import JSON
+                  </button>
+                </div>
+              </div>
+            )}
+          </div>
+          
+          {/* Export button with dropdown */}
+          <div className="relative" ref={exportMenuRef}>
+            <Button
+              onClick={toggleExportMenu}
+              variant={activeMenu === 'export' ? "subtle" : "ghost"}
+              size="sm"
+              className={`flex items-center gap-1.5 ${activeMenu === 'export' ? "hover:bg-[var(--accent-primary)]/20" : "text-[var(--text-secondary)]"}`}
+            >
+              <Download className="h-3.5 w-3.5" />
+              <span className="hidden xs:inline">Export</span>
+              <ChevronDown className={`h-3.5 w-3.5 transition-transform hidden xs:inline-block ${activeMenu === 'export' ? 'rotate-180' : ''}`} />
+            </Button>
+            
+            {/* Export dropdown menu */}
+            {activeMenu === 'export' && (
+              <div className="absolute right-0 mt-2 w-48 bg-[var(--bg-secondary)] rounded-md shadow-lg border border-[var(--bg-hover)] z-10">
+                <div className="py-1">
+                  <button
+                    onClick={() => { handleExport('csv'); setActiveMenu(null); }}
+                    className="w-full text-left px-4 py-2 text-sm text-[var(--text-primary)] hover:bg-[var(--bg-hover)] transition-colors"
+                  >
+                    Export CSV
+                  </button>
+                  <button
+                    onClick={() => { handleExport('xlsx'); setActiveMenu(null); }}
+                    className="w-full text-left px-4 py-2 text-sm text-[var(--text-primary)] hover:bg-[var(--bg-hover)] transition-colors"
+                  >
+                    Export Excel
+                  </button>
+                  <button
+                    onClick={() => { handleExport('json'); setActiveMenu(null); }}
+                    className="w-full text-left px-4 py-2 text-sm text-[var(--text-primary)] hover:bg-[var(--bg-hover)] transition-colors"
+                  >
+                    Export JSON
+                  </button>
+                  <button
+                    onClick={() => { handleExport('pdf'); setActiveMenu(null); }}
+                    className="w-full text-left px-4 py-2 text-sm text-[var(--text-primary)] hover:bg-[var(--bg-hover)] transition-colors"
+                  >
+                    Export PDF
+                  </button>
+                </div>
+              </div>
+            )}
+          </div>
+          
+          {/* Delete All button */}
+          <Button
+            onClick={handleDeleteAll}
+            variant="ghost"
+            size="sm"
+            className="flex items-center gap-1.5 text-red-500 hover:bg-red-500/10 hover:text-red-400"
+          >
+            <Trash2 className="h-3.5 w-3.5" />
+            <span className="hidden xs:inline">Delete All</span>
+          </Button>
+        </div>
       </div>
       
-      {/* Right side */}
-      <div className="flex flex-wrap items-center gap-2">
-        {/* Filter button */}
-        <Button
-          onClick={() => setShowFilters(!showFilters)}
-          variant={showFilters ? "subtle" : "ghost"}
-          size="sm"
-          className={`flex items-center gap-1.5 ${showFilters ? "hover:bg-[var(--accent-primary-20)]" : "text-[var(--text-secondary)]"}`}
-        >
-          <Filter className="h-3.5 w-3.5" />
-          <span className="hidden xs:inline">Filters</span>
-        </Button>
-        
-        {/* Import button with dropdown */}
-        <div className="relative" ref={importMenuRef}>
-          <Button
-            onClick={toggleImportMenu}
-            variant={activeMenu === 'import' ? "subtle" : "ghost"}
-            size="sm"
-            className={`flex items-center gap-1.5 ${activeMenu === 'import' ? "hover:bg-[var(--accent-primary)]/20" : "text-[var(--text-secondary)]"}`}
-          >
-            <Upload className="h-3.5 w-3.5" />
-            <span className="hidden xs:inline">Import</span>
-            <ChevronDown className={`h-3.5 w-3.5 transition-transform hidden xs:inline-block ${activeMenu === 'import' ? 'rotate-180' : ''}`} />
-          </Button>
-          
-          {activeMenu === 'import' && (
-            <div className="absolute right-0 mt-1 w-48 bg-[var(--bg-secondary)] rounded-lg shadow-lg border border-[var(--bg-hover)] overflow-hidden z-10">
-              <button
-                onClick={() => { handleImport('csv'); setActiveMenu(null); }}
-                className="w-full px-4 py-2 text-left text-[var(--text-secondary)] hover:text-[var(--text-primary)] hover:bg-[var(--bg-hover)]"
-              >
-                CSV
-              </button>
-              <button
-                onClick={() => { handleImport('xlsx'); setActiveMenu(null); }}
-                className="w-full px-4 py-2 text-left text-[var(--text-secondary)] hover:text-[var(--text-primary)] hover:bg-[var(--bg-hover)]"
-              >
-                Excel (XLSX)
-              </button>
-              <button
-                onClick={() => { handleImport('json'); setActiveMenu(null); }}
-                className="w-full px-4 py-2 text-left text-[var(--text-secondary)] hover:text-[var(--text-primary)] hover:bg-[var(--bg-hover)]"
-              >
-                JSON
-              </button>
-            </div>
-          )}
-        </div>
-        
-        {/* Export button with dropdown */}
-        <div className="relative" ref={exportMenuRef}>
-          <Button
-            onClick={toggleExportMenu}
-            variant={activeMenu === 'export' ? "subtle" : "ghost"}
-            size="sm"
-            className={`flex items-center gap-1.5 ${activeMenu === 'export' ? "hover:bg-[var(--accent-primary)]/20" : "text-[var(--text-secondary)]"}`}
-          >
-            <Download className="h-3.5 w-3.5" />
-            <span className="hidden xs:inline">Export</span>
-            <ChevronDown className={`h-3.5 w-3.5 transition-transform hidden xs:inline-block ${activeMenu === 'export' ? 'rotate-180' : ''}`} />
-          </Button>
-          
-          {activeMenu === 'export' && (
-            <div className="absolute right-0 mt-1 w-48 bg-[var(--bg-secondary)] rounded-lg shadow-lg border border-[var(--bg-hover)] overflow-hidden z-10">
-              <button
-                onClick={() => { handleExport('csv'); setActiveMenu(null); }}
-                className="w-full px-4 py-2 text-left text-[var(--text-secondary)] hover:text-[var(--text-primary)] hover:bg-[var(--bg-hover)]"
-              >
-                CSV
-              </button>
-              <button
-                onClick={() => { handleExport('xlsx'); setActiveMenu(null); }}
-                className="w-full px-4 py-2 text-left text-[var(--text-secondary)] hover:text-[var(--text-primary)] hover:bg-[var(--bg-hover)]"
-              >
-                Excel (XLSX)
-              </button>
-              <button
-                onClick={() => { handleExport('json'); setActiveMenu(null); }}
-                className="w-full px-4 py-2 text-left text-[var(--text-secondary)] hover:text-[var(--text-primary)] hover:bg-[var(--bg-hover)]"
-              >
-                JSON
-              </button>
-              <button
-                onClick={() => { handleExport('pdf'); setActiveMenu(null); }}
-                className="w-full px-4 py-2 text-left text-[var(--text-secondary)] hover:text-[var(--text-primary)] hover:bg-[var(--bg-hover)]"
-              >
-                PDF (Report)
-              </button>
-            </div>
-          )}
-        </div>
-        
-        {/* Delete All button with red hover background */}
-        <Button
-          onClick={handleDeleteAll}
-          variant="ghost"
-          size="sm"
-          className="text-red-500 hover:text-red-500 hover:bg-red-500/10 flex items-center gap-1.5"
-          disabled={!selectedPortfolio || transactions.length === 0}
-        >
-          <Trash2 className="h-3.5 w-3.5" />
-          <span className="hidden xs:inline">Delete All</span>
-        </Button>
-      </div>
+      {/* This is the key line that matches the Markets styling */}
+      <div className="border-t border-gray-800/50"></div>
     </div>
   );
 }

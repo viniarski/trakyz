@@ -14,7 +14,8 @@ import {
 import { UserResponse } from "@supabase/supabase-js";
 import Market from "./components/market/Market";
 import RealEstate from "./components/real-estate/RealEstate";
-import { Portfolio as NewPortfolio } from "./components/portfolio/Portfolio"
+// FIXED: Changed from named import to default import
+import NewPortfolio from "./components/portfolio/Portfolio";
 import Transactions from "./components/transactions/Transactions";
 import TabNavigation from "@/components/TabNavigation";
 import Analytics from "./components/analytics/Analytics";
@@ -107,6 +108,7 @@ export default async function Page(props: any) {
     crypto: [],
     currencies: [],
     stocks: [],
+    selectedCurrency: "USD",
   };
 
   // Conditionally fetch market data when needed
@@ -317,8 +319,10 @@ export default async function Page(props: any) {
 
           {currentTab === "portfolios" && (
             <NewPortfolio 
+              portfolios={portfoliosData}
+              transactions={transactionsData}
               marketData={marketData}
-              hideBalances={false}
+              userId={user.id}
             />
           )}
 

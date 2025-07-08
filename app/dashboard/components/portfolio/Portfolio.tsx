@@ -6,7 +6,6 @@ import { useState, useEffect, useCallback } from 'react'
 import { Loader2 } from 'lucide-react'
 import { 
   PortfolioHeader,
-  PortfolioSummary,
   CategoryList,
   BuySellModal,
   AddAssetModal
@@ -71,7 +70,7 @@ export default function Portfolio({
   const [portfolioAssets, setPortfolioAssets] = useState<PortfolioAsset[]>([])
   
   // UI state
-  const [expandedCategories, setExpandedCategories] = useState<AssetCategory[]>(['Crypto', 'Stocks & Indexes'])
+  const [expandedCategories, setExpandedCategories] = useState<AssetCategory[]>([]) // Empty array = all closed by default
   const [showAddAsset, setShowAddAsset] = useState(false)
   const [buySellModal, setBuySellModal] = useState<{
     show: boolean
@@ -156,19 +155,19 @@ export default function Portfolio({
   }
 
   // Delete portfolio
-  const handleDeletePortfolio = async (portfolioId: string) => {
+  const handleDeletePortfolio = async (id: string) => {
     try {
-      const response = await fetch(`/api/portfolios/${portfolioId}`, {
+      const response = await fetch(`/api/portfolios/${id}`, {
         method: 'DELETE'
       })
 
       if (!response.ok) throw new Error('Failed to delete portfolio')
 
-      setPortfolios(prev => prev.filter(p => p.id !== portfolioId))
+      setPortfolios(prev => prev.filter(p => p.id !== id))
       
-      // Select another portfolio if the deleted one was selected
-      if (selectedPortfolio?.id === portfolioId) {
-        const remainingPortfolios = portfolios.filter(p => p.id !== portfolioId)
+      // If we deleted the selected portfolio, select another one
+      if (selectedPortfolio?.id === id) {
+        const remainingPortfolios = portfolios.filter(p => p.id !== id)
         setSelectedPortfolio(getDefaultPortfolio(remainingPortfolios))
       }
     } catch (error) {
@@ -177,66 +176,18 @@ export default function Portfolio({
     }
   }
 
-  // Add transaction
-  const handleAddTransaction = async (
-    type: 'BUY' | 'SELL',
-    asset: {
-      category: AssetCategory
-      asset_type: string
-      quantity: number
-      price: number
-      date: string
-    }
-  ) => {
-    if (!selectedPortfolio) return
-
-    try {
-      const response = await fetch('/api/transactions', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          portfolio_id: selectedPortfolio.id,
-          transaction_type: type,
-          category: asset.category,
-          asset_type: asset.asset_type,
-          quantity: asset.quantity,
-          price: asset.price,
-          date: asset.date
-        })
-      })
-
-      if (!response.ok) {
-        const errorData = await response.json()
-        throw new Error(errorData.error || 'Failed to add transaction')
-      }
-
-      const newTransaction = await response.json()
-      setTransactions(prev => [...prev, newTransaction[0]])
-      
-      // Refresh portfolio summary
-      fetchPortfolioSummary(selectedPortfolio.id)
-      
-      return newTransaction[0]
-    } catch (error) {
-      console.error('Error adding transaction:', error)
-      throw error instanceof Error ? error : new Error('Failed to process transaction')
-    }
+  // Select portfolio
+  const handleSelectPortfolio = (portfolio: Portfolio) => {
+    setSelectedPortfolio(portfolio)
   }
 
   // Toggle category expansion
   const toggleCategory = (category: AssetCategory) => {
     setExpandedCategories(prev => 
-      prev.includes(category)
+      prev.includes(category) 
         ? prev.filter(c => c !== category)
         : [...prev, category]
     )
-  }
-
-  // Handle portfolio selection
-  const handleSelectPortfolio = (portfolio: Portfolio) => {
-    if (portfolio && (!selectedPortfolio || portfolio.id !== selectedPortfolio.id)) {
-      setSelectedPortfolio(portfolio)
-    }
   }
 
   // Handle buy action
@@ -247,35 +198,31 @@ export default function Portfolio({
       asset: {
         category: asset.category,
         asset_type: asset.asset_type,
-        current_price: asset.current_price || 0
+        current_price: asset.current_price,
+        quantity: asset.quantity,
+        minDate: getFirstPurchaseDate(asset.category, asset.asset_type) || undefined
       }
     })
   }
 
   // Handle sell action
   const handleSell = (asset: PortfolioAsset) => {
-    const firstPurchaseDate = getFirstPurchaseDate(asset.category, asset.asset_type)
     setBuySellModal({
       show: true,
       type: 'SELL',
       asset: {
         category: asset.category,
         asset_type: asset.asset_type,
-        current_price: asset.current_price || 0,
+        current_price: asset.current_price,
         quantity: asset.quantity,
-        minDate: firstPurchaseDate || undefined
+        minDate: getFirstPurchaseDate(asset.category, asset.asset_type) || undefined
       }
     })
   }
 
-  // Handle buy/sell confirmation
-  const handleBuySell = async (
-    quantity: number,
-    price: number,
-    date: string,
-    type: 'BUY' | 'SELL'
-  ) => {
-    if (!buySellModal.asset || !selectedPortfolio) return
+  // Handle buy/sell confirmation - FIXED: Updated to match BuySellModal interface
+  const handleBuySell = async (quantity: number, price: number, date: string, type: 'BUY' | 'SELL') => {
+    if (!selectedPortfolio || !buySellModal.asset) return
 
     try {
       await handleAddTransaction(type, {
@@ -285,11 +232,62 @@ export default function Portfolio({
         price,
         date
       })
-
       setBuySellModal({ show: false, type: 'BUY' })
     } catch (error) {
-      console.error('Transaction error:', error)
+      console.error('Error processing buy/sell:', error)
       alert(error instanceof Error ? error.message : 'Failed to process transaction')
+    }
+  }
+
+  // Add transaction helper
+  const handleAddTransaction = async (
+    type: 'BUY' | 'SELL',
+    transactionData: {
+      category: AssetCategory
+      asset_type: string
+      quantity: number
+      price: number
+      date: string
+    }
+  ) => {
+    if (!selectedPortfolio) return
+
+    // Validate transaction
+    const validation = validateTransaction(
+      type,
+      transactionData.category,
+      transactionData.asset_type,
+      transactionData.quantity,
+      transactionData.price,
+      transactionData.date
+    )
+
+    if (!validation.isValid) {
+      throw new Error(validation.error || 'Transaction validation failed')
+    }
+
+    try {
+      const response = await fetch('/api/transactions', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          transaction_type: type,
+          portfolio_id: selectedPortfolio.id,
+          user_id: userId,
+          ...transactionData
+        })
+      })
+
+      if (!response.ok) throw new Error('Failed to add transaction')
+
+      const newTransaction = await response.json()
+      setTransactions(prev => [newTransaction, ...prev])
+      
+      // Refresh portfolio summary
+      await fetchPortfolioSummary(selectedPortfolio.id)
+    } catch (error) {
+      console.error('Error adding transaction:', error)
+      throw new Error(error instanceof Error ? error.message : 'Failed to process transaction')
     }
   }
 
@@ -348,6 +346,7 @@ export default function Portfolio({
 
   return (
     <div>
+      {/* Updated PortfolioHeader with summary - FIXED: Added summary prop */}
       <PortfolioHeader 
         setShowAddAsset={setShowAddAsset}
         portfolios={portfolios}
@@ -356,6 +355,8 @@ export default function Portfolio({
         onCreatePortfolio={handleCreatePortfolio}
         onRenamePortfolio={handleRenamePortfolio}
         onDeletePortfolio={handleDeletePortfolio}
+        summary={portfolioSummary}
+        hideBalances={false}
       />
 
       <div className="p-3 sm:p-6 md:p-6">
@@ -370,26 +371,19 @@ export default function Portfolio({
             </p>
           </div>
         ) : (
-          <>
-            <PortfolioSummary 
-              summary={portfolioSummary} 
-              hideBalances={false} 
-            />
-
-            <CategoryList 
-              categories={portfolioSummary.categories}
-              portfolioAssets={portfolioAssets}
-              expandedCategories={expandedCategories}
-              hideBalances={false}
-              onBuy={handleBuy}
-              onSell={handleSell}
-              toggleCategory={toggleCategory}
-            />
-          </>
+          <CategoryList 
+            categories={portfolioSummary.categories}
+            portfolioAssets={portfolioAssets}
+            expandedCategories={expandedCategories}
+            hideBalances={false}
+            onBuy={handleBuy}
+            onSell={handleSell}
+            toggleCategory={toggleCategory}
+          />
         )}
       </div>
 
-      {/* Modals */}
+      {/* Modals - FIXED: Updated BuySellModal props */}
       {buySellModal.show && buySellModal.asset && (
         <BuySellModal
           assetType={buySellModal.asset.asset_type}
