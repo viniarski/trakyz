@@ -73,7 +73,7 @@ export function PortfolioHeader({
         <div className="flex items-center">
           {/* Portfolio Cost - positioned with specific margin */}
           <div className="text-right mr-[200px]">
-            <p className="text-xs text-[var(--text-secondary)]">Portfolio Cost</p>
+            <p className="text-xs text-[var(--text-secondary)] uppercase tracking-wide">Portfolio Cost</p>
             <p className="text-lg font-bold text-[var(--text-primary)]">
               {hideBalances ? '******' : formatPreciseValue(summary.total_cost)}
             </p>
@@ -81,7 +81,7 @@ export function PortfolioHeader({
           
           {/* Portfolio Value - positioned to align with category Total Value */}
           <div className="text-right mr-[140px]">
-            <p className="text-xs text-[var(--text-secondary)]">Portfolio Value</p>
+            <p className="text-xs text-[var(--text-secondary)] uppercase tracking-wide">Portfolio Value</p>
             <p className="text-lg font-bold text-[var(--text-primary)]">
               {hideBalances ? '******' : formatPreciseValue(summary.total_value)}
             </p>
@@ -89,7 +89,7 @@ export function PortfolioHeader({
           
           {/* Portfolio Profit/Loss - positioned to align with category Profit/Loss */}
           <div className="text-right mr-[40px]">
-            <p className="text-xs text-[var(--text-secondary)]">Portfolio Profit/Loss</p>
+            <p className="text-xs text-[var(--text-secondary)] uppercase tracking-wide">Portfolio Profit/Loss</p>
             {!hideBalances ? (
               <div className="flex items-center justify-end gap-1 whitespace-nowrap">
                 {summary.total_profit_loss >= 0 ? (

@@ -52,14 +52,14 @@ export function CategoryItem({
         {/* Total Value - Even further left */}
         {!hideBalances ? (
           <div className="flex flex-col items-end">
-            <p className="text-xs text-[var(--text-secondary)]">Total Value</p>
+            <p className="text-xs text-[var(--text-secondary)] uppercase tracking-wide">Total Value</p>
             <p className="text-sm font-medium text-[var(--text-primary)]">
               {formatPreciseValue(categoryData.total_value)}
             </p>
           </div>
         ) : (
           <div className="flex flex-col items-end">
-            <p className="text-xs text-[var(--text-secondary)]">Total Value</p>
+            <p className="text-xs text-[var(--text-secondary)] uppercase tracking-wide">Total Value</p>
             <p className="text-sm font-medium text-[var(--text-primary)]">******</p>
           </div>
         )}
@@ -70,7 +70,7 @@ export function CategoryItem({
         {/* Profit/Loss - Wider column to prevent wrapping */}
         {!hideBalances ? (
           <div className="flex flex-col items-end">
-            <p className="text-xs text-[var(--text-secondary)]">Profit/Loss</p>
+            <p className="text-xs text-[var(--text-secondary)] uppercase tracking-wide">Profit/Loss</p>
             <div className="flex items-center justify-end gap-1 whitespace-nowrap">
               {categoryData.profit_loss >= 0 ? (
                 <TrendingUp className="h-3 w-3 text-green-500 flex-shrink-0" />
@@ -84,7 +84,7 @@ export function CategoryItem({
           </div>
         ) : (
           <div className="flex flex-col items-end">
-            <p className="text-xs text-[var(--text-secondary)]">Profit/Loss</p>
+            <p className="text-xs text-[var(--text-secondary)] uppercase tracking-wide">Profit/Loss</p>
             <p className="text-sm font-medium text-[var(--text-primary)]">******</p>
           </div>
         )}

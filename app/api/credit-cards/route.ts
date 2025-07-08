@@ -1,59 +1,74 @@
 // app/api/credit-cards/route.ts
 
-import { createClient } from "@/lib/supabase/server";
-import { validateInsertFields } from "@/lib/utils/navigation";
-import { NextRequest, NextResponse } from "next/server";
+import { createClient } from '@/lib/supabase/server'
+import { NextResponse } from 'next/server'
 
-export async function POST(req: NextRequest) {
-  const supabase = await createClient();
-  const body = await req.json();
-  const userId = req.headers.get("x-user-id");
+export async function POST(request: Request) {
+  try {
+    const supabase = await createClient()
+    const cardData = await request.json()
 
-  if (!userId) {
-    return NextResponse.json({ error: "Missing user ID" }, { status: 400 });
-  }
+    // Get the user's default portfolio
+    const { data: portfolio, error: portfolioError } = await supabase
+      .from('portfolios')
+      .select('id')
+      .eq('user_id', cardData.user_id)
+      .eq('is_default', true)
+      .single()
 
-  const allowedFields = [
-    "user_id",
-    "bank_name",
-    "card_name",
-    "credit_limit",
-    "current_balance",
-    "due_date",
-    "interest_rate",
-    "minimum_payment",
-    "encrypted",
-  ] as const;
-
-  const { id, ...inputData } = body;
-  const data = validateInsertFields(inputData, allowedFields);
-  data.user_id = userId;
-
-  // If ID exists, update the existing record
-  if (id) {
-    const { data: updated, error } = await supabase
-      .from("credit_cards")
-      .update(data)
-      .eq("id", id)
-      .eq("user_id", userId) // Ensure users can only update their own cards
-      .select();
-
-    if (error) {
-      return NextResponse.json({ error: error.message }, { status: 400 });
+    if (portfolioError || !portfolio) {
+      return NextResponse.json({ error: 'Default portfolio not found' }, { status: 404 })
     }
 
-    return NextResponse.json(updated, { status: 200 });
+    // Add the portfolio_id to the card data
+    const cardWithPortfolio = {
+      ...cardData,
+      portfolio_id: portfolio.id
+    }
+
+    const { data: card, error } = await supabase
+      .from('credit_cards')
+      .insert([cardWithPortfolio])
+      .select()
+      .single()
+
+    if (error) {
+      console.error('Error creating credit card:', error)
+      return NextResponse.json({ error: 'Failed to create credit card' }, { status: 500 })
+    }
+
+    return NextResponse.json(card)
+  } catch (error) {
+    console.error('Error in credit-cards POST:', error)
+    return NextResponse.json({ error: 'Internal server error' }, { status: 500 })
   }
+}
 
-  // Otherwise insert a new record
-  const { data: inserted, error } = await supabase
-    .from("credit_cards")
-    .insert(data)
-    .select();
+export async function GET(request: Request) {
+  try {
+    const { searchParams } = new URL(request.url)
+    const userId = searchParams.get('user_id')
 
-  if (error) {
-    return NextResponse.json({ error: error.message }, { status: 400 });
+    if (!userId) {
+      return NextResponse.json({ error: 'User ID is required' }, { status: 400 })
+    }
+
+    const supabase = await createClient()
+
+    const { data: creditCards, error } = await supabase
+      .from('credit_cards')
+      .select('*')
+      .eq('user_id', userId)
+      .order('created_at', { ascending: false })
+
+    if (error) {
+      console.error('Error fetching credit cards:', error)
+      return NextResponse.json({ error: 'Failed to fetch credit cards' }, { status: 500 })
+    }
+
+    return NextResponse.json(creditCards)
+  } catch (error) {
+    console.error('Error in credit-cards GET:', error)
+    return NextResponse.json({ error: 'Internal server error' }, { status: 500 })
   }
-
-  return NextResponse.json(inserted, { status: 201 });
 }

@@ -45,8 +45,6 @@ export function TransactionsList({
     return value.toFixed(8).replace(/\.?0+$/, '')
   }
 
-  // Remove the local formatDate function - use the one from utils instead
-
   const getSortIcon = (column: SortKey) => {
     if (sortKey !== column) {
       return <ArrowUpDown className="h-3 w-3 text-[var(--text-tertiary)]" />
@@ -149,10 +147,10 @@ export function TransactionsList({
                 </span>
               </td>
               <td className="p-3">
-                <span className={`inline-flex items-center px-2 py-1 rounded-full text-xs font-medium ${
+                <span className={`text-xs font-medium ${
                   transaction.transaction_type === 'BUY'
-                    ? 'bg-green-500/10 text-green-500'
-                    : 'bg-red-500/10 text-red-500'
+                    ? 'text-green-500'
+                    : 'text-red-500'
                 }`}>
                   {transaction.transaction_type}
                 </span>

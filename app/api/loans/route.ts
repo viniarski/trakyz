@@ -1,56 +1,74 @@
 // app/api/loans/route.ts
 
-import { createClient } from "@/lib/supabase/server";
-import { validateInsertFields } from "@/lib/utils/navigation";
-import { NextRequest, NextResponse } from "next/server";
+import { createClient } from '@/lib/supabase/server'
+import { NextResponse } from 'next/server'
 
-export async function POST(req: NextRequest) {
-  const supabase = await createClient();
-  const body = await req.json();
-  const userId = req.headers.get("x-user-id");
+export async function POST(request: Request) {
+  try {
+    const supabase = await createClient()
+    const loanData = await request.json()
 
-  const allowedFields = [
-    "user_id",
-    "lender_name",
-    "loan_type",
-    "loan_amount",
-    "interest_rate",
-    "monthly_payment",
-    "remaining_balance",
-    "start_date",
-    "end_date",
-    "encrypted",
-  ] as const;
+    // Get the user's default portfolio
+    const { data: portfolio, error: portfolioError } = await supabase
+      .from('portfolios')
+      .select('id')
+      .eq('user_id', loanData.user_id)
+      .eq('is_default', true)
+      .single()
 
-  const { id, ...inputData } = body;
-  const data = validateInsertFields(inputData, allowedFields);
-  data.user_id = userId;
-
-  // If ID exists, update the existing record
-  if (id) {
-    const { data: updated, error } = await supabase
-      .from("loans")
-      .update(data)
-      .eq("id", id)
-      .eq("user_id", userId) // Ensure users can only update their own cards
-      .select();
-
-    if (error) {
-      return NextResponse.json({ error: error.message }, { status: 400 });
+    if (portfolioError || !portfolio) {
+      return NextResponse.json({ error: 'Default portfolio not found' }, { status: 404 })
     }
 
-    return NextResponse.json(updated, { status: 200 });
+    // Add the portfolio_id to the loan data
+    const loanWithPortfolio = {
+      ...loanData,
+      portfolio_id: portfolio.id
+    }
+
+    const { data: loan, error } = await supabase
+      .from('loans')
+      .insert([loanWithPortfolio])
+      .select()
+      .single()
+
+    if (error) {
+      console.error('Error creating loan:', error)
+      return NextResponse.json({ error: 'Failed to create loan' }, { status: 500 })
+    }
+
+    return NextResponse.json(loan)
+  } catch (error) {
+    console.error('Error in loans POST:', error)
+    return NextResponse.json({ error: 'Internal server error' }, { status: 500 })
   }
+}
 
-  // Otherwise insert a new record
-  const { data: inserted, error } = await supabase
-    .from("loans")
-    .insert(data)
-    .select();
+export async function GET(request: Request) {
+  try {
+    const { searchParams } = new URL(request.url)
+    const userId = searchParams.get('user_id')
 
-  if (error) {
-    return NextResponse.json({ error: error.message }, { status: 400 });
+    if (!userId) {
+      return NextResponse.json({ error: 'User ID is required' }, { status: 400 })
+    }
+
+    const supabase = await createClient()
+
+    const { data: loans, error } = await supabase
+      .from('loans')
+      .select('*')
+      .eq('user_id', userId)
+      .order('created_at', { ascending: false })
+
+    if (error) {
+      console.error('Error fetching loans:', error)
+      return NextResponse.json({ error: 'Failed to fetch loans' }, { status: 500 })
+    }
+
+    return NextResponse.json(loans)
+  } catch (error) {
+    console.error('Error in loans GET:', error)
+    return NextResponse.json({ error: 'Internal server error' }, { status: 500 })
   }
-
-  return NextResponse.json(inserted, { status: 201 });
 }

@@ -1,129 +1,225 @@
 // app/dashboard/components/debt/Debt.tsx
 
-"use client";
+'use client'
 
-import { DebtData } from "@/types";
-import { useState } from "react";
-import GenericForm from "@/components/GenericForm";
-import {
-  creditCardFields,
-  loanFields,
-} from "@/lib/db-client-req/GenericFormData";
+import { useState } from 'react'
+import { 
+  DebtHeader,
+  DebtSummary,
+  DebtList,
+  AddLoanModal,
+  AddCreditCardModal,
+  EditLoanModal,
+  EditCreditCardModal,
+  DeleteDebtModal
+} from '@/components/Debt'
+import type { DebtData, Loan, CreditCard } from '@/types'
 
-// Example mapping of debt data to page
-// Replace with real data later
+interface DebtProps {
+  debtData: DebtData
+  userId: string
+}
 
-export default function Debt({
-  debtData,
-  userId,
-}: {
-  debtData: DebtData;
-  userId: string;
-}) {
-  const { loans, creditCards } = debtData;
+export default function Debt({ debtData, userId }: DebtProps) {
+  // State management
+  const [loans, setLoans] = useState<Loan[]>(debtData.loans)
+  const [creditCards, setCreditCards] = useState<CreditCard[]>(debtData.creditCards)
+  
+  // Modal states
+  const [showAddLoan, setShowAddLoan] = useState(false)
+  const [showAddCreditCard, setShowAddCreditCard] = useState(false)
+  const [editingLoan, setEditingLoan] = useState<Loan | null>(null)
+  const [editingCreditCard, setEditingCreditCard] = useState<CreditCard | null>(null)
+  const [deletingDebt, setDeletingDebt] = useState<{
+    type: 'loan' | 'credit_card'
+    id: string
+    name: string
+  } | null>(null)
 
-  // Logged here for easier mapping later
-  console.log(debtData);
+  // Add new loan
+  const handleAddLoan = async (loanData: Omit<Loan, 'id' | 'user_id' | 'created_at' | 'updated_at'>) => {
+    try {
+      const response = await fetch('/api/loans', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ ...loanData, user_id: userId })
+      })
 
-  // Logging user to ensure its avaliable to the component
-  console.log(userId);
+      if (!response.ok) throw new Error('Failed to add loan')
 
-  const [type, setType] = useState<"loan" | "credit-card">("loan");
+      const newLoan = await response.json()
+      setLoans(prev => [...prev, newLoan])
+      setShowAddLoan(false)
+    } catch (error) {
+      console.error('Error adding loan:', error)
+      throw error
+    }
+  }
+
+  // Add new credit card
+  const handleAddCreditCard = async (cardData: Omit<CreditCard, 'id' | 'user_id' | 'created_at' | 'updated_at'>) => {
+    try {
+      const response = await fetch('/api/credit-cards', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ ...cardData, user_id: userId })
+      })
+
+      if (!response.ok) throw new Error('Failed to add credit card')
+
+      const newCard = await response.json()
+      setCreditCards(prev => [...prev, newCard])
+      setShowAddCreditCard(false)
+    } catch (error) {
+      console.error('Error adding credit card:', error)
+      throw error
+    }
+  }
+
+  // Update loan
+  const handleUpdateLoan = async (id: string, loanData: Partial<Loan>) => {
+    try {
+      const response = await fetch(`/api/loans/${id}`, {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(loanData)
+      })
+
+      if (!response.ok) throw new Error('Failed to update loan')
+
+      const updatedLoan = await response.json()
+      setLoans(prev => prev.map(loan => loan.id === id ? updatedLoan : loan))
+      setEditingLoan(null)
+    } catch (error) {
+      console.error('Error updating loan:', error)
+      throw error
+    }
+  }
+
+  // Update credit card
+  const handleUpdateCreditCard = async (id: string, cardData: Partial<CreditCard>) => {
+    try {
+      const response = await fetch(`/api/credit-cards/${id}`, {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(cardData)
+      })
+
+      if (!response.ok) throw new Error('Failed to update credit card')
+
+      const updatedCard = await response.json()
+      setCreditCards(prev => prev.map(card => card.id === id ? updatedCard : card))
+      setEditingCreditCard(null)
+    } catch (error) {
+      console.error('Error updating credit card:', error)
+      throw error
+    }
+  }
+
+  // Delete debt item
+  const handleDeleteDebt = async () => {
+    if (!deletingDebt) return
+
+    try {
+      const endpoint = deletingDebt.type === 'loan' ? 'loans' : 'credit-cards'
+      const response = await fetch(`/api/${endpoint}/${deletingDebt.id}`, {
+        method: 'DELETE'
+      })
+
+      if (!response.ok) throw new Error(`Failed to delete ${deletingDebt.type}`)
+
+      if (deletingDebt.type === 'loan') {
+        setLoans(prev => prev.filter(loan => loan.id !== deletingDebt.id))
+      } else {
+        setCreditCards(prev => prev.filter(card => card.id !== deletingDebt.id))
+      }
+
+      setDeletingDebt(null)
+    } catch (error) {
+      console.error(`Error deleting ${deletingDebt?.type}:`, error)
+      throw error
+    }
+  }
+
+  // Calculate totals for summary
+  const totalDebt = loans.reduce((sum, loan) => sum + loan.current_balance, 0) +
+                   creditCards.reduce((sum, card) => sum + card.balance, 0)
+  
+  const monthlyPayments = loans.reduce((sum, loan) => sum + loan.monthly_payment, 0) +
+                         creditCards.reduce((sum, card) => sum + card.min_payment, 0)
+
+  const totalCreditLimit = creditCards.reduce((sum, card) => sum + card.credit_limit, 0)
+  const totalCreditUsed = creditCards.reduce((sum, card) => sum + card.balance, 0)
+  const creditUtilization = totalCreditLimit > 0 ? (totalCreditUsed / totalCreditLimit) * 100 : 0
 
   return (
-    <div className="space-y-12">
-      <section>
-        <h2 className="text-2xl font-semibold mb-4">Loans</h2>
-        {loans.length > 0 ? (
-          <div className="grid gap-4 md:grid-cols-2">
-            {loans.map((loan) => (
-              <div
-                key={loan.id}
-                className="p-4 rounded-2xl shadow bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-800"
-              >
-                <h3 className="text-lg font-medium">{loan.name}</h3>
-                <p className="text-sm text-gray-500">
-                  {loan.lender} • {loan.loan_type}
-                </p>
-                <div className="mt-2 text-sm">
-                  <p>Balance: ${loan.current_balance.toLocaleString()}</p>
-                  <p>Interest Rate: {loan.interest_rate}%</p>
-                  <p>Monthly Payment: ${loan.monthly_payment}</p>
-                  <p>Next Payment: {loan.next_payment_date}</p>
-                </div>
-              </div>
-            ))}
-          </div>
-        ) : (
-          <p className="text-sm text-gray-500">No loans found.</p>
-        )}
-      </section>
+    <div className="p-3 sm:p-6 md:p-6">
+      {/* Header Section */}
+      <DebtHeader
+        onAddLoan={() => setShowAddLoan(true)}
+        onAddCreditCard={() => setShowAddCreditCard(true)}
+      />
 
-      <section>
-        <h2 className="text-2xl font-semibold mb-4">Credit Cards</h2>
-        {creditCards.length > 0 ? (
-          <div className="grid gap-4 md:grid-cols-2">
-            {creditCards.map((card) => (
-              <div
-                key={card.id}
-                className="p-4 rounded-2xl shadow bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-800"
-              >
-                <h3 className="text-lg font-medium">
-                  {card.name} • ****{card.last_four}
-                </h3>
-                <p className="text-sm text-gray-500">{card.issuer}</p>
-                <div className="mt-2 text-sm">
-                  <p>Balance: ${card.balance.toLocaleString()}</p>
-                  <p>Limit: ${card.credit_limit.toLocaleString()}</p>
-                  <p>Interest Rate: {card.interest_rate}%</p>
-                  <p>Min Payment: ${card.min_payment}</p>
-                  <p>Due: {card.due_date}</p>
-                </div>
-              </div>
-            ))}
-          </div>
-        ) : (
-          <p className="text-sm text-gray-500">No credit cards found.</p>
-        )}
-      </section>
-
-      <div className="max-w-xl mx-auto space-y-6 p-4">
-        <h1 className="text-2xl font-bold mb-2">Add Debt</h1>
-
-        <div className="flex gap-4 mb-4">
-          <button
-            className={`px-4 py-2 rounded ${
-              type === "loan" ? "bg-blue-600 text-white" : "bg-gray-200"
-            }`}
-            onClick={() => setType("loan")}
-          >
-            Loan
-          </button>
-          <button
-            className={`px-4 py-2 rounded ${
-              type === "credit-card" ? "bg-green-600 text-white" : "bg-gray-200"
-            }`}
-            onClick={() => setType("credit-card")}
-          >
-            Credit Card
-          </button>
-        </div>
-
-        {type === "loan" && (
-          <GenericForm
-            apiRoute="/api/loans"
-            userId={userId}
-            fields={loanFields}
-          />
-        )}
-        {type === "credit-card" && (
-          <GenericForm
-            apiRoute="/api/credit-cards"
-            userId={userId}
-            fields={creditCardFields}
-          />
-        )}
+      {/* Debt Summary */}
+      <div className="p-4">
+        <DebtSummary
+          totalDebt={totalDebt}
+          monthlyPayments={monthlyPayments}
+          creditUtilization={creditUtilization}
+          totalAccounts={loans.length + creditCards.length}
+        />
       </div>
+
+      {/* Debt Lists */}
+      <div className="p-4">
+        <DebtList
+          loans={loans}
+          creditCards={creditCards}
+          onEditLoan={setEditingLoan}
+          onEditCreditCard={setEditingCreditCard}
+          onDeleteDebt={setDeletingDebt}
+        />
+      </div>
+
+      {/* Modals */}
+      {showAddLoan && (
+        <AddLoanModal
+          onClose={() => setShowAddLoan(false)}
+          onSubmit={handleAddLoan}
+        />
+      )}
+
+      {showAddCreditCard && (
+        <AddCreditCardModal
+          onClose={() => setShowAddCreditCard(false)}
+          onSubmit={handleAddCreditCard}
+        />
+      )}
+
+      {editingLoan && (
+        <EditLoanModal
+          loan={editingLoan}
+          onClose={() => setEditingLoan(null)}
+          onSubmit={(data) => handleUpdateLoan(editingLoan.id, data)}
+        />
+      )}
+
+      {editingCreditCard && (
+        <EditCreditCardModal
+          creditCard={editingCreditCard}
+          onClose={() => setEditingCreditCard(null)}
+          onSubmit={(data) => handleUpdateCreditCard(editingCreditCard.id, data)}
+        />
+      )}
+
+      {deletingDebt && (
+        <DeleteDebtModal
+          debtType={deletingDebt.type}
+          debtName={deletingDebt.name}
+          onClose={() => setDeletingDebt(null)}
+          onConfirm={handleDeleteDebt}
+        />
+      )}
     </div>
-  );
+  )
 }

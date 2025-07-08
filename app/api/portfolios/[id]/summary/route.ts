@@ -40,32 +40,63 @@ async function getCurrentPrice(category: AssetCategory, assetType: string): Prom
   try {
     const supabase = await createClient()
     
-    // Fetch current prices from your market_data table
-    const { data, error } = await supabase
-      .from('market_data')
-      .select('current_price')
-      .eq('category', category)
-      .eq('asset_type', assetType)
-      .single()
+    // Fetch current prices from the appropriate market data tables
+    switch (category) {
+      case 'Crypto':
+        const { data: cryptoData } = await supabase
+          .from('crypto')
+          .select('price')
+          .eq('symbol', assetType)
+          .order('date', { ascending: false })
+          .limit(1)
+          .single()
+        return cryptoData?.price || 0
 
-    if (error || !data) {
-      console.warn(`No price found for ${category}:${assetType}, using default price of 1`)
-      return 1 // Default fallback price
+      case 'Stocks & Indexes':
+        const { data: stockData } = await supabase
+          .from('stocks')
+          .select('price')
+          .eq('symbol', assetType)
+          .order('date', { ascending: false })
+          .limit(1)
+          .single()
+        return stockData?.price || 0
+
+      case 'Precious Metals':
+        const { data: metalData } = await supabase
+          .from('metals')
+          .select('price')
+          .ilike('metal', assetType)
+          .order('date', { ascending: false })
+          .limit(1)
+          .single()
+        return metalData?.price || 0
+
+      case 'Cash':
+        const { data: currencyData } = await supabase
+          .from('currencies')
+          .select('price')
+          .eq('symbol', assetType)
+          .order('date', { ascending: false })
+          .limit(1)
+          .single()
+        return currencyData?.price || 1
+
+      default:
+        return 0
     }
-
-    return data.current_price
   } catch (error) {
     console.error(`Error fetching price for ${category}:${assetType}:`, error)
-    return 1 // Default fallback price
+    return 0
   }
 }
 
 export async function GET(
   request: Request,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
-    const portfolioId = params.id
+    const { id: portfolioId } = await params
     const supabase = await createClient()
 
     // Get portfolio info
@@ -84,7 +115,7 @@ export async function GET(
       .from('transactions')
       .select('*')
       .eq('portfolio_id', portfolioId)
-      .order('transaction_date', { ascending: true })
+      .order('date', { ascending: true })
 
     if (transactionsError) {
       console.error('Error fetching transactions:', transactionsError)
