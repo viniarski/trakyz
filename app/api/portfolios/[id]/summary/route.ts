@@ -1,4 +1,5 @@
 // app/api/portfolios/[id]/summary/route.ts
+
 import { createClient } from '@/lib/supabase/server'
 import { NextResponse } from 'next/server'
 import { calculateAssetValue, calculateProfitLoss, calculateAveragePurchasePrice } from '@/lib/portfolio-utils'

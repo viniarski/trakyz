@@ -1,4 +1,5 @@
-// app/admin/page.tsx (with fixed TypeScript types)
+// app/admin/page.tsx
+
 'use client'
 
 import { useState, useEffect } from 'react'

@@ -1,9 +1,9 @@
-// components/Markets/Watchlist.tsx
+// components/Markets/components/Watchlist.tsx
 
 'use client'
 
 import { useState, useMemo } from 'react'
-import { Star, TrendingUp, TrendingDown } from 'lucide-react'
+import { TrendingUp, TrendingDown } from 'lucide-react'
 import { CategoryIcon } from '@/components/ui/CategoryIcon'
 import { useCurrencyConverter } from '@/hooks/useCurrencyConverter'
 import { 
@@ -13,12 +13,12 @@ import {
   CurrencyCode, 
   AssetCategory,
   Crypto,
-  LegacyWatchlistItem  // FIXED: Changed from WatchlistItem to LegacyWatchlistItem
+  LegacyWatchlistItem
 } from '@/types'
 import { AssetContextMenu } from '@/components/ui/ContextMenu'
 
 interface WatchlistProps {
-  watchlist: LegacyWatchlistItem[];  // FIXED: Changed from WatchlistItem[] to LegacyWatchlistItem[]
+  watchlist: LegacyWatchlistItem[];
   onToggleWatchlist: (category: AssetCategory, symbol: string) => void;
   marketData: {
     metals: Metal[] | null;
@@ -62,7 +62,7 @@ export function Watchlist({
 
   // Group watchlist items by category
   const categorizedWatchlist = useMemo(() => {
-    const grouped: Record<string, Array<LegacyWatchlistItem>> = {};  // FIXED: Updated type
+    const grouped: Record<string, Array<LegacyWatchlistItem>> = {};
     
     // Group items by category
     watchlist.forEach(item => {
@@ -150,7 +150,7 @@ export function Watchlist({
       {Object.entries(categorizedWatchlist).map(([category, items]) => (
         <div key={category} className="space-y-3">
           <div className="flex items-center gap-2 text-sm font-medium text-[var(--text-secondary)]">
-            <CategoryIcon type={category as AssetCategory} size={16} /> {/* FIXED: Changed category to type */}
+            <CategoryIcon type={category as AssetCategory} size={16} />
             <span>{category}</span>
             <span className="text-xs opacity-60">({items.length})</span>
           </div>
@@ -173,8 +173,8 @@ export function Watchlist({
               }
 
               const currentPrice = currentData.price;
-              const convertedPrice = convertValue(currentPrice, currencyRates);  // FIXED: Pass rates object
-              const displayPrice = formatPreciseValue(convertedPrice);  // FIXED: Remove selectedCurrency param
+              const convertedPrice = convertValue(currentPrice, currencyRates);
+              const displayPrice = formatPreciseValue(convertedPrice);
               
               // Calculate price change
               const priceChange = calculatePriceChange(
@@ -197,7 +197,7 @@ export function Watchlist({
                 >
                   <div className="flex items-center justify-between">
                     <div className="flex items-center gap-3">
-                      <CategoryIcon type={item.category} size={20} /> {/* FIXED: Changed category to type */}
+                      <CategoryIcon type={item.category} size={20} />
                       <div>
                         <div className="font-medium text-[var(--text-primary)]">
                           {item.symbol}

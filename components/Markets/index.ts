@@ -1,3 +1,3 @@
 // components/Markets/index.tsx
 
-export * from './MarketRates'
+export * from './components/MarketRates'

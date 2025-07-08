@@ -1,4 +1,4 @@
-// app/(legal)/components/legal-document/legal-document.tsx
+// app/(legal)/components/legal-document.tsx
 
 'use client'
 

@@ -8,11 +8,11 @@ import { Menu } from 'lucide-react'
 import { createClient } from '@/lib/supabase/client'
 
 // Import subcomponents
-import CurrencySwitcher from './CurrencySwitcher'
-import UserMenu from './UserMenu'
-import MobileMenu from './MobileMenu'
-import BalanceToggle, { MobileBalanceToggle } from './BalanceToggle'
-import NotificationsButton, { MobileNotificationsButton } from './NotificationsButton'
+import CurrencySwitcher from './components/CurrencySwitcher'
+import UserMenu from './components/UserMenu'
+import MobileMenu from './components/MobileMenu'
+import BalanceToggle, { MobileBalanceToggle } from './components/BalanceToggle'
+import NotificationsButton, { MobileNotificationsButton } from './components/NotificationsButton'
 import { useCurrencyStore } from '@/lib/stores/useCurrencyStore'
 
 // Update the HeaderProps interface

@@ -1,4 +1,5 @@
 // app/api/admin/toggle-free-trial/route.ts
+
 import { NextResponse, NextRequest } from 'next/server'
 import { createClient } from '@/lib/supabase/server'
 

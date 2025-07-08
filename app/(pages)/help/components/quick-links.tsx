@@ -1,4 +1,5 @@
 // app/(pages)/pricing/components/quick-links.tsx
+
 'use client'
 
 import { useState } from 'react'

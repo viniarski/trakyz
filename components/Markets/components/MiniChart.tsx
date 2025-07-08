@@ -1,4 +1,4 @@
-// components/Markets/MiniChart.tsx
+// components/Markets/components/MiniChart.tsx
 
 "use client";
 

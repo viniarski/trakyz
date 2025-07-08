@@ -1,4 +1,4 @@
-// components/Markets/MarketRatesMerge.tsx
+// components/Markets/components/MarketRatesMerge.tsx
 
 "use client";
 

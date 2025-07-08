@@ -1,3 +1,5 @@
+// app/welcome/components/early-adopter-offer.tsx
+
 'use client'
 
 import { CtaButtonWithArrow } from '@/components/ui/cta'

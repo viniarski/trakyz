@@ -1,3 +1,5 @@
+// lib/utils/market.ts
+
 import type { Metal, Stock, Currency, Crypto as CryptoType } from "@/types";
 
 export function sortByPreferredOrder<T>(

@@ -1,4 +1,5 @@
 // app/api/market/crypto/route.ts
+
 import { NextResponse } from 'next/server';
 import { supabaseAdmin } from '@/lib/supabase/admin';
 

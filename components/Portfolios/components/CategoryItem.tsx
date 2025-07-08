@@ -1,4 +1,5 @@
 // components/Portfolios/components/CategoryItem.tsx
+
 'use client'
 
 import { ChevronUp, ChevronDown, TrendingUp, TrendingDown } from 'lucide-react'

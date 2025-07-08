@@ -1,4 +1,5 @@
 // app/api/admin/system-settings/route.ts
+
 import { NextResponse, NextRequest } from 'next/server'
 import { createClient } from '@/lib/supabase/server'
 

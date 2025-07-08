@@ -1,4 +1,5 @@
 // app/admin/components/early-adopter-toggle.tsx
+
 'use client'
 
 import { useState, useEffect } from 'react'

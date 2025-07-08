@@ -1,4 +1,4 @@
-// app/components/ui/CategoryIcon.tsx
+// components/ui/CategoryIcon.tsx
 
 import { 
     Bitcoin, 

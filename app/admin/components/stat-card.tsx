@@ -1,4 +1,5 @@
 // app/admin/components/stat-card.tsx
+
 interface StatCardProps {
     title: string
     value: number | string

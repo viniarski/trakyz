@@ -1,4 +1,5 @@
 // app/admin/components/free-trial-toggle.tsx
+
 'use client'
 
 import { useState, useEffect } from 'react'

@@ -1,4 +1,5 @@
 // app/api/admin/toggle-early-adopter/route.ts
+
 import { NextResponse, NextRequest } from 'next/server'
 import { createClient } from '@/lib/supabase/server'
 

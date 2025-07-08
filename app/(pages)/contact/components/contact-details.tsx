@@ -1,4 +1,4 @@
-// app/contact/contact-details.tsx
+// app/contact/components/contact-details.tsx
 
 'use client'
 

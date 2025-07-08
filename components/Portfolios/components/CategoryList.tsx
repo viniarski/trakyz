@@ -1,4 +1,5 @@
 // components/Portfolios/components/CategoryList.tsx
+
 'use client'
 
 import { CategoryItem } from './CategoryItem'

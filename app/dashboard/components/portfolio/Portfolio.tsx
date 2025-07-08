@@ -1,4 +1,5 @@
 // app/dashboard/components/portfolio/Portfolio.tsx
+
 'use client'
 
 import { useState, useEffect, useCallback } from 'react'
