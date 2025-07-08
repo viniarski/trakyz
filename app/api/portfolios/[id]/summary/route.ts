@@ -17,103 +17,81 @@ const DEFAULT_CATEGORIES: Record<AssetCategory, CategorySummary> = {
   'Real Estate': { total_value: 0, total_cost: 0, profit_loss: 0, profit_loss_percentage: 0, asset_count: 0 },
 }
 
+// Helper function to create a deep copy of categories
+function createFreshCategories(): Record<AssetCategory, CategorySummary> {
+  const categories: Record<AssetCategory, CategorySummary> = {} as Record<AssetCategory, CategorySummary>
+  
+  // Create a fresh copy of each category with reset values
+  Object.keys(DEFAULT_CATEGORIES).forEach(key => {
+    const categoryKey = key as AssetCategory
+    categories[categoryKey] = {
+      total_value: 0,
+      total_cost: 0,
+      profit_loss: 0,
+      profit_loss_percentage: 0,
+      asset_count: 0
+    }
+  })
+  
+  return categories
+}
+
 async function getCurrentPrice(category: AssetCategory, assetType: string): Promise<number> {
   try {
     const supabase = await createClient()
     
-    // Fetch current prices from your market data tables
-    switch (category) {
-      case 'Crypto':
-        const { data: cryptoData } = await supabase
-          .from('crypto')
-          .select('price')
-          .eq('symbol', assetType)
-          .order('date', { ascending: false })
-          .limit(1)
-          .single()
-        return cryptoData?.price || 0
+    // Fetch current prices from your market_data table
+    const { data, error } = await supabase
+      .from('market_data')
+      .select('current_price')
+      .eq('category', category)
+      .eq('asset_type', assetType)
+      .single()
 
-      case 'Stocks & Indexes':
-        const { data: stockData } = await supabase
-          .from('stocks')
-          .select('price')
-          .eq('symbol', assetType)
-          .order('date', { ascending: false })
-          .limit(1)
-          .single()
-        return stockData?.price || 0
-
-      case 'Precious Metals':
-        const { data: metalData } = await supabase
-          .from('metals')
-          .select('price')
-          .ilike('metal', assetType)
-          .order('date', { ascending: false })
-          .limit(1)
-          .single()
-        return metalData?.price || 0
-
-      case 'Cash':
-        const { data: currencyData } = await supabase
-          .from('currencies')
-          .select('price')
-          .eq('symbol', assetType)
-          .order('date', { ascending: false })
-          .limit(1)
-          .single()
-        return currencyData?.price || 1
-
-      default:
-        return 0
+    if (error || !data) {
+      console.warn(`No price found for ${category}:${assetType}, using default price of 1`)
+      return 1 // Default fallback price
     }
+
+    return data.current_price
   } catch (error) {
-    console.error(`Error fetching price for ${category}:${assetType}`, error)
-    return 0
+    console.error(`Error fetching price for ${category}:${assetType}:`, error)
+    return 1 // Default fallback price
   }
 }
 
 export async function GET(
   request: Request,
-  { params }: { params: Promise<{ id: string }> }
+  { params }: { params: { id: string } }
 ) {
   try {
+    const portfolioId = params.id
     const supabase = await createClient()
-    const { data: { user } } = await supabase.auth.getUser()
-    
-    if (!user) {
-      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
-    }
 
-    const { id: portfolioId } = await params
-
-    // Verify portfolio belongs to user
+    // Get portfolio info
     const { data: portfolio, error: portfolioError } = await supabase
       .from('portfolios')
       .select('*')
       .eq('id', portfolioId)
-      .eq('user_id', user.id)
       .single()
 
     if (portfolioError || !portfolio) {
       return NextResponse.json({ error: 'Portfolio not found' }, { status: 404 })
     }
 
-    // Get transactions for this portfolio
+    // Get all transactions for this portfolio, sorted by date
     const { data: transactions, error: transactionsError } = await supabase
       .from('transactions')
       .select('*')
       .eq('portfolio_id', portfolioId)
-      .eq('user_id', user.id)
-      .order('date', { ascending: true })
+      .order('transaction_date', { ascending: true })
 
     if (transactionsError) {
       console.error('Error fetching transactions:', transactionsError)
       return NextResponse.json({ error: 'Failed to fetch transactions' }, { status: 500 })
     }
 
-    console.log(`Processing ${transactions?.length || 0} transactions for portfolio ${portfolioId}`)
-
-    // Calculate portfolio holdings from transactions
+    // Group transactions by asset and calculate holdings
     const holdings = new Map<string, {
       category: AssetCategory
       asset_type: string
@@ -122,16 +100,7 @@ export async function GET(
       transactions: any[]
     }>()
 
-    // Deduplicate transactions by ID to prevent processing duplicates
-    const uniqueTransactions = transactions ? 
-      transactions.filter((transaction, index, self) => 
-        index === self.findIndex(t => t.id === transaction.id)
-      ) : []
-
-    console.log(`Processing ${uniqueTransactions.length} unique transactions`)
-
-    // Process transactions to calculate holdings
-    for (const transaction of uniqueTransactions) {
+    for (const transaction of transactions || []) {
       const key = `${transaction.category}-${transaction.asset_type}`
       
       if (!holdings.has(key)) {
@@ -153,7 +122,6 @@ export async function GET(
       } else if (transaction.transaction_type === 'SELL') {
         // For sells, we need to reduce quantity and cost basis using FIFO
         const soldQuantity = transaction.quantity
-        const sellValue = soldQuantity * transaction.price
         
         if (holding.quantity >= soldQuantity) {
           // Calculate average cost before sale
@@ -189,7 +157,9 @@ export async function GET(
 
     // Calculate portfolio assets with current prices
     const portfolioAssets: PortfolioAsset[] = []
-    const categories = { ...DEFAULT_CATEGORIES }
+    
+    // FIXED: Create fresh categories for each request to prevent accumulation
+    const categories = createFreshCategories()
 
     const finalHoldingsEntries = Array.from(holdings.entries())
     for (const [key, holding] of finalHoldingsEntries) {

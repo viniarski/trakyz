@@ -1,4 +1,4 @@
-// components/Header/NotificationsButton.tsx
+// components/Header/components/NotificationsButton.tsx
 
 'use client'
 

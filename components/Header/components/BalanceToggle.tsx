@@ -1,4 +1,4 @@
-// components/Header/BalanceToggle.tsx
+// components/Header/components/BalanceToggle.tsx
 
 'use client'
 

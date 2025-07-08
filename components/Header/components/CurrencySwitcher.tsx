@@ -1,4 +1,4 @@
-// components/Header/CurrencySwitcher.tsx
+// components/Header/components/CurrencySwitcher.tsx
 
 'use client'
 
