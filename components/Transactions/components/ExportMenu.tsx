@@ -2,7 +2,7 @@
 
 'use client'
 
-import { Download, FileText, File, Database } from 'lucide-react'
+import { FileText, File, Database } from 'lucide-react'
 
 interface ExportMenuProps {
   onExport: (type: 'csv' | 'xlsx' | 'json' | 'pdf') => void

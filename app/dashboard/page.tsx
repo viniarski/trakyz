@@ -14,7 +14,7 @@ import {
 import { UserResponse } from "@supabase/supabase-js";
 import Market from "./components/market/Market";
 import RealEstate from "./components/real-estate/RealEstate";
-import Portfolios from "./components/portfolio";
+import { Portfolio as NewPortfolio } from "./components/portfolio/Portfolio"
 import Transactions from "./components/transactions/Transactions";
 import TabNavigation from "@/components/TabNavigation";
 import Analytics from "./components/analytics/Analytics";
@@ -186,43 +186,29 @@ export default async function Page(props: any) {
       break;
 
     case "debt":
-      const [
-        { data: loans, error: loansError },
-        { data: creditCards, error: creditCardsError },
-      ] = await Promise.all([
-        supabase
-          .from("loans")
-          .select("*")
-          .eq("user_id", user.id)
-          .order("created_at", { ascending: false }),
-        supabase
-          .from("credit_cards")
-          .select("*")
-          .eq("user_id", user.id)
-          .order("created_at", { ascending: false }),
-      ]);
+      const { data: loans, error: loanError } = await supabase
+        .from("loans")
+        .select("*")
+        .eq("user_id", user.id);
 
       debtData = {
         loans: loans || [],
-        creditCards: creditCards || [],
+        creditCards: [],
       };
-      if (loansError) console.error("Error fetching loans data:", loansError);
-      if (creditCardsError) console.error("Error fetching credit cards data:", creditCardsError);
+      if (loanError) console.error("Error fetching debt data:", loanError);
       break;
 
     case "real-estate":
       const { data: realEstate, error: realEstateError } = await supabase
-        .from("real_estate_properties")
+        .from("real_estate")
         .select("*")
-        .eq("user_id", user.id)
-        .order("created_at", { ascending: false });
+        .eq("user_id", user.id);
 
       realEstateData = realEstate || [];
       if (realEstateError) console.error("Error fetching real estate data:", realEstateError);
       break;
 
     case "portfolios":
-      // For portfolios, we need both portfolios and transactions
       const [
         { data: portfolios, error: portfolioError },
         { data: portfolioTransactions, error: portfolioTransactionError },
@@ -230,8 +216,7 @@ export default async function Page(props: any) {
         supabase
           .from("portfolios")
           .select("*")
-          .eq("user_id", user.id)
-          .order("created_at", { ascending: false }),
+          .eq("user_id", user.id),
         supabase
           .from("transactions")
           .select("*")
@@ -331,11 +316,9 @@ export default async function Page(props: any) {
           )}
 
           {currentTab === "portfolios" && (
-            <Portfolios 
-              userId={user.id} 
-              portfolios={portfoliosData}
-              transactions={transactionsData}
+            <NewPortfolio 
               marketData={marketData}
+              hideBalances={false}
             />
           )}
 

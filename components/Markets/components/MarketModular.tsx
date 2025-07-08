@@ -17,7 +17,7 @@ import {
   LegacyWatchlistItem  // ONLY CHANGE: Changed from WatchlistItem to LegacyWatchlistItem
 } from "@/types";
 import { useCurrencyConverter } from "@/hooks/useCurrencyConverter";
-import { AssetContextMenu } from "../ui/ContextMenu";
+import { AssetContextMenu } from "@/components/ui/ContextMenu";
 import { CategoryIcon } from "@/components/ui/CategoryIcon";
 import { 
   CryptoEnhancedView, 

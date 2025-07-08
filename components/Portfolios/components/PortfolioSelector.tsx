@@ -1,19 +1,17 @@
-// app/dashboard/components/portfolio/portfolio-selector.tsx
-
+// components/Portfolios/components/PortfolioSelector.tsx
 'use client'
 
 import { useState, useRef, useEffect } from 'react'
 import { ChevronDown, Plus, Edit, X, Check, Trash2 } from 'lucide-react'
-import { createClient } from '@/lib/supabase/client'
-import type { Portfolio } from '@/types'
+import { Portfolio } from '@/types'
 
 interface PortfolioSelectorProps {
-  portfolios: Portfolio[];
-  selectedPortfolio: Portfolio;
-  onSelectPortfolio: (portfolio: Portfolio) => void;
-  onCreatePortfolio: () => void;
-  onRenamePortfolio: (id: string, name: string) => Promise<void>;
-  onDeletePortfolio: (id: string) => Promise<void>;
+  portfolios: Portfolio[]
+  selectedPortfolio: Portfolio | null
+  onSelectPortfolio: (portfolio: Portfolio) => void
+  onCreatePortfolio: (name: string) => Promise<void>
+  onRenamePortfolio: (id: string, name: string) => Promise<void>
+  onDeletePortfolio: (id: string) => Promise<void>
 }
 
 export function PortfolioSelector({
@@ -25,37 +23,16 @@ export function PortfolioSelector({
   onDeletePortfolio
 }: PortfolioSelectorProps) {
   const [isOpen, setIsOpen] = useState(false)
+  const [isCreating, setIsCreating] = useState(false)
+  const [createError, setCreateError] = useState<string | null>(null)
+  const [newPortfolioName, setNewPortfolioName] = useState('')
   const [editingPortfolio, setEditingPortfolio] = useState<{id: string, name: string} | null>(null)
   const [isDeleting, setIsDeleting] = useState<string | null>(null)
 
   const menuRef = useRef<HTMLDivElement>(null)
+  const inputRef = useRef<HTMLInputElement>(null)
   const editInputRef = useRef<HTMLInputElement>(null)
-  
-  // Create Supabase client
-  const supabase = createClient()
-  // We'll check for Pro status using a state variable
-  const [isPro, setIsPro] = useState(false)
-  
-  // Check if user has Pro access
-  useEffect(() => {
-    async function checkProStatus() {
-      const { data } = await supabase.auth.getUser()
-      if (data?.user) {
-        // Fetch user subscription status
-        const { data: subscriptionData } = await supabase
-          .from('user_subscriptions')
-          .select('subscription_status')
-          .eq('id', data.user.id)
-          .single()
-        
-        // Consider Pro if subscription is active
-        setIsPro(subscriptionData?.subscription_status === 'active')
-      }
-    }
-    
-    checkProStatus()
-  }, [])
-  
+
   // Handle outside clicks
   useEffect(() => {
     function handleClickOutside(event: MouseEvent) {
@@ -67,15 +44,33 @@ export function PortfolioSelector({
     return () => document.removeEventListener('mousedown', handleClickOutside)
   }, [])
 
-  // Focus input when editing
+  // Focus input when creating or editing
   useEffect(() => {
+    if (isCreating && inputRef.current) {
+      inputRef.current.focus()
+    }
     if (editingPortfolio && editInputRef.current) {
       editInputRef.current.focus()
     }
-  }, [editingPortfolio])
+  }, [isCreating, editingPortfolio])
 
-  const handleStartRename = (portfolio: Portfolio, e: React.MouseEvent) => {
-    e.stopPropagation() // Prevent triggering portfolio selection
+  const handleCreatePortfolio = async () => {
+    if (!newPortfolioName.trim()) {
+      setCreateError('Portfolio name cannot be empty')
+      return
+    }
+
+    try {
+      await onCreatePortfolio(newPortfolioName.trim())
+      setNewPortfolioName('')
+      setIsCreating(false)
+      setCreateError(null)
+    } catch (error) {
+      setCreateError(error instanceof Error ? error.message : 'Failed to create portfolio')
+    }
+  }
+
+  const handleStartRename = (portfolio: Portfolio) => {
     setEditingPortfolio({ id: portfolio.id, name: portfolio.name })
   }
 
@@ -93,9 +88,7 @@ export function PortfolioSelector({
     }
   }
 
-  const handleDeletePortfolio = async (id: string, e: React.MouseEvent) => {
-    e.stopPropagation() // Prevent triggering portfolio selection
-    
+  const handleDeletePortfolio = async (id: string) => {
     try {
       setIsDeleting(id)
       await onDeletePortfolio(id)
@@ -104,6 +97,14 @@ export function PortfolioSelector({
       console.error('Error deleting portfolio:', error)
       setIsDeleting(null)
     }
+  }
+
+  if (!selectedPortfolio) {
+    return (
+      <div className="flex items-center justify-center gap-1 sm:gap-2 px-2 sm:px-4 py-1 sm:py-2 bg-[var(--accent-primary-10)] text-[var(--accent-primary)] rounded-lg text-sm">
+        <span>No Portfolio Selected</span>
+      </div>
+    )
   }
 
   return (
@@ -167,7 +168,10 @@ export function PortfolioSelector({
                     </button>
                     <div className="flex items-center">
                       <button
-                        onClick={(e) => handleStartRename(portfolio, e)}
+                        onClick={(e) => {
+                          e.stopPropagation()
+                          handleStartRename(portfolio)
+                        }}
                         className="p-1 text-[var(--text-secondary)] hover:text-[var(--accent-primary)]"
                       >
                         <Edit className="h-3 w-3" />
@@ -175,7 +179,10 @@ export function PortfolioSelector({
                       {/* Only allow deleting non-default portfolios */}
                       {!portfolio.is_default && (
                         <button
-                          onClick={(e) => handleDeletePortfolio(portfolio.id, e)}
+                          onClick={(e) => {
+                            e.stopPropagation()
+                            handleDeletePortfolio(portfolio.id)
+                          }}
                           disabled={isDeleting === portfolio.id}
                           className="p-1 text-[var(--text-secondary)] hover:text-red-500 disabled:opacity-50"
                         >
@@ -191,16 +198,51 @@ export function PortfolioSelector({
 
           {/* Create New Portfolio */}
           <div className="border-t border-[var(--bg-hover)] p-2">
-            <button
-              onClick={() => {
-                setIsOpen(false)
-                onCreatePortfolio()
-              }}
-              className="w-full flex items-center gap-2 p-2 rounded-md hover:bg-[var(--bg-hover)] text-[var(--text-secondary)]"
-            >
-              <Plus className="h-4 w-4" />
-              <span>New Portfolio</span>
-            </button>
+            {isCreating ? (
+              <div className="space-y-2">
+                <div className="flex items-center gap-2">
+                  <input
+                    ref={inputRef}
+                    type="text"
+                    value={newPortfolioName}
+                    onChange={(e) => {
+                      setNewPortfolioName(e.target.value)
+                      setCreateError(null)
+                    }}
+                    placeholder="Portfolio name"
+                    className="flex-1 p-2 rounded bg-[var(--bg-primary)] text-[var(--text-primary)] border border-[var(--bg-hover)]"
+                    onKeyDown={(e) => e.key === 'Enter' && handleCreatePortfolio()}
+                  />
+                  <button
+                    onClick={handleCreatePortfolio}
+                    className="p-2 text-[var(--accent-primary)] hover:bg-[var(--accent-primary-10)] rounded"
+                  >
+                    <Check className="h-4 w-4" />
+                  </button>
+                  <button
+                    onClick={() => {
+                      setIsCreating(false)
+                      setNewPortfolioName('')
+                      setCreateError(null)
+                    }}
+                    className="p-2 text-[var(--text-secondary)] hover:text-red-500"
+                  >
+                    <X className="h-4 w-4" />
+                  </button>
+                </div>
+                {createError && (
+                  <p className="text-xs text-red-500">{createError}</p>
+                )}
+              </div>
+            ) : (
+              <button
+                onClick={() => setIsCreating(true)}
+                className="w-full flex items-center gap-2 p-2 rounded-md hover:bg-[var(--bg-hover)] text-[var(--text-secondary)]"
+              >
+                <Plus className="h-4 w-4" />
+                <span>New Portfolio</span>
+              </button>
+            )}
           </div>
         </div>
       )}

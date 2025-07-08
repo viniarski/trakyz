@@ -1,11 +1,10 @@
-// app/dashboard/components/portfolio/portfolio-modals/buy-sell-modal.tsx
-
+// components/Portfolios/modals/BuySellModal.tsx
 'use client'
 
 import { useState } from 'react'
 import { X, AlertCircle } from 'lucide-react'
-import { CategoryIcon } from '@/components/ui/CategoryIcon'
-import { formatCurrency } from '@/lib/utils'
+import { CategoryIcon } from '../components/CategoryIcon'
+import { useCurrencyConverter } from '@/hooks/useCurrencyConverter'
 import { AssetCategory } from '@/types'
 
 interface BuySellModalProps {
@@ -18,7 +17,7 @@ interface BuySellModalProps {
   minDate?: string
   onClose: () => void
   onConfirm: (quantity: number, price: number, date: string, type: 'BUY' | 'SELL') => void
-  getAvailableQuantityAtDate: (date: string, category?: AssetCategory, assetType?: string) => number
+  getAvailableQuantityAtDate: (date: string) => number
 }
 
 export function BuySellModal({
@@ -37,6 +36,8 @@ export function BuySellModal({
   const [price, setPrice] = useState(current_price?.toString() || '0')
   const [date, setDate] = useState(new Date().toISOString().split('T')[0])
   const [error, setError] = useState('')
+
+  const { formatPreciseValue } = useCurrencyConverter()
 
   const validateInputs = (): boolean => {
     if (!quantity || !price || !date) {
@@ -57,7 +58,7 @@ export function BuySellModal({
     }
 
     if (action === 'SELL') {
-      const availableAtDate = getAvailableQuantityAtDate(date, category, assetType)
+      const availableAtDate = getAvailableQuantityAtDate(date)
       if (quantityNum > availableAtDate) {
         setError(`You only had ${availableAtDate} ${assetType} available on ${new Date(date).toLocaleDateString()}`)
         return false
@@ -101,7 +102,7 @@ export function BuySellModal({
 
   return (
     <div className="fixed inset-0 bg-black/80 flex items-center justify-center z-50">
-      <div className="bg-[var(--bg-secondary)] rounded-xl p-6 w-full max-w-md relative animate-scale-up">
+      <div className="bg-[var(--bg-secondary)] rounded-xl p-6 w-full max-w-md relative">
         {/* Header */}
         <div className="flex items-center justify-between mb-6">
           <div className="flex items-center gap-3">
@@ -126,7 +127,7 @@ export function BuySellModal({
             </label>
             <input
               type="text"
-              value={formatCurrency(current_price, 'USD')}
+              value={formatPreciseValue(current_price)}
               disabled
               className="w-full p-2 rounded-lg bg-[var(--bg-hover)] text-[var(--text-secondary)] border-0"
             />
@@ -168,7 +169,7 @@ export function BuySellModal({
               </label>
               <input
                 type="text"
-                value={formatCurrency(total, 'USD')}
+                value={formatPreciseValue(total)}
                 disabled
                 className="w-full p-2 rounded-lg bg-[var(--bg-hover)] text-[var(--text-secondary)] border-0"
               />

@@ -1,54 +1,80 @@
 // app/api/portfolios/route.ts
+import { createClient } from '@/lib/supabase/server'
+import { NextResponse } from 'next/server'
 
-import { createClient } from "@/lib/supabase/server";
-import { validateInsertFields } from "@/lib/utils/navigation";
-import { NextRequest, NextResponse } from "next/server";
-
-export async function POST(req: NextRequest) {
-  const supabase = await createClient();
-  const body = await req.json();
-  const userId = req.headers.get("x-user-id");
-
-  const allowedFields = [
-    "user_id",
-    "name",
-    "is_default",
-    "total_value",
-    "total_cost",
-    "total_profit_loss",
-    "total_profit_loss_percentage",
-    "asset_count",
-  ] as const;
-
-  const { id, ...inputData } = body;
-  const data = validateInsertFields(inputData, allowedFields);
-  data.user_id = userId;
-
-  // If ID exists, update the existing record
-  if (id) {
-    const { data: updated, error } = await supabase
-      .from("portfolios")
-      .update(data)
-      .eq("id", id)
-      .eq("user_id", userId) // Ensure users can only update their own cards
-      .select();
-
-    if (error) {
-      return NextResponse.json({ error: error.message }, { status: 400 });
+export async function GET() {
+  try {
+    const supabase = await createClient()
+    const { data: { user } } = await supabase.auth.getUser()
+    
+    if (!user) {
+      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
     }
 
-    return NextResponse.json(updated, { status: 200 });
+    const { data: portfolios, error } = await supabase
+      .from('portfolios')
+      .select('*')
+      .eq('user_id', user.id)
+      .order('created_at', { ascending: true })
+
+    if (error) {
+      console.error('Error fetching portfolios:', error)
+      return NextResponse.json({ error: 'Failed to fetch portfolios' }, { status: 500 })
+    }
+
+    return NextResponse.json(portfolios || [])
+  } catch (error) {
+    console.error('Error in portfolios API:', error)
+    return NextResponse.json({ error: 'Internal server error' }, { status: 500 })
   }
+}
 
-  // Otherwise insert a new record
-  const { data: inserted, error } = await supabase
-    .from("portfolios")
-    .insert(data)
-    .select();
+export async function POST(request: Request) {
+  try {
+    const supabase = await createClient()
+    const { data: { user } } = await supabase.auth.getUser()
+    
+    if (!user) {
+      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
+    }
 
-  if (error) {
-    return NextResponse.json({ error: error.message }, { status: 400 });
+    const { name } = await request.json()
+    
+    if (!name?.trim()) {
+      return NextResponse.json({ error: 'Portfolio name is required' }, { status: 400 })
+    }
+
+    // Check if this is the user's first portfolio
+    const { data: existingPortfolios } = await supabase
+      .from('portfolios')
+      .select('id')
+      .eq('user_id', user.id)
+
+    const isFirstPortfolio = !existingPortfolios || existingPortfolios.length === 0
+
+    const { data: portfolio, error } = await supabase
+      .from('portfolios')
+      .insert({
+        user_id: user.id,
+        name: name.trim(),
+        is_default: isFirstPortfolio, // First portfolio is default
+        total_value: 0,
+        total_cost: 0,
+        total_profit_loss: 0,
+        total_profit_loss_percentage: 0,
+        asset_count: 0
+      })
+      .select()
+      .single()
+
+    if (error) {
+      console.error('Error creating portfolio:', error)
+      return NextResponse.json({ error: 'Failed to create portfolio' }, { status: 500 })
+    }
+
+    return NextResponse.json(portfolio)
+  } catch (error) {
+    console.error('Error in portfolio creation:', error)
+    return NextResponse.json({ error: 'Internal server error' }, { status: 500 })
   }
-
-  return NextResponse.json(inserted, { status: 201 });
 }

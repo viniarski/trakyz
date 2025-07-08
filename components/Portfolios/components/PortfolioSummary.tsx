@@ -1,20 +1,21 @@
-// app/dashboard/components/portfolio/portfolio-summary.tsx
+// components/Portfolios/components/PortfolioSummary.tsx
+'use client'
 
 import { TrendingUp, TrendingDown } from 'lucide-react'
-import { formatCurrency } from '@/lib/utils'
-import { PortfolioSummary as PortfolioSummaryType, CurrencyCode } from '@/types'
+import { useCurrencyConverter } from '@/hooks/useCurrencyConverter'
+import { PortfolioSummary as PortfolioSummaryType } from '@/types'
 
 interface PortfolioSummaryProps {
   summary: PortfolioSummaryType
-  selectedCurrency: CurrencyCode
-  hideBalances: boolean
+  hideBalances?: boolean
 }
 
 export function PortfolioSummary({ 
   summary, 
-  selectedCurrency, 
-  hideBalances 
+  hideBalances = false
 }: PortfolioSummaryProps) {
+  const { formatPreciseValue } = useCurrencyConverter()
+
   return (
     <div className="flex flex-col md:grid md:grid-cols-3 gap-3 sm:gap-6 mb-4 sm:mb-8 md:mb-8">
       {/* Mobile layout - Combined Total Value and Profit/Loss in one row with space between */}
@@ -22,7 +23,7 @@ export function PortfolioSummary({
         <div>
           <p className="text-xs sm:text-sm text-[var(--text-secondary)]">Total Value</p>
           <p className="text-lg font-bold text-[var(--text-primary)]">
-            {hideBalances ? '******' : formatCurrency(summary.total_value, selectedCurrency)}
+            {hideBalances ? '******' : formatPreciseValue(summary.total_value)}
           </p>
         </div>
         
@@ -38,7 +39,7 @@ export function PortfolioSummary({
               <span className={`text-lg font-bold ${
                 summary.total_profit_loss >= 0 ? 'text-green-500' : 'text-red-500'
               }`}>
-                {formatCurrency(Math.abs(summary.total_profit_loss), selectedCurrency)}
+                {formatPreciseValue(Math.abs(summary.total_profit_loss))}
               </span>
             </div>
           ) : (
@@ -51,14 +52,14 @@ export function PortfolioSummary({
       <div className="hidden md:block">
         <p className="text-sm text-[var(--text-secondary)]">Total Value</p>
         <p className="text-2xl font-bold text-[var(--text-primary)]">
-          {hideBalances ? '******' : formatCurrency(summary.total_value, selectedCurrency)}
+          {hideBalances ? '******' : formatPreciseValue(summary.total_value)}
         </p>
       </div>
       
       <div className="hidden md:block">
         <p className="text-sm text-[var(--text-secondary)]">Total Cost</p>
         <p className="text-2xl font-bold text-[var(--text-primary)]">
-          {hideBalances ? '******' : formatCurrency(summary.total_cost, selectedCurrency)}
+          {hideBalances ? '******' : formatPreciseValue(summary.total_cost)}
         </p>
       </div>
       
@@ -74,7 +75,7 @@ export function PortfolioSummary({
             <p className={`text-2xl font-bold ${
               summary.total_profit_loss >= 0 ? 'text-green-500' : 'text-red-500'
             }`}>
-              {formatCurrency(Math.abs(summary.total_profit_loss), selectedCurrency)}
+              {formatPreciseValue(Math.abs(summary.total_profit_loss))}
               <span className="text-sm ml-1">
                 ({summary.total_profit_loss_percentage.toFixed(2)}%)
               </span>

@@ -15,7 +15,7 @@ import {
   Crypto,
   LegacyWatchlistItem  // FIXED: Changed from WatchlistItem to LegacyWatchlistItem
 } from '@/types'
-import { AssetContextMenu } from '../ui/ContextMenu'
+import { AssetContextMenu } from '@/components/ui/ContextMenu'
 
 interface WatchlistProps {
   watchlist: LegacyWatchlistItem[];  // FIXED: Changed from WatchlistItem[] to LegacyWatchlistItem[]

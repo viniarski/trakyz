@@ -1,10 +1,11 @@
-// app/dashboard/components/portfolio/category-item.tsx
+// components/Portfolios/components/CategoryItem.tsx
+'use client'
 
 import { ChevronUp, ChevronDown, TrendingUp, TrendingDown } from 'lucide-react'
-import { formatCurrency } from '@/lib/utils'
-import { CategoryIcon } from '@/components/ui/CategoryIcon'
-import { AssetList } from './asset-list'
-import { AssetCategory, CategorySummary, CurrencyCode, PortfolioAsset } from '@/types'
+import { useCurrencyConverter } from '@/hooks/useCurrencyConverter'
+import { CategoryIcon } from './CategoryIcon'
+import { AssetList } from './AssetList'
+import { AssetCategory, CategorySummary, PortfolioAsset } from '@/types'
 
 interface CategoryItemProps {
   category: AssetCategory
@@ -12,7 +13,6 @@ interface CategoryItemProps {
   isExpanded: boolean
   toggleCategory: () => void
   assets: PortfolioAsset[]
-  selectedCurrency: CurrencyCode
   hideBalances: boolean
   onBuy: (asset: PortfolioAsset) => void
   onSell: (asset: PortfolioAsset) => void
@@ -24,11 +24,12 @@ export function CategoryItem({
   isExpanded,
   toggleCategory,
   assets,
-  selectedCurrency,
   hideBalances,
   onBuy,
   onSell
 }: CategoryItemProps) {
+  const { formatPreciseValue } = useCurrencyConverter()
+
   return (
     <div className="bg-[var(--bg-hover)]/50 rounded-xl px-2 sm:px-4 md:px-4 py-2 md:py-1">
       {/* Category Header - Make entire header clickable */}
@@ -60,7 +61,7 @@ export function CategoryItem({
               <div className="flex flex-col items-start sm:items-end">
                 <p className="text-xs sm:text-sm sm:text-[var(--text-secondary)] md:text-[var(--text-secondary)]">Total Value</p>
                 <p className="text-xs sm:text-lg text-[var(--text-primary)] sm:font-medium md:text-[var(--text-primary)]">
-                  {formatCurrency(categoryData.total_value, selectedCurrency)}
+                  {formatPreciseValue(categoryData.total_value)}
                 </p>
               </div>
               <div className="flex flex-col items-end">
@@ -72,7 +73,7 @@ export function CategoryItem({
                     <TrendingDown className="h-3 sm:h-4 w-3 sm:w-4 text-red-500" />
                   )}
                   <span className={`text-xs sm:text-sm ${categoryData.profit_loss >= 0 ? 'text-green-500' : 'text-red-500'}`}>
-                    {formatCurrency(Math.abs(categoryData.profit_loss), selectedCurrency)} ({categoryData.profit_loss_percentage.toFixed(2)}%)
+                    {formatPreciseValue(Math.abs(categoryData.profit_loss))} ({categoryData.profit_loss_percentage.toFixed(2)}%)
                   </span>
                 </div>
               </div>
@@ -91,7 +92,6 @@ export function CategoryItem({
       {isExpanded && (
         <AssetList 
           assets={assets} 
-          selectedCurrency={selectedCurrency} 
           hideBalances={hideBalances}
           onBuy={onBuy}
           onSell={onSell}

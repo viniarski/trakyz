@@ -1,11 +1,11 @@
-// app/dashboard/components/portfolio/asset-list.tsx
+// components/Portfolios/components/AssetList.tsx
+'use client'
 
-import { AssetItem } from './asset-item'
-import { CurrencyCode, PortfolioAsset } from '@/types'
+import { AssetItem } from './AssetItem'
+import { PortfolioAsset } from '@/types'
 
 interface AssetListProps {
   assets: PortfolioAsset[]
-  selectedCurrency: CurrencyCode
   hideBalances: boolean
   onBuy: (asset: PortfolioAsset) => void
   onSell: (asset: PortfolioAsset) => void
@@ -13,7 +13,6 @@ interface AssetListProps {
 
 export function AssetList({
   assets,
-  selectedCurrency,
   hideBalances,
   onBuy,
   onSell
@@ -37,7 +36,6 @@ export function AssetList({
           <AssetItem
             key={`${asset.category}-${asset.asset_type}`}
             asset={asset}
-            selectedCurrency={selectedCurrency}
             hideBalances={hideBalances}
             onBuy={() => onBuy(asset)}
             onSell={() => onSell(asset)}

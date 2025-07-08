@@ -1,14 +1,13 @@
-// app/dashboard/components/portfolio/category-list.tsx
+// components/Portfolios/components/CategoryList.tsx
+'use client'
 
-import { CategoryItem } from './category-item'
-import { AssetCategory, CurrencyCode, PortfolioAsset } from '@/types'
-import { CategorySummary } from '@/types/index'
+import { CategoryItem } from './CategoryItem'
+import { AssetCategory, CategorySummary, PortfolioAsset } from '@/types'
 
 interface CategoryListProps {
   categories: Record<AssetCategory, CategorySummary>
   portfolioAssets: PortfolioAsset[]
   expandedCategories: AssetCategory[]
-  selectedCurrency: CurrencyCode
   hideBalances: boolean
   onBuy: (asset: PortfolioAsset) => void
   onSell: (asset: PortfolioAsset) => void
@@ -19,7 +18,6 @@ export function CategoryList({
   categories,
   portfolioAssets,
   expandedCategories,
-  selectedCurrency,
   hideBalances,
   onBuy,
   onSell,
@@ -37,7 +35,6 @@ export function CategoryList({
             isExpanded={expandedCategories.includes(category as AssetCategory)}
             toggleCategory={() => toggleCategory(category as AssetCategory)}
             assets={portfolioAssets.filter(asset => asset.category === category)}
-            selectedCurrency={selectedCurrency}
             hideBalances={hideBalances}
             onBuy={onBuy}
             onSell={onSell}
