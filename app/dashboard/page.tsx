@@ -188,16 +188,27 @@ export default async function Page(props: any) {
       break;
 
     case "debt":
-      const { data: loans, error: loanError } = await supabase
-        .from("loans")
-        .select("*")
-        .eq("user_id", user.id);
+      const [
+        { data: loans, error: loanError },
+        { data: creditCards, error: creditCardError }
+      ] = await Promise.all([
+        supabase
+          .from("loans")
+          .select("*")
+          .eq("user_id", user.id),
+        supabase
+          .from("credit_cards")
+          .select("*")
+          .eq("user_id", user.id)
+      ]);
 
       debtData = {
         loans: loans || [],
-        creditCards: [],
+        creditCards: creditCards || [],
       };
-      if (loanError) console.error("Error fetching debt data:", loanError);
+      
+      if (loanError) console.error("Error fetching loan data:", loanError);
+      if (creditCardError) console.error("Error fetching credit card data:", creditCardError);
       break;
 
     case "real-estate":
@@ -248,12 +259,17 @@ export default async function Page(props: any) {
     case "analytics":
       // Analytics needs multiple data sources
       const [
-        { data: analyticsDebt },
+        { data: analyticsLoans },
+        { data: analyticsCreditCards },
         { data: analyticsTransactions },
         { data: analyticsPortfolios },
       ] = await Promise.all([
         supabase
           .from("loans")
+          .select("*")
+          .eq("user_id", user.id),
+        supabase
+          .from("credit_cards")
           .select("*")
           .eq("user_id", user.id),
         supabase
@@ -269,8 +285,8 @@ export default async function Page(props: any) {
       ]);
 
       debtData = {
-        loans: analyticsDebt || [],
-        creditCards: [],
+        loans: analyticsLoans || [],
+        creditCards: analyticsCreditCards || [],
       };
       transactionsData = analyticsTransactions || [];
       portfoliosData = analyticsPortfolios || [];
@@ -294,48 +310,35 @@ export default async function Page(props: any) {
         </div>
       )}
 
-      {/* Financial Summary Component */}
+      {/* Financial Summary */}
       <FinancialSummary />
 
+      {/* Main Content with proper width constraint */}
       <div className="flex-1 w-[90%] mx-auto py-8">
+        {/* Tab Navigation */}
         <TabNavigation currentTab={currentTab} />
 
+        {/* Content Area */}
         <div className="bg-[var(--bg-secondary)] rounded-b-xl p-6 shadow-md">
-          {currentTab === "budget" && (
-            <Budget userId={user.id} budgets={budgetData} />
-          )}
-
-          {currentTab === "markets" && (
-            <Market userId={user.id} marketData={marketData} />
-          )}
-
-          {currentTab === "debt" && (
-            <Debt userId={user.id} debtData={debtData} />
-          )}
-
-          {currentTab === "real-estate" && (
-            <RealEstate userId={user.id} realEstateData={realEstateData} />
-          )}
-
+          {currentTab === "budget" && <Budget budgets={budgetData} userId={user.id} />}
+          {currentTab === "markets" && <Market marketData={marketData} userId={user.id} />}
+          {currentTab === "debt" && <Debt debtData={debtData} userId={user.id} />}
+          {currentTab === "real-estate" && <RealEstate realEstateData={realEstateData} userId={user.id} />}
           {currentTab === "portfolios" && (
-            <NewPortfolio 
+            <NewPortfolio
               portfolios={portfoliosData}
               transactions={transactionsData}
               marketData={marketData}
               userId={user.id}
             />
           )}
-
-          {currentTab === "transactions" && (
-            <Transactions userId={user.id} transactions={transactionsData} />
-          )}
-
+          {currentTab === "transactions" && <Transactions transactions={transactionsData} userId={user.id} />}
           {currentTab === "analytics" && (
             <Analytics
-              userId={user.id}
-              debtData={debtData}
-              transactions={transactionsData}
               portfolios={portfoliosData}
+              transactions={transactionsData}
+              debtData={debtData}
+              userId={user.id}
             />
           )}
         </div>

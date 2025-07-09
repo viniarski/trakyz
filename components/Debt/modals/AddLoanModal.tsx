@@ -39,15 +39,30 @@ export function AddLoanModal({ onClose, onSubmit }: AddLoanModalProps) {
     setLoading(true)
 
     try {
+      // Calculate maturity date if not provided
+      const startDate = new Date(formData.start_date)
+      const maturityDate = formData.maturity_date || 
+        new Date(startDate.getFullYear(), startDate.getMonth() + formData.term_months, startDate.getDate())
+          .toISOString().split('T')[0]
+
       // Calculate derived fields
       const calculatedData = {
         ...formData,
+        maturity_date: maturityDate,
         months_remaining: formData.term_months - formData.months_paid,
         // Set next payment date based on payment day if not provided
         next_payment_date: formData.next_payment_date || getNextPaymentDate(formData.payment_day)
       }
 
-      await onSubmit(calculatedData)
+      // Remove empty string dates and replace with proper values
+      const cleanedData = {
+        ...calculatedData,
+        start_date: calculatedData.start_date || new Date().toISOString().split('T')[0],
+        maturity_date: maturityDate,
+        next_payment_date: calculatedData.next_payment_date || getNextPaymentDate(formData.payment_day)
+      }
+
+      await onSubmit(cleanedData)
     } catch (error) {
       console.error('Error adding loan:', error)
     } finally {

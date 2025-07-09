@@ -38,9 +38,7 @@ export function DebtSummary({
       {/* Total Debt */}
       <div className="bg-[var(--bg-hover)]/50 rounded-xl p-4">
         <div className="flex items-center gap-3">
-          <div className="p-2 bg-red-500/10 rounded-lg">
-            <DollarSign className="h-5 w-5 text-red-500" />
-          </div>
+          <DollarSign className="h-5 w-5 text-[var(--text-secondary)]" />
           <div className="flex-1 min-w-0">
             <p className="text-xs text-[var(--text-secondary)] uppercase tracking-wide">Total Debt</p>
             <p className="text-lg font-bold text-[var(--text-primary)] truncate">
@@ -53,9 +51,7 @@ export function DebtSummary({
       {/* Monthly Payments */}
       <div className="bg-[var(--bg-hover)]/50 rounded-xl p-4">
         <div className="flex items-center gap-3">
-          <div className="p-2 bg-blue-500/10 rounded-lg">
-            <TrendingUp className="h-5 w-5 text-blue-500" />
-          </div>
+          <TrendingUp className="h-5 w-5 text-[var(--text-secondary)]" />
           <div className="flex-1 min-w-0">
             <p className="text-xs text-[var(--text-secondary)] uppercase tracking-wide">Monthly Payments</p>
             <p className="text-lg font-bold text-[var(--text-primary)] truncate">
@@ -68,9 +64,7 @@ export function DebtSummary({
       {/* Credit Utilization */}
       <div className="bg-[var(--bg-hover)]/50 rounded-xl p-4">
         <div className="flex items-center gap-3">
-          <div className="p-2 bg-purple-500/10 rounded-lg">
-            <CreditCard className="h-5 w-5 text-purple-500" />
-          </div>
+          <CreditCard className="h-5 w-5 text-[var(--text-secondary)]" />
           <div className="flex-1 min-w-0">
             <p className="text-xs text-[var(--text-secondary)] uppercase tracking-wide">Credit Utilization</p>
             <div className="flex items-center gap-2">
@@ -88,9 +82,7 @@ export function DebtSummary({
       {/* Total Accounts */}
       <div className="bg-[var(--bg-hover)]/50 rounded-xl p-4">
         <div className="flex items-center gap-3">
-          <div className="p-2 bg-green-500/10 rounded-lg">
-            <Users className="h-5 w-5 text-green-500" />
-          </div>
+          <Users className="h-5 w-5 text-[var(--text-secondary)]" />
           <div className="flex-1 min-w-0">
             <p className="text-xs text-[var(--text-secondary)] uppercase tracking-wide">Total Accounts</p>
             <p className="text-lg font-bold text-[var(--text-primary)]">{totalAccounts}</p>

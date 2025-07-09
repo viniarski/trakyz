@@ -60,7 +60,7 @@ export function LoanItem({ loan, onEdit, onDelete }: LoanItemProps) {
         </div>
         <div className="w-full bg-[var(--bg-hover)] rounded-full h-2">
           <div 
-            className="bg-gradient-to-r from-green-500 to-blue-500 h-2 rounded-full transition-all duration-300"
+            className="bg-[var(--accent-primary)] h-2 rounded-full transition-all duration-300"
             style={{ width: `${Math.min(progress, 100)}%` }}
           />
         </div>
@@ -69,7 +69,7 @@ export function LoanItem({ loan, onEdit, onDelete }: LoanItemProps) {
       {/* Loan Details Grid */}
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
         <div className="flex items-center gap-2">
-          <DollarSign className="h-4 w-4 text-red-500" />
+          <DollarSign className="h-4 w-4 text-[var(--text-secondary)]" />
           <div>
             <p className="text-xs text-[var(--text-secondary)]">Current Balance</p>
             <p className="text-sm font-semibold text-[var(--text-primary)]">
@@ -79,7 +79,7 @@ export function LoanItem({ loan, onEdit, onDelete }: LoanItemProps) {
         </div>
 
         <div className="flex items-center gap-2">
-          <DollarSign className="h-4 w-4 text-blue-500" />
+          <DollarSign className="h-4 w-4 text-[var(--text-secondary)]" />
           <div>
             <p className="text-xs text-[var(--text-secondary)]">Monthly Payment</p>
             <p className="text-sm font-semibold text-[var(--text-primary)]">
@@ -89,7 +89,7 @@ export function LoanItem({ loan, onEdit, onDelete }: LoanItemProps) {
         </div>
 
         <div className="flex items-center gap-2">
-          <Percent className="h-4 w-4 text-yellow-500" />
+          <Percent className="h-4 w-4 text-[var(--text-secondary)]" />
           <div>
             <p className="text-xs text-[var(--text-secondary)]">Interest Rate</p>
             <p className="text-sm font-semibold text-[var(--text-primary)]">
@@ -99,7 +99,7 @@ export function LoanItem({ loan, onEdit, onDelete }: LoanItemProps) {
         </div>
 
         <div className="flex items-center gap-2">
-          <Clock className="h-4 w-4 text-purple-500" />
+          <Clock className="h-4 w-4 text-[var(--text-secondary)]" />
           <div>
             <p className="text-xs text-[var(--text-secondary)]">Time Remaining</p>
             <p className="text-sm font-semibold text-[var(--text-primary)]">
@@ -114,7 +114,7 @@ export function LoanItem({ loan, onEdit, onDelete }: LoanItemProps) {
         <div className="flex items-center gap-4 text-xs text-[var(--text-secondary)]">
           <span>Next Payment: {formatDate(loan.next_payment_date)}</span>
           {loan.auto_pay && (
-            <span className="px-2 py-1 bg-green-500/10 text-green-500 rounded">Auto Pay</span>
+            <span className="px-2 py-1 bg-[var(--accent-primary)]/10 text-[var(--accent-primary)] rounded">Auto Pay</span>
           )}
         </div>
         <div className="text-xs text-[var(--text-secondary)]">

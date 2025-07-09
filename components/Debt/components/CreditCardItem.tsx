@@ -79,7 +79,7 @@ export function CreditCardItem({ creditCard, onEdit, onDelete }: CreditCardItemP
       {/* Credit Card Details Grid */}
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
         <div className="flex items-center gap-2">
-          <DollarSign className="h-4 w-4 text-red-500" />
+          <DollarSign className="h-4 w-4 text-[var(--text-secondary)]" />
           <div>
             <p className="text-xs text-[var(--text-secondary)]">Current Balance</p>
             <p className="text-sm font-semibold text-[var(--text-primary)]">
@@ -89,7 +89,7 @@ export function CreditCardItem({ creditCard, onEdit, onDelete }: CreditCardItemP
         </div>
 
         <div className="flex items-center gap-2">
-          <CreditCardIcon className="h-4 w-4 text-blue-500" />
+          <CreditCardIcon className="h-4 w-4 text-[var(--text-secondary)]" />
           <div>
             <p className="text-xs text-[var(--text-secondary)]">Credit Limit</p>
             <p className="text-sm font-semibold text-[var(--text-primary)]">
@@ -99,7 +99,7 @@ export function CreditCardItem({ creditCard, onEdit, onDelete }: CreditCardItemP
         </div>
 
         <div className="flex items-center gap-2">
-          <DollarSign className="h-4 w-4 text-green-500" />
+          <DollarSign className="h-4 w-4 text-[var(--text-secondary)]" />
           <div>
             <p className="text-xs text-[var(--text-secondary)]">Available Credit</p>
             <p className="text-sm font-semibold text-[var(--text-primary)]">
@@ -109,7 +109,7 @@ export function CreditCardItem({ creditCard, onEdit, onDelete }: CreditCardItemP
         </div>
 
         <div className="flex items-center gap-2">
-          <Percent className="h-4 w-4 text-yellow-500" />
+          <Percent className="h-4 w-4 text-[var(--text-secondary)]" />
           <div>
             <p className="text-xs text-[var(--text-secondary)]">Interest Rate</p>
             <p className="text-sm font-semibold text-[var(--text-primary)]">
@@ -125,7 +125,7 @@ export function CreditCardItem({ creditCard, onEdit, onDelete }: CreditCardItemP
           <span>Due Date: {formatDate(creditCard.due_date)}</span>
           <span>Min Payment: {formatPreciseValue(creditCard.min_payment)}</span>
           {creditCard.auto_pay && (
-            <span className="px-2 py-1 bg-green-500/10 text-green-500 rounded">Auto Pay</span>
+            <span className="px-2 py-1 bg-[var(--accent-primary)]/10 text-[var(--accent-primary)] rounded">Auto Pay</span>
           )}
         </div>
         {creditCard.annual_fee > 0 && (
