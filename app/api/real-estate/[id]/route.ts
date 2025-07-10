@@ -3,12 +3,17 @@
 import { createClient } from '@/lib/supabase/server'
 import { NextResponse } from 'next/server'
 
+interface RouteParams {
+  params: Promise<{ id: string }>
+}
+
 export async function GET(
   request: Request,
-  { params }: { params: { id: string } }
+  context: RouteParams
 ) {
   try {
     const supabase = await createClient()
+    const { id } = await context.params
     
     // Get the authenticated user
     const { data: { user }, error: authError } = await supabase.auth.getUser()
@@ -21,7 +26,7 @@ export async function GET(
     const { data: property, error } = await supabase
       .from('real_estate')
       .select('*')
-      .eq('id', params.id)
+      .eq('id', id)
       .eq('user_id', user.id)
       .single()
 
@@ -39,10 +44,11 @@ export async function GET(
 
 export async function PUT(
   request: Request,
-  { params }: { params: { id: string } }
+  context: RouteParams
 ) {
   try {
     const supabase = await createClient()
+    const { id } = await context.params
     
     // Get the authenticated user
     const { data: { user }, error: authError } = await supabase.auth.getUser()
@@ -80,7 +86,7 @@ export async function PUT(
     const { data: property, error } = await supabase
       .from('real_estate')
       .update(propertyData)
-      .eq('id', params.id)
+      .eq('id', id)
       .eq('user_id', user.id)
       .select()
       .single()
@@ -99,10 +105,11 @@ export async function PUT(
 
 export async function DELETE(
   request: Request,
-  { params }: { params: { id: string } }
+  context: RouteParams
 ) {
   try {
     const supabase = await createClient()
+    const { id } = await context.params
     
     // Get the authenticated user
     const { data: { user }, error: authError } = await supabase.auth.getUser()
@@ -115,7 +122,7 @@ export async function DELETE(
     const { error } = await supabase
       .from('real_estate')
       .delete()
-      .eq('id', params.id)
+      .eq('id', id)
       .eq('user_id', user.id)
 
     if (error) {
