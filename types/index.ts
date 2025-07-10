@@ -8,6 +8,7 @@ export * from './debt';
 export * from './components';
 export * from './budget';
 export * from './user';
+export * from './realestate'
 
 // Common types used across multiple modules
 export type CurrencyCode = 'USD' | 'EUR' | 'GBP' | 'CHF' | 'BTC' | 'ETH' | 'GOLD';

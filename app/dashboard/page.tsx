@@ -1,4 +1,5 @@
 // app/dashboard/page.tsx
+
 import { createClient } from "@/lib/supabase/server";
 import { redirect } from "next/navigation";
 import Header from "@/components/Header/index";
@@ -212,13 +213,24 @@ export default async function Page(props: any) {
       break;
 
     case "real-estate":
-      const { data: realEstate, error: realEstateError } = await supabase
-        .from("real_estate")
-        .select("*")
-        .eq("user_id", user.id);
+      const [
+        { data: realEstate, error: realEstateError },
+        { data: realEstatePortfolios, error: realEstatePortfolioError }
+      ] = await Promise.all([
+        supabase
+          .from("real_estate")
+          .select("*")
+          .eq("user_id", user.id),
+        supabase
+          .from("portfolios")
+          .select("*")
+          .eq("user_id", user.id)
+      ]);
 
       realEstateData = realEstate || [];
+      portfoliosData = realEstatePortfolios || [];
       if (realEstateError) console.error("Error fetching real estate data:", realEstateError);
+      if (realEstatePortfolioError) console.error("Error fetching portfolio data:", realEstatePortfolioError);
       break;
 
     case "portfolios":
@@ -323,7 +335,7 @@ export default async function Page(props: any) {
           {currentTab === "budget" && <Budget budgets={budgetData} userId={user.id} />}
           {currentTab === "markets" && <Market marketData={marketData} userId={user.id} />}
           {currentTab === "debt" && <Debt debtData={debtData} userId={user.id} />}
-          {currentTab === "real-estate" && <RealEstate realEstateData={realEstateData} userId={user.id} />}
+          {currentTab === "real-estate" && <RealEstate portfolios={portfoliosData} userId={user.id} />}
           {currentTab === "portfolios" && (
             <NewPortfolio
               portfolios={portfoliosData}

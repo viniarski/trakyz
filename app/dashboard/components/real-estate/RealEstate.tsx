@@ -10,7 +10,8 @@ import {
   EditPropertyModal,
   DeletePropertyModal
 } from '@/components/RealEstate'
-import type { RealEstateProperty, Portfolio } from '@/types'
+import type { RealEstateProperty } from '@/types/realestate'
+import type { Portfolio } from '@/types'
 
 interface RealEstateProps {
   portfolios: Portfolio[]
@@ -18,7 +19,7 @@ interface RealEstateProps {
 }
 
 export default function RealEstate({
-  portfolios,
+  portfolios = [], // Default to empty array
   userId
 }: RealEstateProps) {
   const [properties, setProperties] = useState<RealEstateProperty[]>([])
@@ -30,9 +31,11 @@ export default function RealEstate({
 
   // Get default portfolio
   useEffect(() => {
-    const defaultPortfolio = portfolios.find(p => p.is_default) || portfolios[0]
-    if (defaultPortfolio) {
-      setSelectedPortfolio(defaultPortfolio.id)
+    if (portfolios && portfolios.length > 0) {
+      const defaultPortfolio = portfolios.find(p => p.is_default) || portfolios[0]
+      if (defaultPortfolio) {
+        setSelectedPortfolio(defaultPortfolio.id)
+      }
     }
   }, [portfolios])
 
@@ -65,7 +68,7 @@ export default function RealEstate({
         },
         body: JSON.stringify({
           ...propertyData,
-          portfolio_id: selectedPortfolio,
+          portfolio_id: propertyData.portfolio_id || selectedPortfolio,
         }),
       })
 
@@ -103,16 +106,14 @@ export default function RealEstate({
     }
   }
 
-  const handleDeleteProperty = async () => {
-    if (!deletingProperty) return
-
+  const handleDeleteProperty = async (propertyId: string) => {
     try {
-      const response = await fetch(`/api/real-estate/${deletingProperty.id}`, {
+      const response = await fetch(`/api/real-estate/${propertyId}`, {
         method: 'DELETE',
       })
 
       if (response.ok) {
-        setProperties(prev => prev.filter(p => p.id !== deletingProperty.id))
+        setProperties(prev => prev.filter(p => p.id !== propertyId))
         setDeletingProperty(null)
       }
     } catch (error) {
@@ -120,36 +121,48 @@ export default function RealEstate({
     }
   }
 
+  const handleEditClick = (property: RealEstateProperty) => {
+    setEditingProperty(property)
+  }
+
+  const handleDeleteClick = (id: string, name: string) => {
+    setDeletingProperty({ id, name })
+  }
+
+  const handlePortfolioChange = (portfolioId: string) => {
+    setSelectedPortfolio(portfolioId)
+  }
+
   return (
-    <div className="space-y-0">
+    <div className="space-y-6">
       <RealEstateHeader
         onAddProperty={() => setShowAddModal(true)}
         portfolios={portfolios}
         selectedPortfolio={selectedPortfolio}
-        setSelectedPortfolio={setSelectedPortfolio}
-        totalProperties={properties.length}
-        totalValue={properties.reduce((sum, p) => sum + p.current_value, 0)}
+        onPortfolioChange={handlePortfolioChange}
+        properties={properties}
       />
 
-      <div className="p-4">
-        <RealEstateList
-          properties={properties}
-          isLoading={isLoading}
-          onEditProperty={setEditingProperty}
-          onDeleteProperty={(id, name) => setDeletingProperty({ id, name })}
+      <RealEstateList
+        properties={properties}
+        isLoading={isLoading}
+        onEditProperty={handleEditClick}
+        onDeleteProperty={handleDeleteClick}
+      />
+
+      {/* Add Property Modal */}
+      {portfolios.length > 0 && (
+        <AddPropertyModal
+          isOpen={showAddModal}
+          onClose={() => setShowAddModal(false)}
+          onSubmit={handleAddProperty}
+          portfolios={portfolios}
+          selectedPortfolio={selectedPortfolio}
         />
-      </div>
+      )}
 
-      {/* Modals */}
-      <AddPropertyModal
-        isOpen={showAddModal}
-        onClose={() => setShowAddModal(false)}
-        onSubmit={handleAddProperty}
-        portfolios={portfolios}
-        selectedPortfolio={selectedPortfolio}
-      />
-
-      {editingProperty && (
+      {/* Edit Property Modal */}
+      {portfolios.length > 0 && (
         <EditPropertyModal
           isOpen={!!editingProperty}
           onClose={() => setEditingProperty(null)}
@@ -159,14 +172,17 @@ export default function RealEstate({
         />
       )}
 
-      {deletingProperty && (
-        <DeletePropertyModal
-          isOpen={!!deletingProperty}
-          onClose={() => setDeletingProperty(null)}
-          onConfirm={handleDeleteProperty}
-          propertyName={deletingProperty.name}
-        />
-      )}
+      {/* Delete Property Modal */}
+      <DeletePropertyModal
+        isOpen={!!deletingProperty}
+        onClose={() => setDeletingProperty(null)}
+        onConfirm={() => {
+          if (deletingProperty) {
+            handleDeleteProperty(deletingProperty.id)
+          }
+        }}
+        propertyName={deletingProperty?.name || ''}
+      />
     </div>
   )
 }
