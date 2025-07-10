@@ -96,10 +96,10 @@ export function AnalyticsHeader({
     icon: React.ComponentType<{ className?: string }>
     color?: string
   }) => (
-    <div className="bg-[var(--bg-secondary)] rounded-xl p-4 border border-[var(--border-primary)]">
+    <div className="bg-[var(--bg-secondary)] rounded-lg p-4">
       <div className="flex items-center justify-between mb-3">
         <h3 className="text-sm font-medium text-[var(--text-secondary)]">{title}</h3>
-        <Icon className={`h-4 w-4 text-${color}-500`} />
+        <Icon className="h-4 w-4 text-[var(--accent-primary)]" />
       </div>
       <p className="text-xl font-bold text-[var(--text-primary)]">{value}</p>
       {change !== undefined && (
@@ -125,10 +125,10 @@ export function AnalyticsHeader({
   }) => (
     <button
       onClick={() => onClick(id)}
-      className={`px-4 py-2 font-medium rounded-lg transition-colors ${
+      className={`px-3 py-1.5 text-sm font-medium rounded-md transition-colors ${
         active
-          ? 'bg-[var(--accent-primary)] text-white'
-          : 'bg-[var(--bg-hover)] text-[var(--text-secondary)] hover:bg-[var(--bg-secondary)]'
+          ? 'bg-[var(--accent-primary-10)] text-[var(--accent-primary)]'
+          : 'text-[var(--text-secondary)] hover:bg-[var(--bg-hover)] hover:text-[var(--text-primary)]'
       }`}
     >
       {label}
@@ -136,18 +136,24 @@ export function AnalyticsHeader({
   )
 
   return (
-    <div className="space-y-6">
-      {/* Header */}
-      <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
-        <div>
-          <h1 className="text-2xl font-bold text-[var(--text-primary)]">Portfolio Analytics</h1>
-          <p className="text-[var(--text-secondary)] mt-1">Comprehensive insights into your investment performance</p>
+    <div>
+      {/* Header with just period selector - NO title */}
+      <div className="p-4 flex justify-between items-center">
+        {/* Navigation tabs moved to left side */}
+        <div className="flex flex-wrap gap-2">
+          <TabButton id="overview" label="Overview" active={activeTab === 'overview'} onClick={setActiveTab} />
+          <TabButton id="performance" label="Performance" active={activeTab === 'performance'} onClick={setActiveTab} />
+          <TabButton id="allocation" label="Allocation" active={activeTab === 'allocation'} onClick={setActiveTab} />
+          <TabButton id="assets" label="Assets" active={activeTab === 'assets'} onClick={setActiveTab} />
+          <TabButton id="insights" label="Insights" active={activeTab === 'insights'} onClick={setActiveTab} />
         </div>
+        
+        {/* Period selector on right */}
         <div className="flex gap-2">
           <select 
             value={selectedPeriod} 
             onChange={(e) => setSelectedPeriod(e.target.value as any)}
-            className="px-3 py-2 bg-[var(--bg-secondary)] border border-[var(--border-primary)] rounded-lg focus:outline-none focus:ring-2 focus:ring-[var(--accent-primary)] text-[var(--text-primary)]"
+            className="text-sm px-3 py-1.5 rounded-md transition-colors font-medium bg-transparent text-[var(--text-secondary)] hover:bg-[var(--bg-hover)] hover:text-[var(--text-primary)] focus:outline-none"
           >
             <option value="1W">1 Week</option>
             <option value="1M">1 Month</option>
@@ -159,43 +165,35 @@ export function AnalyticsHeader({
         </div>
       </div>
 
-      {/* Key Metrics */}
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
-        <MetricCard
-          title="Total Value"
-          value={formatCurrency(portfolioMetrics.totalValue)}
-          change={portfolioMetrics.profitPercentage}
-          icon={DollarSign}
-          color="blue"
-        />
-        <MetricCard
-          title="Total Return"
-          value={formatCurrency(portfolioMetrics.totalProfit)}
-          change={portfolioMetrics.profitPercentage}
-          icon={TrendingUp}
-          color="green"
-        />
-        <MetricCard
-          title="Total Assets"
-          value={portfolioMetrics.assetCount.toString()}
-          icon={PieChart}
-          color="purple"
-        />
-        <MetricCard
-          title="Categories"
-          value={`${portfolioMetrics.categoryCount}/8`}
-          icon={Target}
-          color="orange"
-        />
-      </div>
+      {/* Border line - same as other components */}
+      <div className="border-t border-gray-800/50"></div>
 
-      {/* Tab Navigation */}
-      <div className="flex flex-wrap gap-2 bg-[var(--bg-secondary)] p-2 rounded-lg border border-[var(--border-primary)]">
-        <TabButton id="overview" label="Overview" active={activeTab === 'overview'} onClick={setActiveTab} />
-        <TabButton id="performance" label="Performance" active={activeTab === 'performance'} onClick={setActiveTab} />
-        <TabButton id="allocation" label="Allocation" active={activeTab === 'allocation'} onClick={setActiveTab} />
-        <TabButton id="assets" label="Assets" active={activeTab === 'assets'} onClick={setActiveTab} />
-        <TabButton id="insights" label="Insights" active={activeTab === 'insights'} onClick={setActiveTab} />
+      {/* Key Metrics only */}
+      <div className="p-4">
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+          <MetricCard
+            title="Total Value"
+            value={formatCurrency(portfolioMetrics.totalValue)}
+            change={portfolioMetrics.profitPercentage}
+            icon={DollarSign}
+          />
+          <MetricCard
+            title="Total Return"
+            value={formatCurrency(portfolioMetrics.totalProfit)}
+            change={portfolioMetrics.profitPercentage}
+            icon={TrendingUp}
+          />
+          <MetricCard
+            title="Total Assets"
+            value={portfolioMetrics.assetCount.toString()}
+            icon={PieChart}
+          />
+          <MetricCard
+            title="Categories"
+            value={`${portfolioMetrics.categoryCount}/8`}
+            icon={Target}
+          />
+        </div>
       </div>
     </div>
   )

@@ -130,7 +130,7 @@ export function AnalyticsOverview({
   return (
     <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
       {/* Portfolio Allocation */}
-      <div className="bg-[var(--bg-secondary)] rounded-xl p-6 border border-[var(--border-primary)]">
+      <div className="bg-[var(--bg-secondary)] rounded-lg p-6">
         <h3 className="text-lg font-semibold mb-4 text-[var(--text-primary)]">Portfolio Allocation</h3>
         <div className="h-80">
           <ResponsiveContainer width="100%" height="100%">
@@ -179,13 +179,13 @@ export function AnalyticsOverview({
       </div>
 
       {/* Top Assets */}
-      <div className="bg-[var(--bg-secondary)] rounded-xl p-6 border border-[var(--border-primary)]">
+      <div className="bg-[var(--bg-secondary)] rounded-lg p-6">
         <h3 className="text-lg font-semibold mb-4 text-[var(--text-primary)]">Top Assets</h3>
         <div className="space-y-3 max-h-96 overflow-y-auto">
           {assetPerformance.slice(0, 10).map((asset, index) => (
-            <div key={asset.asset} className="flex items-center justify-between p-3 rounded-lg bg-[var(--bg-hover)]/50">
+            <div key={asset.asset} className="flex items-center justify-between p-3 rounded-lg bg-[var(--bg-hover)]/30">
               <div className="flex items-center gap-3">
-                <div className="w-8 h-8 bg-[var(--accent-primary)]/10 rounded-full flex items-center justify-center">
+                <div className="w-8 h-8 bg-[var(--accent-primary-10)] rounded-full flex items-center justify-center">
                   <span className="text-xs font-medium text-[var(--accent-primary)]">
                     {index + 1}
                   </span>
@@ -217,28 +217,28 @@ export function AnalyticsOverview({
 
       {/* Quick Stats */}
       <div className="lg:col-span-2">
-        <div className="bg-[var(--bg-secondary)] rounded-xl p-6 border border-[var(--border-primary)]">
+        <div className="bg-[var(--bg-secondary)] rounded-lg p-6">
           <h3 className="text-lg font-semibold mb-4 text-[var(--text-primary)]">Quick Stats</h3>
           <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-            <div className="text-center p-4 bg-[var(--bg-hover)]/50 rounded-lg">
+            <div className="text-center p-4 bg-[var(--bg-hover)]/30 rounded-lg">
               <div className="text-2xl font-bold text-[var(--accent-primary)]">
                 {allocationData.length}
               </div>
               <div className="text-sm text-[var(--text-secondary)]">Categories</div>
             </div>
-            <div className="text-center p-4 bg-[var(--bg-hover)]/50 rounded-lg">
+            <div className="text-center p-4 bg-[var(--bg-hover)]/30 rounded-lg">
               <div className="text-2xl font-bold text-[var(--accent-primary)]">
                 {assetPerformance.length}
               </div>
               <div className="text-sm text-[var(--text-secondary)]">Assets</div>
             </div>
-            <div className="text-center p-4 bg-[var(--bg-hover)]/50 rounded-lg">
+            <div className="text-center p-4 bg-[var(--bg-hover)]/30 rounded-lg">
               <div className="text-2xl font-bold text-green-500">
                 {assetPerformance.filter(a => a.profitPercentage > 0).length}
               </div>
               <div className="text-sm text-[var(--text-secondary)]">Profitable</div>
             </div>
-            <div className="text-center p-4 bg-[var(--bg-hover)]/50 rounded-lg">
+            <div className="text-center p-4 bg-[var(--bg-hover)]/30 rounded-lg">
               <div className="text-2xl font-bold text-red-500">
                 {assetPerformance.filter(a => a.profitPercentage < 0).length}
               </div>

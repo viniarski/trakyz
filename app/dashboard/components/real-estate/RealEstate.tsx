@@ -1,96 +1,172 @@
 // app/dashboard/components/real-estate/RealEstate.tsx
 
-"use client";
+'use client'
 
-import GenericForm from "@/components/GenericForm";
-import { realEstateFields } from "@/lib/db-client-req/GenericFormData";
-import { RealEstateProperty } from "@/types";
-import React from "react";
+import { useState, useEffect } from 'react'
+import { 
+  RealEstateHeader,
+  RealEstateList,
+  AddPropertyModal,
+  EditPropertyModal,
+  DeletePropertyModal
+} from '@/components/RealEstate'
+import type { RealEstateProperty, Portfolio } from '@/types'
 
 interface RealEstateProps {
-  realEstateData: RealEstateProperty[];
-  userId: string;
+  portfolios: Portfolio[]
+  userId: string
 }
 
-const RealEstate: React.FC<RealEstateProps> = ({ realEstateData, userId }) => {
-  // logging the real estate output for easier mapping later
-  console.log(realEstateData);
+export default function RealEstate({
+  portfolios,
+  userId
+}: RealEstateProps) {
+  const [properties, setProperties] = useState<RealEstateProperty[]>([])
+  const [isLoading, setIsLoading] = useState(true)
+  const [showAddModal, setShowAddModal] = useState(false)
+  const [editingProperty, setEditingProperty] = useState<RealEstateProperty | null>(null)
+  const [deletingProperty, setDeletingProperty] = useState<{ id: string; name: string } | null>(null)
+  const [selectedPortfolio, setSelectedPortfolio] = useState<string>('')
 
-  // logging userid for usage later
-  console.log(userId);
+  // Get default portfolio
+  useEffect(() => {
+    const defaultPortfolio = portfolios.find(p => p.is_default) || portfolios[0]
+    if (defaultPortfolio) {
+      setSelectedPortfolio(defaultPortfolio.id)
+    }
+  }, [portfolios])
+
+  // Fetch properties
+  useEffect(() => {
+    const fetchProperties = async () => {
+      try {
+        setIsLoading(true)
+        const response = await fetch('/api/real-estate')
+        if (response.ok) {
+          const data = await response.json()
+          setProperties(data.properties || [])
+        }
+      } catch (error) {
+        console.error('Error fetching properties:', error)
+      } finally {
+        setIsLoading(false)
+      }
+    }
+
+    fetchProperties()
+  }, [])
+
+  const handleAddProperty = async (propertyData: Partial<RealEstateProperty>) => {
+    try {
+      const response = await fetch('/api/real-estate', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          ...propertyData,
+          portfolio_id: selectedPortfolio,
+        }),
+      })
+
+      if (response.ok) {
+        const newProperty = await response.json()
+        setProperties(prev => [...prev, newProperty])
+        setShowAddModal(false)
+      }
+    } catch (error) {
+      console.error('Error adding property:', error)
+    }
+  }
+
+  const handleEditProperty = async (propertyData: Partial<RealEstateProperty>) => {
+    if (!editingProperty) return
+
+    try {
+      const response = await fetch(`/api/real-estate/${editingProperty.id}`, {
+        method: 'PUT',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(propertyData),
+      })
+
+      if (response.ok) {
+        const updatedProperty = await response.json()
+        setProperties(prev => 
+          prev.map(p => p.id === editingProperty.id ? updatedProperty : p)
+        )
+        setEditingProperty(null)
+      }
+    } catch (error) {
+      console.error('Error updating property:', error)
+    }
+  }
+
+  const handleDeleteProperty = async () => {
+    if (!deletingProperty) return
+
+    try {
+      const response = await fetch(`/api/real-estate/${deletingProperty.id}`, {
+        method: 'DELETE',
+      })
+
+      if (response.ok) {
+        setProperties(prev => prev.filter(p => p.id !== deletingProperty.id))
+        setDeletingProperty(null)
+      }
+    } catch (error) {
+      console.error('Error deleting property:', error)
+    }
+  }
 
   return (
-    <div className="real-estate-section">
-      <h2 className="text-2xl font-bold mb-4">Real Estate Properties</h2>
-      {realEstateData.length === 0 ? (
-        <p>No real estate properties found.</p>
-      ) : (
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
-          {realEstateData.map((property) => (
-            <div
-              key={property.id}
-              className="card bg-white shadow-lg p-4 rounded-lg"
-            >
-              <h3 className="text-xl font-semibold">
-                {property.property_type}
-              </h3>
-              <p className="text-gray-500">{property.property_address}</p>
-              <div className="mt-2">
-                <p className="font-semibold">
-                  Purchase Price: ${property.purchase_price.toLocaleString()}
-                </p>
-                <p className="font-semibold">
-                  Current Value: ${property.current_value.toLocaleString()}
-                </p>
-                <p className="font-semibold">
-                  Rental Income: ${property.rental_income.toLocaleString()}
-                </p>
-                <p className="font-semibold">
-                  Monthly Cash Flow: $
-                  {property.monthly_cash_flow.toLocaleString()}
-                </p>
-                <p className="font-semibold">
-                  Yearly Cash Flow: $
-                  {property.yearly_cash_flow.toLocaleString()}
-                </p>
-              </div>
-              <div className="mt-4">
-                <p className="text-sm text-gray-600">
-                  Purchase Date:{" "}
-                  {new Date(property.purchase_date).toLocaleDateString()}
-                </p>
-                <p className="text-sm text-gray-600">
-                  Mortgage Payment: $
-                  {property.mortgage_monthly_payment.toLocaleString()}
-                </p>
-                <p className="text-sm text-gray-600">
-                  Mortgage Interest Rate: {property.mortgage_interest_rate}%
-                </p>
-                <p className="text-sm text-gray-600">
-                  Property Tax: ${property.property_tax.toLocaleString()}
-                </p>
-                <p className="text-sm text-gray-600">
-                  Insurance: ${property.insurance.toLocaleString()}
-                </p>
-                <p className="text-sm text-gray-600">
-                  Maintenance Costs: $
-                  {property.maintenance_costs.toLocaleString()}
-                </p>
-                <p className="text-sm text-gray-600">
-                  Utilities: ${property.utilities.toLocaleString()}
-                </p>
-              </div>
-            </div>
-          ))}
-        </div>
-      )}
-      <GenericForm
-        apiRoute="/api/real-estate"
-        userId={userId}
-        fields={realEstateFields}
+    <div className="space-y-0">
+      <RealEstateHeader
+        onAddProperty={() => setShowAddModal(true)}
+        portfolios={portfolios}
+        selectedPortfolio={selectedPortfolio}
+        setSelectedPortfolio={setSelectedPortfolio}
+        totalProperties={properties.length}
+        totalValue={properties.reduce((sum, p) => sum + p.current_value, 0)}
       />
-    </div>
-  );
-};
 
-export default RealEstate;
+      <div className="p-4">
+        <RealEstateList
+          properties={properties}
+          isLoading={isLoading}
+          onEditProperty={setEditingProperty}
+          onDeleteProperty={(id, name) => setDeletingProperty({ id, name })}
+        />
+      </div>
+
+      {/* Modals */}
+      <AddPropertyModal
+        isOpen={showAddModal}
+        onClose={() => setShowAddModal(false)}
+        onSubmit={handleAddProperty}
+        portfolios={portfolios}
+        selectedPortfolio={selectedPortfolio}
+      />
+
+      {editingProperty && (
+        <EditPropertyModal
+          isOpen={!!editingProperty}
+          onClose={() => setEditingProperty(null)}
+          onSubmit={handleEditProperty}
+          property={editingProperty}
+          portfolios={portfolios}
+        />
+      )}
+
+      {deletingProperty && (
+        <DeletePropertyModal
+          isOpen={!!deletingProperty}
+          onClose={() => setDeletingProperty(null)}
+          onConfirm={handleDeleteProperty}
+          propertyName={deletingProperty.name}
+        />
+      )}
+    </div>
+  )
+}
