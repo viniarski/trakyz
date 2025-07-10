@@ -5,7 +5,6 @@
 import { useState } from 'react'
 import { 
   DebtHeader,
-  DebtSummary,
   DebtList,
   AddLoanModal,
   AddCreditCardModal,
@@ -152,74 +151,27 @@ export default function Debt({ debtData, userId }: DebtProps) {
   const totalCreditUsed = creditCards.reduce((sum, card) => sum + card.balance, 0)
   const creditUtilization = totalCreditLimit > 0 ? (totalCreditUsed / totalCreditLimit) * 100 : 0
 
-  return (
-    <div className="p-3 sm:p-6 md:p-6">
-      {/* Header Section */}
-      <DebtHeader
-        onAddLoan={() => setShowAddLoan(true)}
-        onAddCreditCard={() => setShowAddCreditCard(true)}
+return (
+  <div className="p-3 sm:p-6 md:p-6">
+    {/* Header Section with Summary */}
+    <DebtHeader
+      onAddLoan={() => setShowAddLoan(true)}
+      onAddCreditCard={() => setShowAddCreditCard(true)}
+      debtData={{ loans, creditCards }}
+    />
+
+    {/* Debt Lists */}
+    <div className="p-4">
+      <DebtList
+        loans={loans}
+        creditCards={creditCards}
+        onEditLoan={setEditingLoan}
+        onEditCreditCard={setEditingCreditCard}
+        onDeleteDebt={setDeletingDebt}
       />
-
-      {/* Debt Summary */}
-      <div className="p-4">
-        <DebtSummary
-          totalDebt={totalDebt}
-          monthlyPayments={monthlyPayments}
-          creditUtilization={creditUtilization}
-          totalAccounts={loans.length + creditCards.length}
-        />
-      </div>
-
-      {/* Debt Lists */}
-      <div className="p-4">
-        <DebtList
-          loans={loans}
-          creditCards={creditCards}
-          onEditLoan={setEditingLoan}
-          onEditCreditCard={setEditingCreditCard}
-          onDeleteDebt={setDeletingDebt}
-        />
-      </div>
-
-      {/* Modals */}
-      {showAddLoan && (
-        <AddLoanModal
-          onClose={() => setShowAddLoan(false)}
-          onSubmit={handleAddLoan}
-        />
-      )}
-
-      {showAddCreditCard && (
-        <AddCreditCardModal
-          onClose={() => setShowAddCreditCard(false)}
-          onSubmit={handleAddCreditCard}
-        />
-      )}
-
-      {editingLoan && (
-        <EditLoanModal
-          loan={editingLoan}
-          onClose={() => setEditingLoan(null)}
-          onSubmit={(data) => handleUpdateLoan(editingLoan.id, data)}
-        />
-      )}
-
-      {editingCreditCard && (
-        <EditCreditCardModal
-          creditCard={editingCreditCard}
-          onClose={() => setEditingCreditCard(null)}
-          onSubmit={(data) => handleUpdateCreditCard(editingCreditCard.id, data)}
-        />
-      )}
-
-      {deletingDebt && (
-        <DeleteDebtModal
-          debtType={deletingDebt.type}
-          debtName={deletingDebt.name}
-          onClose={() => setDeletingDebt(null)}
-          onConfirm={handleDeleteDebt}
-        />
-      )}
     </div>
-  )
+
+    {/* Modals... */}
+  </div>
+)
 }

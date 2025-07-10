@@ -439,7 +439,7 @@ export function MarketRates({
         setActiveCategory={setActiveCategory}
       />
 
-      <div className="p-6 border-t border-gray-800/50">
+      <div className="p-6 border-t">
         {isLoading ? (
           <LoadingState />
         ) : view === "watchlist" ? (

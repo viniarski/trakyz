@@ -5,297 +5,447 @@
 import { useState, useEffect } from 'react'
 import { useRouter } from 'next/navigation'
 import { createClient } from '@/lib/supabase/client'
-import Header from '@/components/Header'
 import AdminHeader from './components/admin-header'
-import { Activity, Shield, Users } from 'lucide-react'
+import { Activity, Shield, Users, Database, Settings, AlertTriangle } from 'lucide-react'
 
-// Define the types we need
-interface UserProfile {
-  id: string;
-  email?: string;
-  role?: string;
-  theme_preference?: string;
-  created_at: string;
+interface AdminStats {
+  totalUsers: number
+  activeUsers: number
+  totalTransactions: number
+  systemHealth: 'healthy' | 'warning' | 'critical'
 }
 
-interface MarketItem {
-  date: string;
-  price: number;
-  [key: string]: any;
-}
-
-interface MarketData {
-  crypto: MarketItem[] | null;
-  metals: MarketItem[] | null;
-  stocks: MarketItem[] | null;
-  currencies: MarketItem[] | null;
-}
-
-export default function AdminDashboard() {
-  const router = useRouter()
-  const [isLoading, setIsLoading] = useState(true)
-  const [error, setError] = useState<string | null>(null)
-  const [userData, setUserData] = useState<UserProfile[]>([])
-  const [marketData, setMarketData] = useState<MarketData>({
-    crypto: null,
-    metals: null,
-    stocks: null,
-    currencies: null
+export default function AdminPage() {
+  const [user, setUser] = useState<any>(null)
+  const [isAdmin, setIsAdmin] = useState(false)
+  const [loading, setLoading] = useState(true)
+  const [stats, setStats] = useState<AdminStats>({
+    totalUsers: 0,
+    activeUsers: 0,
+    totalTransactions: 0,
+    systemHealth: 'healthy'
   })
+  const [activeTab, setActiveTab] = useState('overview')
+  const router = useRouter()
 
-  // Check admin access and load data
   useEffect(() => {
-    const checkAdmin = async () => {
-      try {
-        setIsLoading(true)
-        
-        // Verify current user is admin
-        const supabase = createClient()
-        const { data: { user } } = await supabase.auth.getUser()
-        
-        if (!user) {
-          router.push('/sign-in')
-          return
-        }
-        
-        console.log("Current user ID:", user.id)
-        
-        // Get user role from profiles
-        const { data: profile, error: profileError } = await supabase
-          .from('user_profiles')
-          .select('role')
-          .eq('id', user.id)
-          .single()
-        
-        console.log("User profile:", profile, "Error:", profileError)
-        
-        if (profileError || profile?.role !== 'admin') {
-          console.log("Not admin, redirecting")
-          router.push('/')
-          return
-        }
-        
-        // Load user data
-        const { data: profiles, error: usersError } = await supabase
-          .from('user_profiles')
-          .select('*')
-        
-        if (usersError) {
-          throw new Error(`Failed to load user profiles: ${usersError.message}`)
-        }
-        
-        console.log("Loaded profiles:", profiles)
-        setUserData(profiles || [])
-        
-        // Load market data
-        try {
-          const [cryptoRes, metalsRes, stocksRes, currenciesRes] = await Promise.all([
-            fetch('/api/market/crypto').then(res => res.json()),
-            fetch('/api/market/metals').then(res => res.json()),
-            fetch('/api/market/stocks').then(res => res.json()),
-            fetch('/api/market/currencies').then(res => res.json())
-          ])
-          
-          setMarketData({
-            crypto: cryptoRes.data || null,
-            metals: metalsRes.data || null,
-            stocks: stocksRes.data || null,
-            currencies: currenciesRes.data || null
-          })
-        } catch (marketError) {
-          console.error("Error fetching market data:", marketError)
-          // Continue without market data
-        }
-      } catch (err) {
-        console.error("Error loading admin data:", err)
-        setError(err instanceof Error ? err.message : 'Unknown error')
-      } finally {
-        setIsLoading(false)
-      }
-    }
-    
-    checkAdmin()
-  }, [router])
+    checkAdminAccess()
+  }, [])
 
-  if (isLoading) {
+  useEffect(() => {
+    if (isAdmin) {
+      fetchAdminStats()
+    }
+  }, [isAdmin])
+
+  const checkAdminAccess = async () => {
+    const supabase = createClient()
+    
+    try {
+      const { data: { user } } = await supabase.auth.getUser()
+      
+      if (!user) {
+        router.push('/sign-in')
+        return
+      }
+
+      // Check if user has admin role
+      const { data: profile } = await supabase
+        .from('user_profiles')
+        .select('role')
+        .eq('id', user.id)
+        .single()
+
+      if (profile?.role !== 'admin') {
+        router.push('/dashboard')
+        return
+      }
+
+      setUser(user)
+      setIsAdmin(true)
+    } catch (error) {
+      console.error('Error checking admin access:', error)
+      router.push('/dashboard')
+    } finally {
+      setLoading(false)
+    }
+  }
+
+  const fetchAdminStats = async () => {
+    const supabase = createClient()
+    
+    try {
+      // Fetch user stats
+      const { count: totalUsers } = await supabase
+        .from('user_profiles')
+        .select('*', { count: 'exact', head: true })
+
+      const { count: activeUsers } = await supabase
+        .from('user_profiles')
+        .select('*', { count: 'exact', head: true })
+        .gte('last_sign_in_at', new Date(Date.now() - 30 * 24 * 60 * 60 * 1000).toISOString())
+
+      const { count: totalTransactions } = await supabase
+        .from('transactions')
+        .select('*', { count: 'exact', head: true })
+
+      setStats({
+        totalUsers: totalUsers || 0,
+        activeUsers: activeUsers || 0,
+        totalTransactions: totalTransactions || 0,
+        systemHealth: 'healthy'
+      })
+    } catch (error) {
+      console.error('Error fetching admin stats:', error)
+    }
+  }
+
+  const handleManageUsers = () => {
+    setActiveTab('users')
+  }
+
+  const handleSystemSettings = () => {
+    setActiveTab('settings')
+  }
+
+  const handleViewLogs = () => {
+    setActiveTab('logs')
+  }
+
+  if (loading) {
     return (
-      <div className="min-h-screen bg-[var(--bg-primary)] flex items-center justify-center">
-        <div className="flex items-center gap-3">
-          <div className="w-6 h-6 border-2 border-[var(--accent-primary)] border-t-transparent rounded-full animate-spin" />
-          <span className="text-[var(--text-secondary)]">Loading admin dashboard...</span>
+      <div className="min-h-screen flex items-center justify-center bg-[var(--bg-primary)]">
+        <div className="text-center">
+          <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-[var(--accent-primary)] mx-auto"></div>
+          <p className="mt-2 text-[var(--text-secondary)]">Checking admin access...</p>
         </div>
       </div>
     )
   }
 
-  if (error) {
-    return (
-      <div className="min-h-screen bg-[var(--bg-primary)]">
-        <Header />
-        <main className="max-w-7xl mx-auto px-4 py-8">
-          <AdminHeader />
-          <div className="bg-red-500/10 border border-red-500/30 rounded-lg p-6 text-red-500">
-            <h2 className="text-xl font-semibold mb-2">Error Loading Admin Dashboard</h2>
-            <p>{error}</p>
-            <button 
-              onClick={() => window.location.reload()}
-              className="mt-4 px-4 py-2 bg-[var(--accent-primary)] text-white rounded-lg"
-            >
-              Retry
-            </button>
-          </div>
-        </main>
-      </div>
-    )
+  if (!isAdmin) {
+    return null
   }
 
-  // Calculate stats
-  const totalUsers = userData.length
-  const adminUsers = userData.filter(u => u.role === 'admin').length
-  
   return (
     <div className="min-h-screen bg-[var(--bg-primary)]">
-      <Header />
-      <main className="max-w-7xl mx-auto px-4 py-8">
-        <AdminHeader />
-        
-        {/* Stats Grid */}
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
-          <div className="bg-[var(--bg-secondary)] rounded-xl p-6">
-            <div className="flex items-center justify-between">
-              <div>
-                <p className="text-[var(--text-secondary)] text-sm">Total Users</p>
-                <p className="text-[var(--text-primary)] text-2xl font-semibold mt-1">{totalUsers}</p>
-              </div>
-              <div className="bg-[var(--bg-hover)] p-3 rounded-lg">
-                <Users className="h-4 w-4 text-blue-500" />
-              </div>
-            </div>
-          </div>
+      {/* Main app header */}
+      <AdminHeader />
+      
+      <div className="max-w-7xl mx-auto">
+        {/* Admin Section with hardcoded header */}
+        <div className="bg-[var(--bg-secondary)] rounded-xl mt-6 mx-4">
           
-          <div className="bg-[var(--bg-secondary)] rounded-xl p-6">
-            <div className="flex items-center justify-between">
-              <div>
-                <p className="text-[var(--text-secondary)] text-sm">Admin Users</p>
-                <p className="text-[var(--text-primary)] text-2xl font-semibold mt-1">{adminUsers}</p>
+          {/* Hardcoded Header - Same styling as reusable component */}
+          <div>
+            {/* Header with reduced padding and standardized layout */}
+            <div className="px-4 py-3 flex justify-between items-center flex-wrap gap-y-2">
+              {/* Left side - Admin Navigation Tabs */}
+              <div className="flex flex-wrap items-center gap-2">
+                <div className="flex flex-wrap gap-2">
+                  <button
+                    onClick={() => setActiveTab('overview')}
+                    className={`px-3 py-1.5 text-sm font-medium rounded-md transition-colors ${
+                      activeTab === 'overview'
+                        ? 'bg-[var(--accent-primary-10)] text-[var(--accent-primary)]'
+                        : 'text-[var(--text-secondary)] hover:bg-[var(--bg-hover)] hover:text-[var(--text-primary)]'
+                    }`}
+                  >
+                    Overview
+                  </button>
+                  
+                  <button
+                    onClick={() => setActiveTab('users')}
+                    className={`px-3 py-1.5 text-sm font-medium rounded-md transition-colors ${
+                      activeTab === 'users'
+                        ? 'bg-[var(--accent-primary-10)] text-[var(--accent-primary)]'
+                        : 'text-[var(--text-secondary)] hover:bg-[var(--bg-hover)] hover:text-[var(--text-primary)]'
+                    }`}
+                  >
+                    Users
+                  </button>
+                  
+                  <button
+                    onClick={() => setActiveTab('settings')}
+                    className={`px-3 py-1.5 text-sm font-medium rounded-md transition-colors ${
+                      activeTab === 'settings'
+                        ? 'bg-[var(--accent-primary-10)] text-[var(--accent-primary)]'
+                        : 'text-[var(--text-secondary)] hover:bg-[var(--bg-hover)] hover:text-[var(--text-primary)]'
+                    }`}
+                  >
+                    Settings
+                  </button>
+                  
+                  <button
+                    onClick={() => setActiveTab('logs')}
+                    className={`px-3 py-1.5 text-sm font-medium rounded-md transition-colors ${
+                      activeTab === 'logs'
+                        ? 'bg-[var(--accent-primary-10)] text-[var(--accent-primary)]'
+                        : 'text-[var(--text-secondary)] hover:bg-[var(--bg-hover)] hover:text-[var(--text-primary)]'
+                    }`}
+                  >
+                    Logs
+                  </button>
+                </div>
               </div>
-              <div className="bg-[var(--bg-hover)] p-3 rounded-lg">
-                <Shield className="h-4 w-4 text-red-500" />
-              </div>
-            </div>
-          </div>
-          
-          <div className="bg-[var(--bg-secondary)] rounded-xl p-6">
-            <div className="flex items-center justify-between">
-              <div>
-                <p className="text-[var(--text-secondary)] text-sm">Regular Users</p>
-                <p className="text-[var(--text-primary)] text-2xl font-semibold mt-1">{totalUsers - adminUsers}</p>
-              </div>
-              <div className="bg-[var(--bg-hover)] p-3 rounded-lg">
-                <Users className="h-4 w-4 text-green-500" />
-              </div>
-            </div>
-          </div>
-        </div>
-        
-        {/* Market Data */}
-        <div className="bg-[var(--bg-secondary)] rounded-xl overflow-hidden mb-8">
-          <div className="px-6 py-4 border-b border-gray-700 flex justify-between items-center">
-            <div className="flex items-center gap-2">
-              <Activity className="h-5 w-5 text-[var(--accent-primary)]" />
-              <h2 className="text-lg font-semibold text-[var(--text-primary)]">Market Status</h2>
-            </div>
-            <button
-              onClick={() => window.location.reload()}
-              className="px-3 py-1 bg-[var(--accent-primary)] text-white text-sm rounded-md hover:bg-[var(--accent-secondary)] transition-colors"
-            >
-              Refresh Data
-            </button>
-          </div>
-          <div className="p-4 space-y-3">
-            <div className="flex items-center justify-between">
-              <span className="text-sm text-[var(--text-secondary)]">Crypto</span>
-              <span className="text-sm text-[var(--text-primary)]">
-                {marketData.crypto && marketData.crypto.length > 0 
-                  ? new Date(marketData.crypto[0].date).toLocaleString() 
-                  : 'No data'}
-              </span>
-            </div>
-            <div className="flex items-center justify-between">
-              <span className="text-sm text-[var(--text-secondary)]">Metals</span>
-              <span className="text-sm text-[var(--text-primary)]">
-                {marketData.metals && marketData.metals.length > 0 
-                  ? new Date(marketData.metals[0].date).toLocaleString() 
-                  : 'No data'}
-              </span>
-            </div>
-            <div className="flex items-center justify-between">
-              <span className="text-sm text-[var(--text-secondary)]">Stocks</span>
-              <span className="text-sm text-[var(--text-primary)]">
-                {marketData.stocks && marketData.stocks.length > 0 
-                  ? new Date(marketData.stocks[0].date).toLocaleString() 
-                  : 'No data'}
-              </span>
-            </div>
-            <div className="flex items-center justify-between">
-              <span className="text-sm text-[var(--text-secondary)]">Currencies</span>
-              <span className="text-sm text-[var(--text-primary)]">
-                {marketData.currencies && marketData.currencies.length > 0 
-                  ? new Date(marketData.currencies[0].date).toLocaleString() 
-                  : 'No data'}
-              </span>
-            </div>
-          </div>
-        </div>
-        
-        {/* Users Table */}
-        <div className="bg-[var(--bg-secondary)] rounded-xl overflow-hidden">
-          <div className="px-6 py-4 border-b border-gray-700">
-            <h2 className="text-lg font-semibold text-[var(--text-primary)]">Users</h2>
-          </div>
-          <div className="overflow-x-auto">
-            <table className="w-full">
-              <thead>
-                <tr className="bg-[var(--bg-hover)]">
-                  <th className="px-6 py-3 text-left text-xs font-medium text-[var(--text-secondary)] uppercase tracking-wider">User</th>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-[var(--text-secondary)] uppercase tracking-wider">Role</th>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-[var(--text-secondary)] uppercase tracking-wider">Theme</th>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-[var(--text-secondary)] uppercase tracking-wider">Created</th>
-                </tr>
-              </thead>
-              <tbody className="divide-y divide-gray-700">
-                {userData.map((user) => (
-                  <tr key={user.id} className="hover:bg-[var(--bg-hover)]">
-                    <td className="px-6 py-4 whitespace-nowrap">
-                      <div className="flex items-center">
-                        <div>
-                          <div className="text-sm font-medium text-[var(--text-primary)]">{user.email || 'No email'}</div>
-                          <div className="text-sm text-[var(--text-secondary)]">{user.id.slice(0, 8)}...</div>
-                        </div>
-                      </div>
-                    </td>
-                    <td className="px-6 py-4 whitespace-nowrap">
-                      <span className={`px-2 py-1 text-xs rounded-full ${
-                        user.role === 'admin' 
-                          ? 'bg-red-500/20 text-red-500' 
-                          : 'bg-blue-500/20 text-blue-500'
+              
+              {/* Right side - Admin Summary Stats */}
+              <div className="flex flex-wrap items-center gap-2">
+                <div className="flex items-center gap-8">
+                  {/* Total Users */}
+                  <div className="text-right">
+                    <p className="text-xs text-[var(--text-secondary)] uppercase tracking-wide">Total Users</p>
+                    <p className="text-lg font-bold text-[var(--text-primary)]">
+                      {stats.totalUsers.toLocaleString()}
+                    </p>
+                  </div>
+                  
+                  {/* Active Users */}
+                  <div className="text-right">
+                    <p className="text-xs text-[var(--text-secondary)] uppercase tracking-wide">Active Users</p>
+                    <p className="text-lg font-bold text-green-500">
+                      {stats.activeUsers.toLocaleString()}
+                    </p>
+                  </div>
+                  
+                  {/* Total Transactions */}
+                  <div className="text-right">
+                    <p className="text-xs text-[var(--text-secondary)] uppercase tracking-wide">Total Transactions</p>
+                    <p className="text-lg font-bold text-[var(--text-primary)]">
+                      {stats.totalTransactions.toLocaleString()}
+                    </p>
+                  </div>
+                  
+                  {/* System Health */}
+                  <div className="text-right">
+                    <p className="text-xs text-[var(--text-secondary)] uppercase tracking-wide">System Health</p>
+                    <div className="flex items-center justify-end gap-2">
+                      <div className={`w-2 h-2 rounded-full ${
+                        stats.systemHealth === 'healthy' ? 'bg-green-500' :
+                        stats.systemHealth === 'warning' ? 'bg-yellow-500' : 'bg-red-500'
+                      }`} />
+                      <p className={`text-lg font-bold ${
+                        stats.systemHealth === 'healthy' ? 'text-green-500' :
+                        stats.systemHealth === 'warning' ? 'text-yellow-500' : 'text-red-500'
                       }`}>
-                        {user.role || 'user'}
-                      </span>
-                    </td>
-                    <td className="px-6 py-4 whitespace-nowrap text-sm text-[var(--text-secondary)]">
-                      {user.theme_preference || 'blue'}
-                    </td>
-                    <td className="px-6 py-4 whitespace-nowrap text-sm text-[var(--text-secondary)]">
-                      {new Date(user.created_at).toLocaleDateString()}
-                    </td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
+                        {stats.systemHealth.charAt(0).toUpperCase() + stats.systemHealth.slice(1)}
+                      </p>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+            
+            {/* Standardized border line */}
+            <div className="border-t border-gray-800/50"></div>
+          </div>
+          {/* End of hardcoded header */}
+          
+          {/* Admin Content */}
+          <div className="p-6">
+            {activeTab === 'overview' && (
+              <div className="space-y-6">
+                <h2 className="text-2xl font-bold text-[var(--text-primary)]">Admin Dashboard</h2>
+                
+                {/* Quick Actions */}
+                <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                  <button
+                    onClick={handleManageUsers}
+                    className="p-6 bg-[var(--bg-hover)]/50 rounded-lg border border-[var(--bg-hover)] hover:border-[var(--accent-primary)]/30 transition-colors text-left"
+                  >
+                    <Users className="h-8 w-8 text-[var(--accent-primary)] mb-4" />
+                    <h3 className="text-lg font-semibold text-[var(--text-primary)]">Manage Users</h3>
+                    <p className="text-[var(--text-secondary)]">View and manage user accounts</p>
+                  </button>
+                  
+                  <button
+                    onClick={handleSystemSettings}
+                    className="p-6 bg-[var(--bg-hover)]/50 rounded-lg border border-[var(--bg-hover)] hover:border-[var(--accent-primary)]/30 transition-colors text-left"
+                  >
+                    <Settings className="h-8 w-8 text-[var(--accent-primary)] mb-4" />
+                    <h3 className="text-lg font-semibold text-[var(--text-primary)]">System Settings</h3>
+                    <p className="text-[var(--text-secondary)]">Configure system parameters</p>
+                  </button>
+                  
+                  <button
+                    onClick={handleViewLogs}
+                    className="p-6 bg-[var(--bg-hover)]/50 rounded-lg border border-[var(--bg-hover)] hover:border-[var(--accent-primary)]/30 transition-colors text-left"
+                  >
+                    <Activity className="h-8 w-8 text-[var(--accent-primary)] mb-4" />
+                    <h3 className="text-lg font-semibold text-[var(--text-primary)]">View Logs</h3>
+                    <p className="text-[var(--text-secondary)]">Monitor system activity</p>
+                  </button>
+                </div>
+
+                {/* System Overview Cards */}
+                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 mt-8">
+                  <div className="bg-[var(--bg-hover)]/30 rounded-lg p-4">
+                    <div className="flex items-center justify-between">
+                      <div>
+                        <p className="text-sm text-[var(--text-secondary)]">Database Status</p>
+                        <p className="text-2xl font-bold text-green-500">Online</p>
+                      </div>
+                      <Database className="h-8 w-8 text-[var(--accent-primary)]" />
+                    </div>
+                  </div>
+
+                  <div className="bg-[var(--bg-hover)]/30 rounded-lg p-4">
+                    <div className="flex items-center justify-between">
+                      <div>
+                        <p className="text-sm text-[var(--text-secondary)]">API Status</p>
+                        <p className="text-2xl font-bold text-green-500">Active</p>
+                      </div>
+                      <Activity className="h-8 w-8 text-[var(--accent-primary)]" />
+                    </div>
+                  </div>
+
+                  <div className="bg-[var(--bg-hover)]/30 rounded-lg p-4">
+                    <div className="flex items-center justify-between">
+                      <div>
+                        <p className="text-sm text-[var(--text-secondary)]">Security</p>
+                        <p className="text-2xl font-bold text-green-500">Secure</p>
+                      </div>
+                      <Shield className="h-8 w-8 text-[var(--accent-primary)]" />
+                    </div>
+                  </div>
+
+                  <div className="bg-[var(--bg-hover)]/30 rounded-lg p-4">
+                    <div className="flex items-center justify-between">
+                      <div>
+                        <p className="text-sm text-[var(--text-secondary)]">Uptime</p>
+                        <p className="text-2xl font-bold text-[var(--text-primary)]">99.9%</p>
+                      </div>
+                      <AlertTriangle className="h-8 w-8 text-[var(--accent-primary)]" />
+                    </div>
+                  </div>
+                </div>
+              </div>
+            )}
+            
+            {activeTab === 'users' && (
+              <div className="space-y-6">
+                <div className="flex items-center justify-between">
+                  <h2 className="text-2xl font-bold text-[var(--text-primary)]">User Management</h2>
+                  <button className="px-4 py-2 bg-[var(--accent-primary)] text-white rounded-lg hover:bg-[var(--accent-primary)]/80 transition-colors">
+                    Add User
+                  </button>
+                </div>
+                
+                <div className="bg-[var(--bg-hover)]/30 rounded-lg p-6">
+                  <p className="text-[var(--text-secondary)]">User management interface coming soon...</p>
+                  <div className="mt-4 space-y-2">
+                    <div className="flex items-center justify-between p-3 bg-[var(--bg-hover)]/50 rounded">
+                      <span className="text-[var(--text-primary)]">View all users</span>
+                      <span className="text-[var(--text-secondary)]">Feature in development</span>
+                    </div>
+                    <div className="flex items-center justify-between p-3 bg-[var(--bg-hover)]/50 rounded">
+                      <span className="text-[var(--text-primary)]">Manage user roles</span>
+                      <span className="text-[var(--text-secondary)]">Feature in development</span>
+                    </div>
+                    <div className="flex items-center justify-between p-3 bg-[var(--bg-hover)]/50 rounded">
+                      <span className="text-[var(--text-primary)]">User activity logs</span>
+                      <span className="text-[var(--text-secondary)]">Feature in development</span>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            )}
+            
+            {activeTab === 'settings' && (
+              <div className="space-y-6">
+                <h2 className="text-2xl font-bold text-[var(--text-primary)]">System Settings</h2>
+                
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                  <div className="bg-[var(--bg-hover)]/30 rounded-lg p-6">
+                    <h3 className="text-lg font-semibold text-[var(--text-primary)] mb-4">Application Settings</h3>
+                    <div className="space-y-4">
+                      <div className="flex items-center justify-between">
+                        <span className="text-[var(--text-primary)]">Maintenance Mode</span>
+                        <button className="px-3 py-1 bg-green-500 text-white rounded text-sm">Disabled</button>
+                      </div>
+                      <div className="flex items-center justify-between">
+                        <span className="text-[var(--text-primary)]">User Registration</span>
+                        <button className="px-3 py-1 bg-green-500 text-white rounded text-sm">Enabled</button>
+                      </div>
+                      <div className="flex items-center justify-between">
+                        <span className="text-[var(--text-primary)]">API Rate Limiting</span>
+                        <button className="px-3 py-1 bg-green-500 text-white rounded text-sm">Active</button>
+                      </div>
+                    </div>
+                  </div>
+
+                  <div className="bg-[var(--bg-hover)]/30 rounded-lg p-6">
+                    <h3 className="text-lg font-semibold text-[var(--text-primary)] mb-4">Security Settings</h3>
+                    <div className="space-y-4">
+                      <div className="flex items-center justify-between">
+                        <span className="text-[var(--text-primary)]">Two-Factor Auth</span>
+                        <button className="px-3 py-1 bg-green-500 text-white rounded text-sm">Enabled</button>
+                      </div>
+                      <div className="flex items-center justify-between">
+                        <span className="text-[var(--text-primary)]">Password Policy</span>
+                        <button className="px-3 py-1 bg-green-500 text-white rounded text-sm">Strong</button>
+                      </div>
+                      <div className="flex items-center justify-between">
+                        <span className="text-[var(--text-primary)]">Session Timeout</span>
+                        <span className="text-[var(--text-secondary)]">24 hours</span>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            )}
+            
+            {activeTab === 'logs' && (
+              <div className="space-y-6">
+                <div className="flex items-center justify-between">
+                  <h2 className="text-2xl font-bold text-[var(--text-primary)]">System Logs</h2>
+                  <div className="flex gap-2">
+                    <button className="px-4 py-2 bg-[var(--bg-hover)] text-[var(--text-primary)] rounded-lg hover:bg-[var(--bg-hover)]/80 transition-colors">
+                      Refresh
+                    </button>
+                    <button className="px-4 py-2 bg-[var(--accent-primary)] text-white rounded-lg hover:bg-[var(--accent-primary)]/80 transition-colors">
+                      Export Logs
+                    </button>
+                  </div>
+                </div>
+                
+                <div className="bg-[var(--bg-hover)]/30 rounded-lg p-6">
+                  <div className="space-y-3">
+                    <div className="flex items-center justify-between p-3 bg-[var(--bg-hover)]/50 rounded">
+                      <div className="flex items-center gap-3">
+                        <div className="w-2 h-2 bg-green-500 rounded-full"></div>
+                        <span className="text-[var(--text-primary)]">System startup completed</span>
+                      </div>
+                      <span className="text-[var(--text-secondary)] text-sm">2 minutes ago</span>
+                    </div>
+                    <div className="flex items-center justify-between p-3 bg-[var(--bg-hover)]/50 rounded">
+                      <div className="flex items-center gap-3">
+                        <div className="w-2 h-2 bg-blue-500 rounded-full"></div>
+                        <span className="text-[var(--text-primary)]">Database backup completed</span>
+                      </div>
+                      <span className="text-[var(--text-secondary)] text-sm">1 hour ago</span>
+                    </div>
+                    <div className="flex items-center justify-between p-3 bg-[var(--bg-hover)]/50 rounded">
+                      <div className="flex items-center gap-3">
+                        <div className="w-2 h-2 bg-yellow-500 rounded-full"></div>
+                        <span className="text-[var(--text-primary)]">High API usage detected</span>
+                      </div>
+                      <span className="text-[var(--text-secondary)] text-sm">3 hours ago</span>
+                    </div>
+                    <div className="flex items-center justify-between p-3 bg-[var(--bg-hover)]/50 rounded">
+                      <div className="flex items-center gap-3">
+                        <div className="w-2 h-2 bg-green-500 rounded-full"></div>
+                        <span className="text-[var(--text-primary)]">User authentication successful</span>
+                      </div>
+                      <span className="text-[var(--text-secondary)] text-sm">5 hours ago</span>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            )}
           </div>
         </div>
-      </main>
+      </div>
     </div>
   )
 }

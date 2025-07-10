@@ -3,7 +3,8 @@
 'use client'
 
 import { useMemo } from 'react'
-import { TrendingUp, TrendingDown, DollarSign, PieChart, Target, AlertTriangle } from 'lucide-react'
+import { TrendingUp, TrendingDown, DollarSign, PieChart, Target } from 'lucide-react'
+import { Header } from '@/components/Header'
 import type { Transaction } from '@/types'
 
 interface AnalyticsHeaderProps {
@@ -89,34 +90,6 @@ export function AnalyticsHeader({
 
   const formatPercentage = (value: number) => `${value >= 0 ? '+' : ''}${value.toFixed(2)}%`
 
-  const MetricCard = ({ title, value, change, icon: Icon, color = 'blue' }: {
-    title: string
-    value: string
-    change?: number
-    icon: React.ComponentType<{ className?: string }>
-    color?: string
-  }) => (
-    <div className="bg-[var(--bg-secondary)] rounded-lg p-4">
-      <div className="flex items-center justify-between mb-3">
-        <h3 className="text-sm font-medium text-[var(--text-secondary)]">{title}</h3>
-        <Icon className="h-4 w-4 text-[var(--accent-primary)]" />
-      </div>
-      <p className="text-xl font-bold text-[var(--text-primary)]">{value}</p>
-      {change !== undefined && (
-        <div className="flex items-center mt-2">
-          {change >= 0 ? (
-            <TrendingUp className="h-3 w-3 text-green-500 mr-1" />
-          ) : (
-            <TrendingDown className="h-3 w-3 text-red-500 mr-1" />
-          )}
-          <span className={`text-sm ${change >= 0 ? 'text-green-500' : 'text-red-500'}`}>
-            {formatPercentage(change)}
-          </span>
-        </div>
-      )}
-    </div>
-  )
-
   const TabButton = ({ id, label, active, onClick }: {
     id: string
     label: string
@@ -135,40 +108,72 @@ export function AnalyticsHeader({
     </button>
   )
 
+  const MetricCard = ({ title, value, change, icon: Icon }: {
+    title: string
+    value: string
+    change?: number
+    icon: React.ComponentType<{ className?: string }>
+  }) => (
+    <div className="bg-[var(--bg-hover)]/30 rounded-lg p-4">
+      <div className="flex items-center justify-between">
+        <div>
+          <p className="text-sm text-[var(--text-secondary)]">{title}</p>
+          <p className="text-2xl font-bold text-[var(--text-primary)]">{value}</p>
+        </div>
+        <Icon className="h-8 w-8 text-[var(--accent-primary)]" />
+      </div>
+      {change !== undefined && (
+        <div className="mt-2 flex items-center gap-1">
+          {change >= 0 ? (
+            <TrendingUp className="h-4 w-4 text-green-500" />
+          ) : (
+            <TrendingDown className="h-4 w-4 text-red-500" />
+          )}
+          <span className={`text-sm ${change >= 0 ? 'text-green-500' : 'text-red-500'}`}>
+            {formatPercentage(change)}
+          </span>
+        </div>
+      )}
+    </div>
+  )
+
+  const leftContent = (
+    <>
+      {/* Analytics Navigation Tabs */}
+      <div className="flex flex-wrap gap-2">
+        <TabButton id="overview" label="Overview" active={activeTab === 'overview'} onClick={setActiveTab} />
+        <TabButton id="performance" label="Performance" active={activeTab === 'performance'} onClick={setActiveTab} />
+        <TabButton id="allocation" label="Allocation" active={activeTab === 'allocation'} onClick={setActiveTab} />
+        <TabButton id="assets" label="Assets" active={activeTab === 'assets'} onClick={setActiveTab} />
+        <TabButton id="insights" label="Insights" active={activeTab === 'insights'} onClick={setActiveTab} />
+      </div>
+    </>
+  )
+
+  const rightContent = (
+    <>
+      {/* Period Selector */}
+      <select 
+        value={selectedPeriod} 
+        onChange={(e) => setSelectedPeriod(e.target.value as any)}
+        className="text-sm px-3 py-1.5 rounded-md transition-colors font-medium bg-transparent text-[var(--text-secondary)] hover:bg-[var(--bg-hover)] hover:text-[var(--text-primary)] focus:outline-none"
+      >
+        <option value="1W">1 Week</option>
+        <option value="1M">1 Month</option>
+        <option value="3M">3 Months</option>
+        <option value="6M">6 Months</option>
+        <option value="1Y">1 Year</option>
+        <option value="ALL">All Time</option>
+      </select>
+    </>
+  )
+
   return (
     <div>
-      {/* Header with just period selector - NO title */}
-      <div className="p-4 flex justify-between items-center">
-        {/* Navigation tabs moved to left side */}
-        <div className="flex flex-wrap gap-2">
-          <TabButton id="overview" label="Overview" active={activeTab === 'overview'} onClick={setActiveTab} />
-          <TabButton id="performance" label="Performance" active={activeTab === 'performance'} onClick={setActiveTab} />
-          <TabButton id="allocation" label="Allocation" active={activeTab === 'allocation'} onClick={setActiveTab} />
-          <TabButton id="assets" label="Assets" active={activeTab === 'assets'} onClick={setActiveTab} />
-          <TabButton id="insights" label="Insights" active={activeTab === 'insights'} onClick={setActiveTab} />
-        </div>
-        
-        {/* Period selector on right */}
-        <div className="flex gap-2">
-          <select 
-            value={selectedPeriod} 
-            onChange={(e) => setSelectedPeriod(e.target.value as any)}
-            className="text-sm px-3 py-1.5 rounded-md transition-colors font-medium bg-transparent text-[var(--text-secondary)] hover:bg-[var(--bg-hover)] hover:text-[var(--text-primary)] focus:outline-none"
-          >
-            <option value="1W">1 Week</option>
-            <option value="1M">1 Month</option>
-            <option value="3M">3 Months</option>
-            <option value="6M">6 Months</option>
-            <option value="1Y">1 Year</option>
-            <option value="ALL">All Time</option>
-          </select>
-        </div>
-      </div>
-
-      {/* Border line - same as other components */}
-      <div className="border-t border-gray-800/50"></div>
-
-      {/* Key Metrics only */}
+      {/* Header with tabs and period selector */}
+      <Header leftContent={leftContent} rightContent={rightContent} />
+      
+      {/* Key Metrics Cards */}
       <div className="p-4">
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
           <MetricCard
