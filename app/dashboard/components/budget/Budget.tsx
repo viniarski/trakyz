@@ -1,78 +1,154 @@
 // app/dashboard/components/budget/Budget.tsx
 
-"use client";
+'use client'
 
-import { BudgetData } from "@/types";
-import { useState } from "react";
+import { useState, useEffect } from 'react'
+import { 
+  BudgetHeader,
+  BudgetList,
+  AddBudgetModal,
+  EditBudgetModal,
+  DeleteBudgetModal
+} from '@/components/Budget'
+import type { BudgetData } from '@/types'
 
 interface BudgetProps {
-  budgets: BudgetData[];
-  userId: string;
+  budgets: BudgetData[]
+  userId: string
 }
 
-export default function Budget({ budgets, userId }: BudgetProps) {
-  const [selectedMonth, setSelectedMonth] = useState<string | null>(null);
+export default function Budget({
+  budgets: initialBudgets = [],
+  userId
+}: BudgetProps) {
+  const [budgets, setBudgets] = useState<BudgetData[]>(initialBudgets)
+  const [isLoading, setIsLoading] = useState(false)
+  const [showAddModal, setShowAddModal] = useState(false)
+  const [editingBudget, setEditingBudget] = useState<BudgetData | null>(null)
+  const [deletingBudget, setDeletingBudget] = useState<string | null>(null)
+  const [selectedPeriod, setSelectedPeriod] = useState<string>('')
 
-  // Added this log here so you can map them easier later
-  console.log(budgets);
+  // Set default selected period to current month
+  useEffect(() => {
+    const currentDate = new Date()
+    const currentMonth = currentDate.toISOString().substring(0, 7) + '-01'
+    setSelectedPeriod(currentMonth)
+  }, [])
 
-  // Logging user to ensure its avaliable to the component
-  console.log(userId);
+  // Update budgets when initialBudgets changes
+  useEffect(() => {
+    setBudgets(initialBudgets)
+  }, [initialBudgets])
 
-  // example return for future reference
+  const handleAddBudget = async (budgetData: Partial<BudgetData>) => {
+    try {
+      const response = await fetch('/api/budgets', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(budgetData),
+      })
+
+      if (response.ok) {
+        const newBudget = await response.json()
+        setBudgets(prev => [...prev, newBudget])
+        setShowAddModal(false)
+      }
+    } catch (error) {
+      console.error('Error adding budget:', error)
+    }
+  }
+
+  const handleEditBudget = async (budgetData: Partial<BudgetData>) => {
+    if (!editingBudget) return
+
+    try {
+      const response = await fetch(`/api/budgets/${editingBudget.month}`, {
+        method: 'PUT',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(budgetData),
+      })
+
+      if (response.ok) {
+        const updatedBudget = await response.json()
+        setBudgets(prev => 
+          prev.map(b => b.month === editingBudget.month ? updatedBudget : b)
+        )
+        setEditingBudget(null)
+      }
+    } catch (error) {
+      console.error('Error updating budget:', error)
+    }
+  }
+
+  const handleDeleteBudget = async () => {
+    if (!deletingBudget) return
+
+    try {
+      const response = await fetch(`/api/budgets/${deletingBudget}`, {
+        method: 'DELETE',
+      })
+
+      if (response.ok) {
+        setBudgets(prev => prev.filter(b => b.month !== deletingBudget))
+        setDeletingBudget(null)
+      }
+    } catch (error) {
+      console.error('Error deleting budget:', error)
+    }
+  }
+
+  const handleEditClick = (budget: BudgetData) => {
+    setEditingBudget(budget)
+  }
+
+  const handleDeleteClick = (month: string) => {
+    setDeletingBudget(month)
+  }
+
   return (
-    <div className="container py-8">
-      <h2 className="font-bold text-2xl mb-4">Budget Overview</h2>
+    <div className="space-y-6">
+      <BudgetHeader
+        onAddBudget={() => setShowAddModal(true)}
+        budgets={budgets}
+        selectedPeriod={selectedPeriod}
+        onPeriodChange={setSelectedPeriod}
+      />
 
-      {budgets.length ? (
-        budgets.map((budget) => (
-          <div
-            key={budget.month}
-            className="border rounded p-4 shadow-sm bg-muted cursor-pointer"
-            onClick={() => setSelectedMonth(budget.month)}
-          >
-            <h3 className="text-lg font-semibold">
-              {new Date(budget.month).toLocaleString("default", {
-                month: "long",
-                year: "numeric",
-              })}
-            </h3>
-            <p>Planned Income: ${budget.planned_income}</p>
-            <p>Planned Expenses: ${budget.planned_expenses}</p>
-            <p>Last Updated: {new Date(budget.updated_at).toLocaleString()}</p>
+      <BudgetList
+        budgets={budgets}
+        isLoading={isLoading}
+        selectedPeriod={selectedPeriod}
+        onEditBudget={handleEditClick}
+        onDeleteBudget={handleDeleteClick}
+      />
 
-            {/* Income Sources */}
-            <p className="mt-2 text-sm font-medium">Income Sources:</p>
-            <ul className="list-disc list-inside text-sm">
-              {budget.budget_income
-                .filter((income) => income.is_selected)
-                .map((income) => (
-                  <li key={income.income_options[0].name}>
-                    {income.income_options[0].name}
-                  </li>
-                ))}
-            </ul>
+      {/* Add Budget Modal */}
+      <AddBudgetModal
+        isOpen={showAddModal}
+        onClose={() => setShowAddModal(false)}
+        onSubmit={handleAddBudget}
+        existingBudgets={budgets}
+      />
 
-            {/* Expense Categories */}
-            <p className="mt-2 text-sm font-medium">Expense Categories:</p>
-            <ul className="list-disc list-inside text-sm">
-              {budget.budget_expenses
-                .filter((expense) => expense.is_selected)
-                .map((expense) => (
-                  <li key={expense.expense_options[0].name}>
-                    {expense.expense_options[0].name}
-                  </li>
-                ))}
-            </ul>
-          </div>
-        ))
-      ) : (
-        <p className="text-muted-foreground">No budget data found.</p>
-      )}
+      {/* Edit Budget Modal */}
+      <EditBudgetModal
+        isOpen={!!editingBudget}
+        onClose={() => setEditingBudget(null)}
+        onSubmit={handleEditBudget}
+        budget={editingBudget}
+      />
 
-      {selectedMonth && (
-        <p className="mt-4 text-sm text-accent">Selected: {selectedMonth}</p>
-      )}
+      {/* Delete Budget Modal */}
+      <DeleteBudgetModal
+        isOpen={!!deletingBudget}
+        onClose={() => setDeletingBudget(null)}
+        onConfirm={handleDeleteBudget}
+        budgetMonth={deletingBudget || ''}
+      />
     </div>
-  );
+  )
 }
