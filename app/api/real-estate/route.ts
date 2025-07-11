@@ -1,91 +1,96 @@
 // app/api/real-estate/route.ts
 
 import { createClient } from '@/lib/supabase/server'
-import { NextResponse } from 'next/server'
+import { NextRequest, NextResponse } from 'next/server'
 
-export async function GET() {
+export async function GET(request: NextRequest) {
+  const supabase = await createClient()
+
   try {
-    const supabase = await createClient()
-    
-    // Get the authenticated user
-    const { data: { user }, error: authError } = await supabase.auth.getUser()
-    
-    if (authError || !user) {
+    const { data: { user } } = await supabase.auth.getUser()
+
+    if (!user) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
     }
 
-    // Fetch real estate properties for the user
-    const { data: properties, error } = await supabase
+    const { data: realEstate, error } = await supabase
       .from('real_estate')
       .select('*')
       .eq('user_id', user.id)
       .order('created_at', { ascending: false })
 
     if (error) {
-      console.error('Error fetching real estate properties:', error)
-      return NextResponse.json({ error: 'Failed to fetch properties' }, { status: 500 })
+      console.error('Error fetching real estate:', error)
+      return NextResponse.json({ error: error.message }, { status: 500 })
     }
 
-    return NextResponse.json({ properties: properties || [] })
+    return NextResponse.json(realEstate || [])
   } catch (error) {
-    console.error('Error in real estate API:', error)
+    console.error('Error in real estate GET:', error)
     return NextResponse.json({ error: 'Internal server error' }, { status: 500 })
   }
 }
 
-export async function POST(request: Request) {
+export async function POST(request: NextRequest) {
+  const supabase = await createClient()
+
   try {
-    const supabase = await createClient()
-    
-    // Get the authenticated user
-    const { data: { user }, error: authError } = await supabase.auth.getUser()
-    
-    if (authError || !user) {
+    const { data: { user } } = await supabase.auth.getUser()
+
+    if (!user) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
     }
 
     const body = await request.json()
     
-    // Create the property data
-    const propertyData = {
-      user_id: user.id,
-      name: body.name,
-      property_type: body.property_type,
-      address: body.address,
-      purchase_price: body.purchase_price,
-      current_value: body.current_value,
-      purchase_date: body.purchase_date,
-      portfolio_id: body.portfolio_id,
-      description: body.description,
-      square_feet: body.square_feet,
-      bedrooms: body.bedrooms,
-      bathrooms: body.bathrooms,
-      year_built: body.year_built,
-      lot_size: body.lot_size,
-      property_tax: body.property_tax,
-      insurance_cost: body.insurance_cost,
-      hoa_fees: body.hoa_fees,
-      rental_income: body.rental_income,
-      expenses: body.expenses,
-      created_at: new Date().toISOString(),
-      updated_at: new Date().toISOString()
-    }
+    // Map the fields to match your database schema (excluding generated columns)
+    const {
+      property_address,
+      property_type,
+      purchase_price,
+      current_value,
+      purchase_date,
+      rental_income = 0,
+      mortgage_monthly_payment = 0,
+      mortgage_interest_rate = 0,
+      property_tax = 0,
+      insurance = 0,
+      maintenance_costs = 0,
+      utilities = 0
+    } = body
 
-    // Insert the property
-    const { data: property, error } = await supabase
+    // Don't include asset_id - let it be NULL for now since it requires a valid transaction reference
+    const { data: realEstate, error } = await supabase
       .from('real_estate')
-      .insert([propertyData])
+      .insert({
+        user_id: user.id,
+        // asset_id: null,  // Don't include this field - let it default to NULL
+        property_address,
+        property_type,
+        purchase_price: Number(purchase_price),
+        current_value: Number(current_value),
+        purchase_date,
+        rental_income: Number(rental_income) || 0,
+        mortgage_monthly_payment: Number(mortgage_monthly_payment) || 0,
+        mortgage_interest_rate: Number(mortgage_interest_rate) || 0,
+        property_tax: Number(property_tax) || 0,
+        insurance: Number(insurance) || 0,
+        maintenance_costs: Number(maintenance_costs) || 0,
+        utilities: Number(utilities) || 0,
+        encrypted: false
+        // monthly_cash_flow and yearly_cash_flow are generated columns - don't insert them
+      })
       .select()
       .single()
 
     if (error) {
       console.error('Error creating real estate property:', error)
-      return NextResponse.json({ error: 'Failed to create property' }, { status: 500 })
+      return NextResponse.json({ error: error.message }, { status: 500 })
     }
 
-    return NextResponse.json(property, { status: 201 })
+    return NextResponse.json(realEstate, { status: 201 })
   } catch (error) {
-    console.error('Error in real estate POST API:', error)
+    console.error('Error in real estate POST:', error)
     return NextResponse.json({ error: 'Internal server error' }, { status: 500 })
   }
 }

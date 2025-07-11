@@ -1,91 +1,47 @@
 // app/api/real-estate/[id]/route.ts
 
 import { createClient } from '@/lib/supabase/server'
-import { NextResponse } from 'next/server'
+import { NextRequest, NextResponse } from 'next/server'
 
-interface RouteParams {
-  params: Promise<{ id: string }>
-}
-
-export async function GET(
-  request: Request,
-  context: RouteParams
+export async function PATCH(
+  request: NextRequest,
+  { params }: { params: { id: string } }
 ) {
+  const supabase = await createClient()
+
   try {
-    const supabase = await createClient()
-    const { id } = await context.params
-    
-    // Get the authenticated user
-    const { data: { user }, error: authError } = await supabase.auth.getUser()
-    
-    if (authError || !user) {
-      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
-    }
+    const { data: { user } } = await supabase.auth.getUser()
 
-    // Fetch the specific property
-    const { data: property, error } = await supabase
-      .from('real_estate')
-      .select('*')
-      .eq('id', id)
-      .eq('user_id', user.id)
-      .single()
-
-    if (error) {
-      console.error('Error fetching real estate property:', error)
-      return NextResponse.json({ error: 'Property not found' }, { status: 404 })
-    }
-
-    return NextResponse.json(property)
-  } catch (error) {
-    console.error('Error in real estate GET API:', error)
-    return NextResponse.json({ error: 'Internal server error' }, { status: 500 })
-  }
-}
-
-export async function PUT(
-  request: Request,
-  context: RouteParams
-) {
-  try {
-    const supabase = await createClient()
-    const { id } = await context.params
-    
-    // Get the authenticated user
-    const { data: { user }, error: authError } = await supabase.auth.getUser()
-    
-    if (authError || !user) {
+    if (!user) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
     }
 
     const body = await request.json()
-    
-    // Update the property data
-    const propertyData = {
-      name: body.name,
-      property_type: body.property_type,
-      address: body.address,
-      purchase_price: body.purchase_price,
-      current_value: body.current_value,
-      purchase_date: body.purchase_date,
-      portfolio_id: body.portfolio_id,
-      description: body.description,
-      square_feet: body.square_feet,
-      bedrooms: body.bedrooms,
-      bathrooms: body.bathrooms,
-      year_built: body.year_built,
-      lot_size: body.lot_size,
-      property_tax: body.property_tax,
-      insurance_cost: body.insurance_cost,
-      hoa_fees: body.hoa_fees,
-      rental_income: body.rental_income,
-      expenses: body.expenses,
-      updated_at: new Date().toISOString()
-    }
+    const { id } = params
 
-    // Update the property
-    const { data: property, error } = await supabase
+    // Map the fields to match your database schema (excluding generated columns)
+    const updateData: any = {}
+    
+    if (body.property_address !== undefined) updateData.property_address = body.property_address
+    if (body.property_type !== undefined) updateData.property_type = body.property_type
+    if (body.purchase_price !== undefined) updateData.purchase_price = Number(body.purchase_price)
+    if (body.current_value !== undefined) updateData.current_value = Number(body.current_value)
+    if (body.purchase_date !== undefined) updateData.purchase_date = body.purchase_date
+    if (body.rental_income !== undefined) updateData.rental_income = Number(body.rental_income) || 0
+    if (body.mortgage_monthly_payment !== undefined) updateData.mortgage_monthly_payment = Number(body.mortgage_monthly_payment) || 0
+    if (body.mortgage_interest_rate !== undefined) updateData.mortgage_interest_rate = Number(body.mortgage_interest_rate) || 0
+    if (body.property_tax !== undefined) updateData.property_tax = Number(body.property_tax) || 0
+    if (body.insurance !== undefined) updateData.insurance = Number(body.insurance) || 0
+    if (body.maintenance_costs !== undefined) updateData.maintenance_costs = Number(body.maintenance_costs) || 0
+    if (body.utilities !== undefined) updateData.utilities = Number(body.utilities) || 0
+
+    // DO NOT update monthly_cash_flow and yearly_cash_flow - they are generated columns
+
+    updateData.updated_at = new Date().toISOString()
+
+    const { data: realEstate, error } = await supabase
       .from('real_estate')
-      .update(propertyData)
+      .update(updateData)
       .eq('id', id)
       .eq('user_id', user.id)
       .select()
@@ -93,32 +49,35 @@ export async function PUT(
 
     if (error) {
       console.error('Error updating real estate property:', error)
-      return NextResponse.json({ error: 'Failed to update property' }, { status: 500 })
+      return NextResponse.json({ error: error.message }, { status: 500 })
     }
 
-    return NextResponse.json(property)
+    if (!realEstate) {
+      return NextResponse.json({ error: 'Property not found' }, { status: 404 })
+    }
+
+    return NextResponse.json(realEstate)
   } catch (error) {
-    console.error('Error in real estate PUT API:', error)
+    console.error('Error in real estate PATCH:', error)
     return NextResponse.json({ error: 'Internal server error' }, { status: 500 })
   }
 }
 
 export async function DELETE(
-  request: Request,
-  context: RouteParams
+  request: NextRequest,
+  { params }: { params: { id: string } }
 ) {
+  const supabase = await createClient()
+
   try {
-    const supabase = await createClient()
-    const { id } = await context.params
-    
-    // Get the authenticated user
-    const { data: { user }, error: authError } = await supabase.auth.getUser()
-    
-    if (authError || !user) {
+    const { data: { user } } = await supabase.auth.getUser()
+
+    if (!user) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
     }
 
-    // Delete the property
+    const { id } = params
+
     const { error } = await supabase
       .from('real_estate')
       .delete()
@@ -127,12 +86,12 @@ export async function DELETE(
 
     if (error) {
       console.error('Error deleting real estate property:', error)
-      return NextResponse.json({ error: 'Failed to delete property' }, { status: 500 })
+      return NextResponse.json({ error: error.message }, { status: 500 })
     }
 
     return NextResponse.json({ message: 'Property deleted successfully' })
   } catch (error) {
-    console.error('Error in real estate DELETE API:', error)
+    console.error('Error in real estate DELETE:', error)
     return NextResponse.json({ error: 'Internal server error' }, { status: 500 })
   }
 }

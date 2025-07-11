@@ -16,14 +16,16 @@ import type { Portfolio } from '@/types'
 interface RealEstateProps {
   portfolios: Portfolio[]
   userId: string
+  initialProperties?: RealEstateProperty[] // Add this to use server-side data
 }
 
 export default function RealEstate({
   portfolios = [], // Default to empty array
-  userId
+  userId,
+  initialProperties = [] // Add initial properties prop
 }: RealEstateProps) {
-  const [properties, setProperties] = useState<RealEstateProperty[]>([])
-  const [isLoading, setIsLoading] = useState(true)
+  const [properties, setProperties] = useState<RealEstateProperty[]>(initialProperties)
+  const [isLoading, setIsLoading] = useState(false) // Start with false if we have initial data
   const [showAddModal, setShowAddModal] = useState(false)
   const [editingProperty, setEditingProperty] = useState<RealEstateProperty | null>(null)
   const [deletingProperty, setDeletingProperty] = useState<{ id: string; name: string } | null>(null)
@@ -39,7 +41,7 @@ export default function RealEstate({
     }
   }, [portfolios])
 
-  // Fetch properties
+  // Fetch properties (only if we don't have initial properties)
   useEffect(() => {
     const fetchProperties = async () => {
       try {
@@ -47,19 +49,36 @@ export default function RealEstate({
         const response = await fetch('/api/real-estate')
         if (response.ok) {
           const data = await response.json()
-          setProperties(data.properties || [])
+          // FIX: Handle both response formats
+          if (Array.isArray(data)) {
+            // API returns array directly
+            setProperties(data)
+          } else if (data.properties) {
+            // API returns object with properties field
+            setProperties(data.properties)
+          } else {
+            // Fallback
+            setProperties([])
+          }
+        } else {
+          console.error('Failed to fetch properties:', response.statusText)
+          setProperties([])
         }
       } catch (error) {
         console.error('Error fetching properties:', error)
+        setProperties([])
       } finally {
         setIsLoading(false)
       }
     }
 
-    fetchProperties()
-  }, [])
+    // Only fetch if we don't have initial properties
+    if (initialProperties.length === 0) {
+      fetchProperties()
+    }
+  }, [initialProperties.length])
 
-  const handleAddProperty = async (propertyData: Partial<RealEstateProperty>) => {
+  const handleAddProperty = async (propertyData: any) => {
     try {
       const response = await fetch('/api/real-estate', {
         method: 'POST',
@@ -76,18 +95,20 @@ export default function RealEstate({
         const newProperty = await response.json()
         setProperties(prev => [...prev, newProperty])
         setShowAddModal(false)
+      } else {
+        console.error('Failed to add property:', response.statusText)
       }
     } catch (error) {
       console.error('Error adding property:', error)
     }
   }
 
-  const handleEditProperty = async (propertyData: Partial<RealEstateProperty>) => {
+  const handleEditProperty = async (propertyData: any) => {
     if (!editingProperty) return
 
     try {
       const response = await fetch(`/api/real-estate/${editingProperty.id}`, {
-        method: 'PUT',
+        method: 'PATCH', // Use PATCH instead of PUT to match your API
         headers: {
           'Content-Type': 'application/json',
         },
@@ -100,6 +121,8 @@ export default function RealEstate({
           prev.map(p => p.id === editingProperty.id ? updatedProperty : p)
         )
         setEditingProperty(null)
+      } else {
+        console.error('Failed to update property:', response.statusText)
       }
     } catch (error) {
       console.error('Error updating property:', error)
@@ -115,6 +138,8 @@ export default function RealEstate({
       if (response.ok) {
         setProperties(prev => prev.filter(p => p.id !== propertyId))
         setDeletingProperty(null)
+      } else {
+        console.error('Failed to delete property:', response.statusText)
       }
     } catch (error) {
       console.error('Error deleting property:', error)
@@ -125,8 +150,8 @@ export default function RealEstate({
     setEditingProperty(property)
   }
 
-  const handleDeleteClick = (id: string, name: string) => {
-    setDeletingProperty({ id, name })
+  const handleDeleteClick = (id: string, address: string) => {
+    setDeletingProperty({ id, name: address }) // Use address as name
   }
 
   const handlePortfolioChange = (portfolioId: string) => {
@@ -151,24 +176,20 @@ export default function RealEstate({
       />
 
       {/* Add Property Modal */}
-      {portfolios.length > 0 && (
-        <AddPropertyModal
-          isOpen={showAddModal}
-          onClose={() => setShowAddModal(false)}
-          onSubmit={handleAddProperty}
-          portfolios={portfolios}
-          selectedPortfolio={selectedPortfolio}
-        />
-      )}
+      <AddPropertyModal
+        isOpen={showAddModal}
+        onClose={() => setShowAddModal(false)}
+        onSubmit={handleAddProperty}
+      />
 
       {/* Edit Property Modal */}
-      {portfolios.length > 0 && (
+      {editingProperty && (
         <EditPropertyModal
           isOpen={!!editingProperty}
           onClose={() => setEditingProperty(null)}
           onSubmit={handleEditProperty}
           property={editingProperty}
-          portfolios={portfolios}
+          portfolios={portfolios} // Add missing portfolios prop
         />
       )}
 

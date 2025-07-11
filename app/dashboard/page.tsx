@@ -15,7 +15,6 @@ import {
 import { UserResponse } from "@supabase/supabase-js";
 import Market from "./components/market/Market";
 import RealEstate from "./components/real-estate/RealEstate";
-// FIXED: Changed from named import to default import
 import NewPortfolio from "./components/portfolio/Portfolio";
 import Transactions from "./components/transactions/Transactions";
 import TabNavigation from "@/components/TabNavigation";
@@ -103,86 +102,58 @@ export default async function Page(props: any) {
     subscriptionData?.subscription_status === "active" ||
     subscriptionData?.subscription_status === "trialing";
 
-  // Fetch market data - needed for multiple tabs
+  // Initialize data variables
   let marketData: MarketData = {
     metals: [],
     crypto: [],
     currencies: [],
     stocks: [],
-    selectedCurrency: "USD",
+    selectedCurrency: userProfile?.selected_currency || "USD",
+  };
+  let budgetData: BudgetData[] = [];
+  let realEstateData: RealEstateProperty[] = [];
+  let transactionsData: Transaction[] = [];
+  let portfoliosData: Portfolio[] = [];
+  let debtData: DebtData = {
+    loans: [],
+    creditCards: [],
   };
 
-  // Conditionally fetch market data when needed
-  if (currentTab === "markets" || currentTab === "portfolios") {
-    const [
-      { data: metals, error: metalsError },
-      { data: crypto, error: cryptoError },
-      { data: currencies, error: currencyError },
-      { data: stocks, error: stocksError },
-    ] = await Promise.all([
-      supabase.from("metals").select("*").order("date", { ascending: false }),
-      supabase.from("crypto").select("*").order("date", { ascending: false }),
-      supabase
-        .from("currencies")
-        .select("*")
-        .order("date", { ascending: false }),
-      supabase.from("stocks").select("*").order("date", { ascending: false }),
-    ]);
-
-    marketData = {
-      metals: metals || [],
-      crypto: crypto || [],
-      currencies: currencies || [],
-      stocks: stocks || [],
-      selectedCurrency: userProfile?.selected_currency || "USD",
-    };
-
-    // Log any market data errors
-    if (metalsError) {
-      console.error("Error fetching metals data:", metalsError);
-    }
-    if (cryptoError) {
-      console.error("Error fetching crypto data:", cryptoError);
-    }
-    if (currencyError) {
-      console.error("Error fetching currency data:", currencyError);
-    }
-    if (stocksError) {
-      console.error("Error fetching stocks data:", stocksError);
-    }
-  }
-
-  // Only fetch the data needed for the current tab
-  let budgetData: BudgetData[] = [];
-  let debtData: DebtData = { loans: [], creditCards: [] };
-  let realEstateData: RealEstateProperty[] = [];
-  let portfoliosData: Portfolio[] = [];
-  let transactionsData: Transaction[] = [];
-
-  // Fetch only the data needed for the currently selected tab
+  // Conditionally fetch data based on the current tab for performance
   switch (currentTab) {
+    case "markets":
+      const [
+        { data: metals, error: metalsError },
+        { data: crypto, error: cryptoError },
+        { data: currencies, error: currencyError },
+        { data: stocks, error: stocksError },
+      ] = await Promise.all([
+        supabase.from("metals").select("*").order("date", { ascending: false }),
+        supabase.from("crypto").select("*").order("date", { ascending: false }),
+        supabase.from("currencies").select("*").order("date", { ascending: false }),
+        supabase.from("stocks").select("*").order("date", { ascending: false }),
+      ]);
+
+      marketData = {
+        metals: metals || [],
+        crypto: crypto || [],
+        currencies: currencies || [],
+        stocks: stocks || [],
+        selectedCurrency: userProfile?.selected_currency || "USD",
+      };
+
+      if (metalsError) console.error("Error fetching metals data:", metalsError);
+      if (cryptoError) console.error("Error fetching crypto data:", cryptoError);
+      if (currencyError) console.error("Error fetching currency data:", currencyError);
+      if (stocksError) console.error("Error fetching stocks data:", stocksError);
+      break;
+
     case "budget":
       const { data: budgets, error: budgetError } = await supabase
         .from("budgets")
-        .select(
-          `
-          month, 
-          planned_income, 
-          planned_expenses, 
-          updated_at,
-          budget_income (
-            income_options (name),
-            is_selected
-          ),
-          budget_expenses (
-            expense_options (name),
-            is_selected
-          )
-        `
-        )
+        .select("*")
         .eq("user_id", user.id)
-        .order("month", { ascending: false })
-        .limit(12);
+        .order("month", { ascending: false });
 
       budgetData = budgets || [];
       if (budgetError) console.error("Error fetching budget data:", budgetError);
@@ -220,7 +191,8 @@ export default async function Page(props: any) {
         supabase
           .from("real_estate")
           .select("*")
-          .eq("user_id", user.id),
+          .eq("user_id", user.id)
+          .order("created_at", { ascending: false }),
         supabase
           .from("portfolios")
           .select("*")
@@ -305,7 +277,14 @@ export default async function Page(props: any) {
       break;
 
     default:
-      // For markets tab, we already fetched the data above
+      // For default case, fetch minimal market data
+      const { data: defaultMetals } = await supabase
+        .from("metals")
+        .select("*")
+        .order("date", { ascending: false })
+        .limit(10);
+      
+      marketData.metals = defaultMetals || [];
       break;
   }
 
@@ -332,10 +311,26 @@ export default async function Page(props: any) {
 
         {/* Content Area */}
         <div className="bg-[var(--bg-secondary)] rounded-b-xl p-6 shadow-md">
-          {currentTab === "budget" && <Budget budgets={budgetData} userId={user.id} />}
-          {currentTab === "markets" && <Market marketData={marketData} userId={user.id} />}
-          {currentTab === "debt" && <Debt debtData={debtData} userId={user.id} />}
-          {currentTab === "real-estate" && <RealEstate portfolios={portfoliosData} userId={user.id} />}
+          {currentTab === "budget" && (
+            <Budget budgets={budgetData} userId={user.id} />
+          )}
+          
+          {currentTab === "markets" && (
+            <Market marketData={marketData} userId={user.id} />
+          )}
+          
+          {currentTab === "debt" && (
+            <Debt debtData={debtData} userId={user.id} />
+          )}
+          
+          {currentTab === "real-estate" && (
+            <RealEstate 
+              portfolios={portfoliosData} 
+              userId={user.id} 
+              initialProperties={realEstateData}
+            />
+          )}
+          
           {currentTab === "portfolios" && (
             <NewPortfolio
               portfolios={portfoliosData}
@@ -344,7 +339,14 @@ export default async function Page(props: any) {
               userId={user.id}
             />
           )}
-          {currentTab === "transactions" && <Transactions transactions={transactionsData} userId={user.id} />}
+          
+          {currentTab === "transactions" && (
+            <Transactions 
+              transactions={transactionsData} 
+              userId={user.id} 
+            />
+          )}
+          
           {currentTab === "analytics" && (
             <Analytics
               portfolios={portfoliosData}
