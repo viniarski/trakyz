@@ -4,7 +4,7 @@
 
 import { Plus, Calendar } from 'lucide-react'
 import { Button } from '@/components/ui/button'
-import { Header } from '@/components/Header'
+import { Header } from '@/components/ui/DashboardHeader'
 import type { BudgetData } from '@/types'
 
 interface BudgetHeaderProps {

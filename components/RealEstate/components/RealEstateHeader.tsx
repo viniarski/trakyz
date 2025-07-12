@@ -4,7 +4,7 @@
 
 import { Plus } from 'lucide-react'
 import { Button } from '@/components/ui/button'
-import { Header } from '@/components/Header'
+import { Header } from '@/components/ui/DashboardHeader'
 import type { RealEstateProperty } from '@/types/realestate'
 import type { Portfolio } from '@/types'
 

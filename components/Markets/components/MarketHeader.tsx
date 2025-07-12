@@ -5,7 +5,7 @@
 import { Star, BarChart2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { CategoryIcon } from "@/components/ui/CategoryIcon";
-import { Header } from "@/components/Header";
+import { Header } from "@/components/ui/DashboardHeader";
 import { SelectedPeriod, MarketCategory } from "@/types";
 
 interface MarketHeaderProps {

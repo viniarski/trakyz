@@ -4,7 +4,7 @@
 
 import { Plus, TrendingUp, TrendingDown } from 'lucide-react'
 import { Button } from '@/components/ui/button'
-import { Header } from '@/components/Header'
+import { Header } from '@/components/ui/DashboardHeader'
 import { useCurrencyConverter } from '@/hooks/useCurrencyConverter'
 import { Portfolio, PortfolioSummary as PortfolioSummaryType } from '@/types'
 

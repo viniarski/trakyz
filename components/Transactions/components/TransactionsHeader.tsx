@@ -6,7 +6,7 @@ import { Filter, Plus, Trash2, Upload, Download, ChevronDown } from 'lucide-reac
 import { CurrencyCode } from '@/types'
 import { useState, useRef, useEffect } from 'react'
 import { Button } from '@/components/ui/button'
-import { Header } from '@/components/Header'
+import { Header } from '@/components/ui/DashboardHeader'
 
 interface TransactionsHeaderProps {
   showFilters: boolean

@@ -4,7 +4,7 @@
 
 import { useMemo } from 'react'
 import { TrendingUp, TrendingDown, DollarSign, PieChart, Target } from 'lucide-react'
-import { Header } from '@/components/Header'
+import { Header } from '@/components/ui/DashboardHeader'
 import type { Transaction } from '@/types'
 
 interface AnalyticsHeaderProps {
