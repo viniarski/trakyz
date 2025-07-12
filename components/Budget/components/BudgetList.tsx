@@ -81,43 +81,36 @@ export function BudgetList({
       setSortOrder(sortOrder === 'asc' ? 'desc' : 'asc')
     } else {
       setSortBy(column)
-      setSortOrder('asc')
+      setSortOrder('desc')
     }
   }
 
   if (isLoading) {
     return (
-      <div className="bg-[var(--bg-primary)] rounded-lg p-6">
-        <div className="space-y-4">
-          {[...Array(3)].map((_, i) => (
-            <div key={i} className="animate-pulse">
-              <div className="h-4 bg-[var(--bg-hover)] rounded w-3/4 mb-2"></div>
-              <div className="h-3 bg-[var(--bg-hover)] rounded w-1/2"></div>
-            </div>
-          ))}
-        </div>
+      <div className="flex items-center justify-center h-64">
+        <div className="text-[var(--text-secondary)]">Loading budgets...</div>
       </div>
     )
   }
 
   if (budgets.length === 0) {
     return (
-      <div className="bg-[var(--bg-primary)] rounded-lg p-8 text-center">
+      <div className="text-center py-12">
         <PiggyBank className="h-12 w-12 text-[var(--text-secondary)] mx-auto mb-4" />
         <h3 className="text-lg font-medium text-[var(--text-primary)] mb-2">
-          No Budgets Found
+          No budgets yet
         </h3>
         <p className="text-[var(--text-secondary)]">
-          Create your first budget to start tracking your income and expenses.
+          Create your first budget to start tracking your finances.
         </p>
       </div>
     )
   }
 
   return (
-    <div className="bg-[var(--bg-primary)] rounded-lg overflow-hidden">
+    <div className="bg-[var(--bg-primary)] rounded-lg border border-[var(--bg-hover)] overflow-hidden">
       {/* Header */}
-      <div className="px-6 py-4 border-b border-[var(--bg-hover)]">
+      <div className="px-6 py-4 bg-[var(--bg-hover)]">
         <div className="grid grid-cols-12 gap-4 text-sm font-medium text-[var(--text-secondary)]">
           <div 
             className="col-span-3 cursor-pointer hover:text-[var(--accent-primary)] flex items-center gap-1"
@@ -233,13 +226,13 @@ export function BudgetList({
                   </div>
                 </div>
 
-                {/* Income Sources */}
+                {/* Income Sources - FIXED: Use income_entries instead of budget_income */}
                 <div className="col-span-2">
                   <div className="text-sm text-[var(--text-primary)]">
-                    {budget.budget_income?.filter(income => income.is_selected).length || 0} sources
+                    {budget.income_entries?.filter(income => income.is_selected).length || 0} sources
                   </div>
                   <div className="text-xs text-[var(--text-secondary)]">
-                    {budget.budget_expenses?.filter(expense => expense.is_selected).length || 0} categories
+                    {budget.expense_entries?.filter(expense => expense.is_selected).length || 0} categories
                   </div>
                 </div>
 

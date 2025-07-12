@@ -4,7 +4,7 @@
 
 import { useState, useEffect } from 'react'
 import { X } from 'lucide-react'
-import type { BudgetData, IncomeSelection, ExpenseSelection } from '@/types'
+import type { BudgetData } from '@/types'
 
 interface AddBudgetModalProps {
   isOpen: boolean
@@ -54,24 +54,13 @@ export function AddBudgetModal({
     setIsSubmitting(true)
 
     try {
-      // Create budget income selections
-      const budget_income: IncomeSelection[] = INCOME_OPTIONS.map(option => ({
-        income_options: [{ name: option }],
-        is_selected: selectedIncomes.includes(option)
-      }))
-
-      // Create budget expense selections
-      const budget_expenses: ExpenseSelection[] = EXPENSE_OPTIONS.map(option => ({
-        expense_options: [{ name: option }],
-        is_selected: selectedExpenses.includes(option)
-      }))
-
+      // For now, just send the basic budget data
+      // The income/expense selections would need to be handled separately
+      // via the API that manages the budget_income and budget_expenses tables
       await onSubmit({
         month: formData.month,
         planned_income: parseFloat(formData.planned_income) || 0,
-        planned_expenses: parseFloat(formData.planned_expenses) || 0,
-        budget_income,
-        budget_expenses
+        planned_expenses: parseFloat(formData.planned_expenses) || 0
       })
       
       // Reset form
@@ -146,13 +135,16 @@ export function AddBudgetModal({
               {/* Month */}
               <div>
                 <label className="block text-sm font-medium text-[var(--text-primary)] mb-2">
-                  Month *
+                  Month
                 </label>
                 <input
                   type="month"
                   name="month"
                   value={formData.month.substring(0, 7)}
-                  onChange={(e) => setFormData(prev => ({ ...prev, month: e.target.value + '-01' }))}
+                  onChange={(e) => setFormData(prev => ({ 
+                    ...prev, 
+                    month: e.target.value + '-01' 
+                  }))}
                   required
                   className="w-full px-3 py-2 bg-[var(--bg-primary)] border border-[var(--bg-hover)] rounded-lg focus:outline-none focus:ring-2 focus:ring-[var(--accent-primary)] text-[var(--text-primary)]"
                 />
@@ -166,7 +158,7 @@ export function AddBudgetModal({
               {/* Planned Income */}
               <div>
                 <label className="block text-sm font-medium text-[var(--text-primary)] mb-2">
-                  Planned Income *
+                  Planned Income
                 </label>
                 <input
                   type="number"
@@ -184,7 +176,7 @@ export function AddBudgetModal({
               {/* Planned Expenses */}
               <div>
                 <label className="block text-sm font-medium text-[var(--text-primary)] mb-2">
-                  Planned Expenses *
+                  Planned Expenses
                 </label>
                 <input
                   type="number"
@@ -204,7 +196,7 @@ export function AddBudgetModal({
           {/* Income Sources */}
           <div className="space-y-4">
             <h3 className="text-lg font-medium text-[var(--text-primary)]">
-              Income Sources
+              Income Sources (Optional)
             </h3>
             <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-3">
               {INCOME_OPTIONS.map(income => (
@@ -227,7 +219,7 @@ export function AddBudgetModal({
           {/* Expense Categories */}
           <div className="space-y-4">
             <h3 className="text-lg font-medium text-[var(--text-primary)]">
-              Expense Categories
+              Expense Categories (Optional)
             </h3>
             <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-3">
               {EXPENSE_OPTIONS.map(expense => (
@@ -247,8 +239,8 @@ export function AddBudgetModal({
             </div>
           </div>
 
-          {/* Form Actions */}
-          <div className="flex items-center justify-end gap-3 pt-6 border-t border-[var(--bg-hover)]">
+          {/* Submit Button */}
+          <div className="flex justify-end gap-3 pt-6 border-t border-[var(--bg-hover)]">
             <button
               type="button"
               onClick={onClose}
@@ -261,7 +253,7 @@ export function AddBudgetModal({
               disabled={isSubmitting || monthExists}
               className="px-6 py-2 bg-[var(--accent-primary)] text-white rounded-lg hover:bg-[var(--accent-primary-hover)] disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
             >
-              {isSubmitting ? 'Adding...' : 'Add Budget'}
+              {isSubmitting ? 'Creating...' : 'Create Budget'}
             </button>
           </div>
         </form>
