@@ -1,4 +1,4 @@
--- Complete Trakyz Database Schema
+-- Complete Trakyz Database Schema - Updated Version
 
 -- Enable extensions
 CREATE EXTENSION IF NOT EXISTS "uuid-ossp";
@@ -23,7 +23,7 @@ CREATE TABLE public.user_profiles (
     updated_at TIMESTAMPTZ DEFAULT NOW()
 );
 
--- User subscription table (replacing user_plans)
+-- User subscription table
 CREATE TABLE public.user_subscriptions (
     id UUID PRIMARY KEY REFERENCES auth.users(id) ON DELETE CASCADE,
     stripe_customer_id TEXT,
@@ -36,6 +36,26 @@ CREATE TABLE public.user_subscriptions (
     trial_until TIMESTAMPTZ,
     created_at TIMESTAMPTZ DEFAULT NOW(),
     updated_at TIMESTAMPTZ DEFAULT NOW()
+);
+
+-- System settings table
+CREATE TABLE public.system_settings (
+    id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+    key TEXT NOT NULL UNIQUE,
+    trial_enabled BOOLEAN DEFAULT true,
+    created_at TIMESTAMPTZ DEFAULT NOW(),
+    updated_at TIMESTAMPTZ DEFAULT NOW()
+);
+
+-- Notifications table
+CREATE TABLE public.notifications (
+    id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+    user_id UUID NOT NULL REFERENCES auth.users(id) ON DELETE CASCADE,
+    type TEXT NOT NULL,
+    title TEXT NOT NULL,
+    message TEXT NOT NULL,
+    is_read BOOLEAN DEFAULT false,
+    created_at TIMESTAMPTZ DEFAULT NOW()
 );
 
 --------------- ASSET TABLES ---------------
@@ -121,10 +141,10 @@ CREATE TABLE public.credit_cards (
 );
 
 -- Real estate table
-CREATE TABLE public.real_estate_properties (
+CREATE TABLE public.real_estate (
     id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
     user_id UUID NOT NULL REFERENCES auth.users(id) ON DELETE CASCADE,
-    asset_id UUID NOT NULL REFERENCES public.transactions(id) ON DELETE CASCADE,
+    asset_id UUID REFERENCES public.transactions(id) ON DELETE CASCADE,
     property_type TEXT NOT NULL,
     property_address TEXT NOT NULL,
     purchase_price NUMERIC NOT NULL,
@@ -162,37 +182,6 @@ CREATE TABLE public.watchlist (
     UNIQUE(user_id, category, symbol)
 );
 
--- Enable Row Level Security
-ALTER TABLE public.watchlist ENABLE ROW LEVEL SECURITY;
-
--- Create RLS policies
-CREATE POLICY "Users can view their own watchlist items"
-  ON public.watchlist
-  FOR SELECT
-  USING (auth.uid() = user_id);
-
-
-CREATE POLICY "Users can insert their own watchlist items"
-  ON public.watchlist
-  FOR INSERT
-  WITH CHECK (auth.uid() = user_id);
-
-CREATE POLICY "Users can update their own watchlist items"
-  ON public.watchlist
-  FOR UPDATE
-  USING (auth.uid() = user_id);
-
-CREATE POLICY "Users can delete their own watchlist items"
-  ON public.watchlist
-  FOR DELETE
-  USING (auth.uid() = user_id);
-
--- Trigger to update updated_at timestamp automatically
-CREATE TRIGGER update_watchlist_updated_at
-BEFORE UPDATE ON public.watchlist
-FOR EACH ROW EXECUTE FUNCTION update_updated_at_column();
-
-
 -------------------- BUDGET TABLES --------------------
 
 -- Table storing predefined income options
@@ -213,7 +202,7 @@ CREATE TABLE public.budgets (
     user_id UUID NOT NULL REFERENCES auth.users(id) ON DELETE CASCADE,
     planned_income NUMERIC NOT NULL DEFAULT 0,
     planned_expenses NUMERIC NOT NULL DEFAULT 0,
-    updated_at TIMESTAMP WITH TIME ZONE DEFAULT now(),
+    updated_at TIMESTAMPTZ DEFAULT NOW(),
     PRIMARY KEY (month, user_id)
 );
 
@@ -240,147 +229,104 @@ CREATE TABLE public.budget_expenses (
 );
 
 ------------------ MARKET DATA TABLES ------------------
--- Enable the uuid-ossp extension for uuid_generate_v4()
-CREATE EXTENSION IF NOT EXISTS "uuid-ossp";
 
 -- Crypto table
 CREATE TABLE public.crypto (
+    id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
     name VARCHAR NOT NULL,
-    date TIMESTAMP WITH TIME ZONE NOT NULL,
+    symbol VARCHAR NOT NULL,
+    date TIMESTAMPTZ NOT NULL,
     price NUMERIC NOT NULL,
     market_cap NUMERIC,
     volume_24h NUMERIC,
-    created_at TIMESTAMP WITH TIME ZONE DEFAULT now(),
     date_day TEXT,
-    symbol VARCHAR NOT NULL,
-    id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
-    CONSTRAINT unique_symbol_date UNIQUE (symbol, date)
+    created_at TIMESTAMPTZ DEFAULT NOW(),
+    CONSTRAINT unique_crypto_symbol_date UNIQUE (symbol, date)
 );
 
 -- Currencies table
 CREATE TABLE public.currencies (
-    created_at TIMESTAMP WITH TIME ZONE DEFAULT now(),
+    id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
     symbol VARCHAR NOT NULL,
     name VARCHAR NOT NULL,
-    date TIMESTAMP WITHOUT TIME ZONE NOT NULL,
-    id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
-    price NUMERIC NOT NULL
+    date TIMESTAMPTZ NOT NULL,
+    price NUMERIC NOT NULL,
+    date_day TEXT,
+    created_at TIMESTAMPTZ DEFAULT NOW()
 );
 
 -- Metals table
 CREATE TABLE public.metals (
-    date TIMESTAMP WITHOUT TIME ZONE NOT NULL,
+    id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+    date TIMESTAMPTZ NOT NULL,
     metal VARCHAR NOT NULL,
-    id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
-    created_at TIMESTAMP WITH TIME ZONE DEFAULT now(),
-    price NUMERIC NOT NULL
-);
-   
--- Stocks table
-CREATE TABLE public.stocks (
     price NUMERIC NOT NULL,
-    volume NUMERIC,
-    created_at TIMESTAMP WITH TIME ZONE DEFAULT now(),
-    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-    date TIMESTAMP WITH TIME ZONE NOT NULL,
-    name VARCHAR NOT NULL,
-    symbol VARCHAR NOT NULL,
     date_day TEXT,
-    CONSTRAINT unique_symbol_date_stocks UNIQUE (symbol, date)
-);
-
--- Enable Row-Level Security for stocks
-ALTER TABLE stocks ENABLE ROW LEVEL SECURITY;
-
--- Enable Row-Level Security for crypto
-ALTER TABLE crypto ENABLE ROW LEVEL SECURITY;
-
--- Enable Row-Level Security for metals
-ALTER TABLE metals ENABLE ROW LEVEL SECURITY;
-
--- Enable Row-Level Security for currencies
-ALTER TABLE currencies ENABLE ROW LEVEL SECURITY;
-
-------------------- SYSTEM TABLES ----------------------
-
--- System settings table
-CREATE TABLE public.system_settings (
-    id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
-    key TEXT NOT NULL UNIQUE,
-    trial_enabled BOOLEAN DEFAULT true,
-    created_at TIMESTAMPTZ DEFAULT NOW(),
-    updated_at TIMESTAMPTZ DEFAULT NOW()
-);
-
--- Notifications table
-CREATE TABLE public.notifications (
-    id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
-    user_id UUID NOT NULL REFERENCES auth.users(id) ON DELETE CASCADE,
-    type TEXT NOT NULL,
-    title TEXT NOT NULL,
-    message TEXT NOT NULL,
-    is_read BOOLEAN DEFAULT false,
     created_at TIMESTAMPTZ DEFAULT NOW()
 );
 
---------------------- FUNCTIONS -------------------------
+-- Stocks table
+CREATE TABLE public.stocks (
+    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+    name VARCHAR NOT NULL,
+    symbol VARCHAR NOT NULL,
+    date TIMESTAMPTZ NOT NULL,
+    price NUMERIC NOT NULL,
+    volume NUMERIC,
+    date_day TEXT,
+    created_at TIMESTAMPTZ DEFAULT NOW()
+);
 
--- Create a new user profile when a user signs up
+---------------------- FUNCTIONS -------------------------
+
+-- Function to create user profile
 CREATE OR REPLACE FUNCTION create_user_profile()
 RETURNS TRIGGER
 LANGUAGE plpgsql
 SECURITY DEFINER
 SET search_path = public
 AS $$
+BEGIN
   INSERT INTO public.user_profiles (
-    id, 
-    name, 
+    id,
+    name,
     role,
-    avatar_url, 
+    avatar_url,
     selected_currency,
     selected_period,
     theme_preference,
+    last_active_tab,
+    language,
+    market_show_more,
     created_at,
     updated_at
   )
   VALUES (
     NEW.id,
-    COALESCE(NEW.raw_user_meta_data->>'full_name', split_part(NEW.email, '@', 1)),
+    COALESCE(NEW.raw_user_meta_data->>'name', NEW.email),
     'user',
     NEW.raw_user_meta_data->>'avatar_url',
     'USD',
     '24H',
     'blue',
+    'portfolio',
+    'en',
+    false,
     NOW(),
     NOW()
   );
-  
-  -- Also create an entry in user_subscriptions
- INSERT INTO public.user_subscriptions (
-    id, 
-    subscription_status, 
-    created_at,
-    updated_at
-  )
-  VALUES (
-    NEW.id,
-    'inactive',
-    NOW(),
-    NOW()
-  );
-  
   RETURN NEW;
 END;
 $$;
 
--- Update updated_at timestamp automatically
+-- Function to update updated_at timestamp
 CREATE OR REPLACE FUNCTION update_updated_at_column()
 RETURNS TRIGGER AS $$
 BEGIN
   NEW.updated_at = NOW();
   RETURN NEW;
 END;
-$$;
+$$ LANGUAGE plpgsql;
 
 -- Create default portfolio for new users
 CREATE OR REPLACE FUNCTION create_default_portfolio()
@@ -389,6 +335,7 @@ LANGUAGE plpgsql
 SECURITY DEFINER
 SET search_path = public
 AS $$
+BEGIN
   INSERT INTO public.portfolios (
     user_id, 
     name, 
@@ -466,28 +413,34 @@ BEFORE UPDATE ON public.credit_cards
 FOR EACH ROW EXECUTE FUNCTION update_updated_at_column();
 
 CREATE TRIGGER update_real_estate_updated_at
-BEFORE UPDATE ON public.real_estate_properties
+BEFORE UPDATE ON public.real_estate
+FOR EACH ROW EXECUTE FUNCTION update_updated_at_column();
+
+CREATE TRIGGER update_watchlist_updated_at
+BEFORE UPDATE ON public.watchlist
 FOR EACH ROW EXECUTE FUNCTION update_updated_at_column();
 
 CREATE TRIGGER update_system_settings_updated_at
 BEFORE UPDATE ON public.system_settings
 FOR EACH ROW EXECUTE FUNCTION update_updated_at_column();
 
--- Enable Row Level Security
+---------------------- ROW LEVEL SECURITY -------------------------
+
+-- Enable RLS on all user tables
 ALTER TABLE public.user_profiles ENABLE ROW LEVEL SECURITY;
 ALTER TABLE public.user_subscriptions ENABLE ROW LEVEL SECURITY;
 ALTER TABLE public.portfolios ENABLE ROW LEVEL SECURITY;
 ALTER TABLE public.transactions ENABLE ROW LEVEL SECURITY;
 ALTER TABLE public.loans ENABLE ROW LEVEL SECURITY;
 ALTER TABLE public.credit_cards ENABLE ROW LEVEL SECURITY;
-ALTER TABLE public.real_estate_properties ENABLE ROW LEVEL SECURITY;
+ALTER TABLE public.real_estate ENABLE ROW LEVEL SECURITY;
+ALTER TABLE public.watchlist ENABLE ROW LEVEL SECURITY;
+ALTER TABLE public.notifications ENABLE ROW LEVEL SECURITY;
 ALTER TABLE public.budgets ENABLE ROW LEVEL SECURITY;
 ALTER TABLE public.budget_income ENABLE ROW LEVEL SECURITY;
 ALTER TABLE public.budget_expenses ENABLE ROW LEVEL SECURITY;
-ALTER TABLE public.notifications ENABLE ROW LEVEL SECURITY;
 
--- Create RLS policies
--- User Profiles policies
+-- User profiles policies
 CREATE POLICY "Users can view their own profile"
   ON public.user_profiles
   FOR SELECT
@@ -498,18 +451,16 @@ CREATE POLICY "Users can update their own profile"
   FOR UPDATE
   USING (auth.uid() = id);
 
--- User Subscriptions policies
+-- User subscriptions policies
 CREATE POLICY "Users can view their own subscription"
   ON public.user_subscriptions
   FOR SELECT
   USING (auth.uid() = id);
 
--- Service roles can update subscriptions (for webhooks)
-CREATE POLICY "Service role can update subscriptions"
+CREATE POLICY "Users can update their own subscription"
   ON public.user_subscriptions
   FOR UPDATE
-  USING (true)
-  WITH CHECK (true);
+  USING (auth.uid() = id);
 
 -- Portfolios policies
 CREATE POLICY "Users can view their own portfolios"
@@ -595,28 +546,65 @@ CREATE POLICY "Users can delete their own credit cards"
   FOR DELETE
   USING (auth.uid() = user_id);
 
--- Real estate properties policies
-CREATE POLICY "Users can view their own real estate properties"
-  ON public.real_estate_properties
+-- Real estate policies
+CREATE POLICY "Users can view their own real estate"
+  ON public.real_estate
   FOR SELECT
   USING (auth.uid() = user_id);
 
-CREATE POLICY "Users can insert their own real estate properties"
-  ON public.real_estate_properties
+CREATE POLICY "Users can insert their own real estate"
+  ON public.real_estate
   FOR INSERT
   WITH CHECK (auth.uid() = user_id);
 
-CREATE POLICY "Users can update their own real estate properties"
-  ON public.real_estate_properties
+CREATE POLICY "Users can update their own real estate"
+  ON public.real_estate
   FOR UPDATE
   USING (auth.uid() = user_id);
 
-CREATE POLICY "Users can delete their own real estate properties"
-  ON public.real_estate_properties
+CREATE POLICY "Users can delete their own real estate"
+  ON public.real_estate
   FOR DELETE
   USING (auth.uid() = user_id);
 
--- Budgets policies
+-- Watchlist policies
+CREATE POLICY "Users can view their own watchlist items"
+  ON public.watchlist
+  FOR SELECT
+  USING (auth.uid() = user_id);
+
+CREATE POLICY "Users can insert their own watchlist items"
+  ON public.watchlist
+  FOR INSERT
+  WITH CHECK (auth.uid() = user_id);
+
+CREATE POLICY "Users can update their own watchlist items"
+  ON public.watchlist
+  FOR UPDATE
+  USING (auth.uid() = user_id);
+
+CREATE POLICY "Users can delete their own watchlist items"
+  ON public.watchlist
+  FOR DELETE
+  USING (auth.uid() = user_id);
+
+-- Notifications policies
+CREATE POLICY "Users can view their own notifications"
+  ON public.notifications
+  FOR SELECT
+  USING (auth.uid() = user_id);
+
+CREATE POLICY "Users can update their own notifications"
+  ON public.notifications
+  FOR UPDATE
+  USING (auth.uid() = user_id);
+
+CREATE POLICY "Users can delete their own notifications"
+  ON public.notifications
+  FOR DELETE
+  USING (auth.uid() = user_id);
+
+-- Budget policies
 CREATE POLICY "Users can view their own budgets"
   ON public.budgets
   FOR SELECT
@@ -637,23 +625,23 @@ CREATE POLICY "Users can delete their own budgets"
   FOR DELETE
   USING (auth.uid() = user_id);
 
--- Budget incomes policies
-CREATE POLICY "Users can view their own budget incomes"
+-- Budget income policies
+CREATE POLICY "Users can view their own budget income"
   ON public.budget_income
   FOR SELECT
   USING (auth.uid() = user_id);
 
-CREATE POLICY "Users can insert their own budget incomes"
+CREATE POLICY "Users can insert their own budget income"
   ON public.budget_income
   FOR INSERT
   WITH CHECK (auth.uid() = user_id);
 
-CREATE POLICY "Users can update their own budget incomes"
+CREATE POLICY "Users can update their own budget income"
   ON public.budget_income
   FOR UPDATE
   USING (auth.uid() = user_id);
 
-CREATE POLICY "Users can delete their own budget incomes"
+CREATE POLICY "Users can delete their own budget income"
   ON public.budget_income
   FOR DELETE
   USING (auth.uid() = user_id);
@@ -679,68 +667,54 @@ CREATE POLICY "Users can delete their own budget expenses"
   FOR DELETE
   USING (auth.uid() = user_id);
 
--- Notifications policies
-CREATE POLICY "Users can view their own notifications"
-  ON public.notifications
-  FOR SELECT
-  USING (auth.uid() = user_id);
-
-CREATE POLICY "Users can update their own notifications"
-  ON public.notifications
-  FOR UPDATE
-  USING (auth.uid() = user_id);
-
--- Market data is accessible to all authenticated users
-CREATE POLICY "All users can view market data"
-  ON public.metals
-  FOR SELECT
-  USING (auth.role() = 'authenticated');
-
-CREATE POLICY "All users can view crypto data"
+-- Market data tables are public read-only
+CREATE POLICY "Anyone can view crypto data"
   ON public.crypto
   FOR SELECT
-  USING (auth.role() = 'authenticated');
+  TO authenticated, anon
+  USING (true);
 
-CREATE POLICY "All users can view currency data"
+CREATE POLICY "Anyone can view currency data"
   ON public.currencies
   FOR SELECT
-  USING (auth.role() = 'authenticated');
+  TO authenticated, anon
+  USING (true);
 
-CREATE POLICY "All users can view stock data"
+CREATE POLICY "Anyone can view metals data"
+  ON public.metals
+  FOR SELECT
+  TO authenticated, anon
+  USING (true);
+
+CREATE POLICY "Anyone can view stocks data"
   ON public.stocks
   FOR SELECT
-  USING (auth.role() = 'authenticated');
+  TO authenticated, anon
+  USING (true);
 
--- Insert default predefined income and expense options
-INSERT INTO public.income_options (name) VALUES 
-  ('Salary'), 
-  ('Freelance'), 
-  ('Investments'), 
-  ('Rental Income'), 
-  ('Side Business'),
-  ('Dividends'),
-  ('Interest'),
-  ('Royalties'),
-  ('Pension'),
-  ('Social Security'),
-  ('Gifts'),
-  ('Other');
+-- System settings - admin only
+CREATE POLICY "Only service role can access system settings"
+  ON public.system_settings
+  FOR ALL
+  TO service_role
+  USING (true);
 
-INSERT INTO public.expense_options (name) VALUES 
-  ('Housing'), 
-  ('Utilities'), 
-  ('Groceries'), 
-  ('Transportation'), 
-  ('Insurance'),
-  ('Healthcare'),
-  ('Debt Payments'),
-  ('Entertainment'),
-  ('Dining Out'),
-  ('Shopping'),
-  ('Education'),
-  ('Travel'),
-  ('Subscriptions'),
-  ('Savings'),
-  ('Investments'),
-  ('Charity'),
-  ('Other');
+---------------------- INDEXES -------------------------
+
+-- Performance indexes
+CREATE INDEX idx_user_profiles_user_id ON public.user_profiles(id);
+CREATE INDEX idx_portfolios_user_id ON public.portfolios(user_id);
+CREATE INDEX idx_transactions_user_id ON public.transactions(user_id);
+CREATE INDEX idx_transactions_portfolio_id ON public.transactions(portfolio_id);
+CREATE INDEX idx_loans_user_id ON public.loans(user_id);
+CREATE INDEX idx_credit_cards_user_id ON public.credit_cards(user_id);
+CREATE INDEX idx_real_estate_user_id ON public.real_estate(user_id);
+CREATE INDEX idx_watchlist_user_id ON public.watchlist(user_id);
+CREATE INDEX idx_notifications_user_id ON public.notifications(user_id);
+CREATE INDEX idx_budgets_user_id ON public.budgets(user_id);
+
+-- Market data indexes
+CREATE INDEX idx_crypto_symbol_date ON public.crypto(symbol, date);
+CREATE INDEX idx_currencies_symbol_date ON public.currencies(symbol, date);
+CREATE INDEX idx_metals_metal_date ON public.metals(metal, date);
+CREATE INDEX idx_stocks_symbol_date ON public.stocks(symbol, date);

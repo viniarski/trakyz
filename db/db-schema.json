@@ -1,0 +1,1133 @@
+[
+  {
+    "tables_schema": [
+      {
+        "table_name": "budget_expenses",
+        "columns": [
+          {
+            "column_name": "budget_month",
+            "data_type": "date",
+            "is_nullable": "NO",
+            "column_default": null
+          },
+          {
+            "column_name": "user_id",
+            "data_type": "uuid",
+            "is_nullable": "NO",
+            "column_default": null
+          },
+          {
+            "column_name": "expense_option_id",
+            "data_type": "integer",
+            "is_nullable": "NO",
+            "column_default": null
+          },
+          {
+            "column_name": "is_selected",
+            "data_type": "boolean",
+            "is_nullable": "NO",
+            "column_default": "false"
+          }
+        ]
+      },
+      {
+        "table_name": "budget_income",
+        "columns": [
+          {
+            "column_name": "budget_month",
+            "data_type": "date",
+            "is_nullable": "NO",
+            "column_default": null
+          },
+          {
+            "column_name": "user_id",
+            "data_type": "uuid",
+            "is_nullable": "NO",
+            "column_default": null
+          },
+          {
+            "column_name": "income_option_id",
+            "data_type": "integer",
+            "is_nullable": "NO",
+            "column_default": null
+          },
+          {
+            "column_name": "is_selected",
+            "data_type": "boolean",
+            "is_nullable": "NO",
+            "column_default": "false"
+          }
+        ]
+      },
+      {
+        "table_name": "budgets",
+        "columns": [
+          {
+            "column_name": "month",
+            "data_type": "date",
+            "is_nullable": "NO",
+            "column_default": null
+          },
+          {
+            "column_name": "user_id",
+            "data_type": "uuid",
+            "is_nullable": "NO",
+            "column_default": null
+          },
+          {
+            "column_name": "planned_income",
+            "data_type": "numeric",
+            "is_nullable": "NO",
+            "column_default": "0"
+          },
+          {
+            "column_name": "planned_expenses",
+            "data_type": "numeric",
+            "is_nullable": "NO",
+            "column_default": "0"
+          },
+          {
+            "column_name": "updated_at",
+            "data_type": "timestamp with time zone",
+            "is_nullable": "YES",
+            "column_default": "now()"
+          }
+        ]
+      },
+      {
+        "table_name": "credit_cards",
+        "columns": [
+          {
+            "column_name": "id",
+            "data_type": "uuid",
+            "is_nullable": "NO",
+            "column_default": "uuid_generate_v4()"
+          },
+          {
+            "column_name": "user_id",
+            "data_type": "uuid",
+            "is_nullable": "NO",
+            "column_default": null
+          },
+          {
+            "column_name": "portfolio_id",
+            "data_type": "uuid",
+            "is_nullable": "NO",
+            "column_default": null
+          },
+          {
+            "column_name": "name",
+            "data_type": "text",
+            "is_nullable": "NO",
+            "column_default": null
+          },
+          {
+            "column_name": "issuer",
+            "data_type": "text",
+            "is_nullable": "NO",
+            "column_default": null
+          },
+          {
+            "column_name": "last_four",
+            "data_type": "text",
+            "is_nullable": "NO",
+            "column_default": null
+          },
+          {
+            "column_name": "balance",
+            "data_type": "numeric",
+            "is_nullable": "NO",
+            "column_default": "0"
+          },
+          {
+            "column_name": "credit_limit",
+            "data_type": "numeric",
+            "is_nullable": "NO",
+            "column_default": "0"
+          },
+          {
+            "column_name": "interest_rate",
+            "data_type": "numeric",
+            "is_nullable": "NO",
+            "column_default": "0"
+          },
+          {
+            "column_name": "min_payment",
+            "data_type": "numeric",
+            "is_nullable": "NO",
+            "column_default": "0"
+          },
+          {
+            "column_name": "due_date",
+            "data_type": "date",
+            "is_nullable": "NO",
+            "column_default": null
+          },
+          {
+            "column_name": "auto_pay",
+            "data_type": "boolean",
+            "is_nullable": "NO",
+            "column_default": "false"
+          },
+          {
+            "column_name": "statement_balance",
+            "data_type": "numeric",
+            "is_nullable": "NO",
+            "column_default": "0"
+          },
+          {
+            "column_name": "annual_fee",
+            "data_type": "numeric",
+            "is_nullable": "NO",
+            "column_default": "0"
+          },
+          {
+            "column_name": "rewards_rate",
+            "data_type": "text",
+            "is_nullable": "YES",
+            "column_default": null
+          },
+          {
+            "column_name": "encrypted",
+            "data_type": "boolean",
+            "is_nullable": "YES",
+            "column_default": "false"
+          },
+          {
+            "column_name": "created_at",
+            "data_type": "timestamp with time zone",
+            "is_nullable": "YES",
+            "column_default": "now()"
+          },
+          {
+            "column_name": "updated_at",
+            "data_type": "timestamp with time zone",
+            "is_nullable": "YES",
+            "column_default": "now()"
+          }
+        ]
+      },
+      {
+        "table_name": "crypto",
+        "columns": [
+          {
+            "column_name": "name",
+            "data_type": "character varying",
+            "is_nullable": "NO",
+            "column_default": null
+          },
+          {
+            "column_name": "date",
+            "data_type": "timestamp with time zone",
+            "is_nullable": "NO",
+            "column_default": null
+          },
+          {
+            "column_name": "price",
+            "data_type": "numeric",
+            "is_nullable": "NO",
+            "column_default": null
+          },
+          {
+            "column_name": "market_cap",
+            "data_type": "numeric",
+            "is_nullable": "YES",
+            "column_default": null
+          },
+          {
+            "column_name": "volume_24h",
+            "data_type": "numeric",
+            "is_nullable": "YES",
+            "column_default": null
+          },
+          {
+            "column_name": "created_at",
+            "data_type": "timestamp with time zone",
+            "is_nullable": "YES",
+            "column_default": "now()"
+          },
+          {
+            "column_name": "date_day",
+            "data_type": "text",
+            "is_nullable": "YES",
+            "column_default": null
+          },
+          {
+            "column_name": "symbol",
+            "data_type": "character varying",
+            "is_nullable": "NO",
+            "column_default": null
+          },
+          {
+            "column_name": "id",
+            "data_type": "uuid",
+            "is_nullable": "NO",
+            "column_default": "uuid_generate_v4()"
+          }
+        ]
+      },
+      {
+        "table_name": "currencies",
+        "columns": [
+          {
+            "column_name": "created_at",
+            "data_type": "timestamp with time zone",
+            "is_nullable": "YES",
+            "column_default": "now()"
+          },
+          {
+            "column_name": "symbol",
+            "data_type": "character varying",
+            "is_nullable": "NO",
+            "column_default": null
+          },
+          {
+            "column_name": "name",
+            "data_type": "character varying",
+            "is_nullable": "NO",
+            "column_default": null
+          },
+          {
+            "column_name": "date",
+            "data_type": "timestamp with time zone",
+            "is_nullable": "NO",
+            "column_default": null
+          },
+          {
+            "column_name": "id",
+            "data_type": "uuid",
+            "is_nullable": "NO",
+            "column_default": "uuid_generate_v4()"
+          },
+          {
+            "column_name": "price",
+            "data_type": "numeric",
+            "is_nullable": "NO",
+            "column_default": null
+          },
+          {
+            "column_name": "date_day",
+            "data_type": "text",
+            "is_nullable": "YES",
+            "column_default": null
+          }
+        ]
+      },
+      {
+        "table_name": "expense_options",
+        "columns": [
+          {
+            "column_name": "id",
+            "data_type": "integer",
+            "is_nullable": "NO",
+            "column_default": "nextval('expense_options_id_seq'::regclass)"
+          },
+          {
+            "column_name": "name",
+            "data_type": "text",
+            "is_nullable": "NO",
+            "column_default": null
+          }
+        ]
+      },
+      {
+        "table_name": "income_options",
+        "columns": [
+          {
+            "column_name": "id",
+            "data_type": "integer",
+            "is_nullable": "NO",
+            "column_default": "nextval('income_options_id_seq'::regclass)"
+          },
+          {
+            "column_name": "name",
+            "data_type": "text",
+            "is_nullable": "NO",
+            "column_default": null
+          }
+        ]
+      },
+      {
+        "table_name": "loans",
+        "columns": [
+          {
+            "column_name": "id",
+            "data_type": "uuid",
+            "is_nullable": "NO",
+            "column_default": "uuid_generate_v4()"
+          },
+          {
+            "column_name": "user_id",
+            "data_type": "uuid",
+            "is_nullable": "NO",
+            "column_default": null
+          },
+          {
+            "column_name": "portfolio_id",
+            "data_type": "uuid",
+            "is_nullable": "NO",
+            "column_default": null
+          },
+          {
+            "column_name": "name",
+            "data_type": "text",
+            "is_nullable": "NO",
+            "column_default": null
+          },
+          {
+            "column_name": "lender",
+            "data_type": "text",
+            "is_nullable": "NO",
+            "column_default": null
+          },
+          {
+            "column_name": "loan_type",
+            "data_type": "text",
+            "is_nullable": "NO",
+            "column_default": null
+          },
+          {
+            "column_name": "original_amount",
+            "data_type": "numeric",
+            "is_nullable": "NO",
+            "column_default": "0"
+          },
+          {
+            "column_name": "current_balance",
+            "data_type": "numeric",
+            "is_nullable": "NO",
+            "column_default": "0"
+          },
+          {
+            "column_name": "interest_rate",
+            "data_type": "numeric",
+            "is_nullable": "NO",
+            "column_default": "0"
+          },
+          {
+            "column_name": "monthly_payment",
+            "data_type": "numeric",
+            "is_nullable": "NO",
+            "column_default": "0"
+          },
+          {
+            "column_name": "payment_day",
+            "data_type": "integer",
+            "is_nullable": "NO",
+            "column_default": "1"
+          },
+          {
+            "column_name": "term_months",
+            "data_type": "integer",
+            "is_nullable": "NO",
+            "column_default": "0"
+          },
+          {
+            "column_name": "start_date",
+            "data_type": "date",
+            "is_nullable": "NO",
+            "column_default": null
+          },
+          {
+            "column_name": "maturity_date",
+            "data_type": "date",
+            "is_nullable": "NO",
+            "column_default": null
+          },
+          {
+            "column_name": "months_paid",
+            "data_type": "integer",
+            "is_nullable": "NO",
+            "column_default": "0"
+          },
+          {
+            "column_name": "months_remaining",
+            "data_type": "integer",
+            "is_nullable": "NO",
+            "column_default": "0"
+          },
+          {
+            "column_name": "next_payment_date",
+            "data_type": "date",
+            "is_nullable": "NO",
+            "column_default": null
+          },
+          {
+            "column_name": "auto_pay",
+            "data_type": "boolean",
+            "is_nullable": "NO",
+            "column_default": "false"
+          },
+          {
+            "column_name": "extra_payments_total",
+            "data_type": "numeric",
+            "is_nullable": "NO",
+            "column_default": "0"
+          },
+          {
+            "column_name": "encrypted",
+            "data_type": "boolean",
+            "is_nullable": "YES",
+            "column_default": "false"
+          },
+          {
+            "column_name": "created_at",
+            "data_type": "timestamp with time zone",
+            "is_nullable": "YES",
+            "column_default": "now()"
+          },
+          {
+            "column_name": "updated_at",
+            "data_type": "timestamp with time zone",
+            "is_nullable": "YES",
+            "column_default": "now()"
+          }
+        ]
+      },
+      {
+        "table_name": "metals",
+        "columns": [
+          {
+            "column_name": "date",
+            "data_type": "timestamp with time zone",
+            "is_nullable": "NO",
+            "column_default": null
+          },
+          {
+            "column_name": "metal",
+            "data_type": "character varying",
+            "is_nullable": "NO",
+            "column_default": null
+          },
+          {
+            "column_name": "id",
+            "data_type": "uuid",
+            "is_nullable": "NO",
+            "column_default": "uuid_generate_v4()"
+          },
+          {
+            "column_name": "created_at",
+            "data_type": "timestamp with time zone",
+            "is_nullable": "YES",
+            "column_default": "now()"
+          },
+          {
+            "column_name": "price",
+            "data_type": "numeric",
+            "is_nullable": "NO",
+            "column_default": null
+          },
+          {
+            "column_name": "date_day",
+            "data_type": "text",
+            "is_nullable": "YES",
+            "column_default": null
+          }
+        ]
+      },
+      {
+        "table_name": "notifications",
+        "columns": [
+          {
+            "column_name": "id",
+            "data_type": "uuid",
+            "is_nullable": "NO",
+            "column_default": "uuid_generate_v4()"
+          },
+          {
+            "column_name": "user_id",
+            "data_type": "uuid",
+            "is_nullable": "NO",
+            "column_default": null
+          },
+          {
+            "column_name": "type",
+            "data_type": "text",
+            "is_nullable": "NO",
+            "column_default": null
+          },
+          {
+            "column_name": "title",
+            "data_type": "text",
+            "is_nullable": "NO",
+            "column_default": null
+          },
+          {
+            "column_name": "message",
+            "data_type": "text",
+            "is_nullable": "NO",
+            "column_default": null
+          },
+          {
+            "column_name": "is_read",
+            "data_type": "boolean",
+            "is_nullable": "YES",
+            "column_default": "false"
+          },
+          {
+            "column_name": "created_at",
+            "data_type": "timestamp with time zone",
+            "is_nullable": "YES",
+            "column_default": "now()"
+          }
+        ]
+      },
+      {
+        "table_name": "portfolios",
+        "columns": [
+          {
+            "column_name": "id",
+            "data_type": "uuid",
+            "is_nullable": "NO",
+            "column_default": "uuid_generate_v4()"
+          },
+          {
+            "column_name": "user_id",
+            "data_type": "uuid",
+            "is_nullable": "NO",
+            "column_default": null
+          },
+          {
+            "column_name": "name",
+            "data_type": "text",
+            "is_nullable": "NO",
+            "column_default": null
+          },
+          {
+            "column_name": "is_default",
+            "data_type": "boolean",
+            "is_nullable": "YES",
+            "column_default": "false"
+          },
+          {
+            "column_name": "total_value",
+            "data_type": "numeric",
+            "is_nullable": "YES",
+            "column_default": "0"
+          },
+          {
+            "column_name": "total_cost",
+            "data_type": "numeric",
+            "is_nullable": "YES",
+            "column_default": "0"
+          },
+          {
+            "column_name": "total_profit_loss",
+            "data_type": "numeric",
+            "is_nullable": "YES",
+            "column_default": "0"
+          },
+          {
+            "column_name": "total_profit_loss_percentage",
+            "data_type": "numeric",
+            "is_nullable": "YES",
+            "column_default": "0"
+          },
+          {
+            "column_name": "asset_count",
+            "data_type": "integer",
+            "is_nullable": "YES",
+            "column_default": "0"
+          },
+          {
+            "column_name": "created_at",
+            "data_type": "timestamp with time zone",
+            "is_nullable": "YES",
+            "column_default": "now()"
+          },
+          {
+            "column_name": "updated_at",
+            "data_type": "timestamp with time zone",
+            "is_nullable": "YES",
+            "column_default": "now()"
+          }
+        ]
+      },
+      {
+        "table_name": "real_estate",
+        "columns": [
+          {
+            "column_name": "id",
+            "data_type": "uuid",
+            "is_nullable": "NO",
+            "column_default": "uuid_generate_v4()"
+          },
+          {
+            "column_name": "user_id",
+            "data_type": "uuid",
+            "is_nullable": "NO",
+            "column_default": null
+          },
+          {
+            "column_name": "asset_id",
+            "data_type": "uuid",
+            "is_nullable": "YES",
+            "column_default": null
+          },
+          {
+            "column_name": "property_type",
+            "data_type": "text",
+            "is_nullable": "NO",
+            "column_default": null
+          },
+          {
+            "column_name": "property_address",
+            "data_type": "text",
+            "is_nullable": "NO",
+            "column_default": null
+          },
+          {
+            "column_name": "purchase_price",
+            "data_type": "numeric",
+            "is_nullable": "NO",
+            "column_default": null
+          },
+          {
+            "column_name": "current_value",
+            "data_type": "numeric",
+            "is_nullable": "NO",
+            "column_default": null
+          },
+          {
+            "column_name": "purchase_date",
+            "data_type": "date",
+            "is_nullable": "NO",
+            "column_default": null
+          },
+          {
+            "column_name": "rental_income",
+            "data_type": "numeric",
+            "is_nullable": "NO",
+            "column_default": "0"
+          },
+          {
+            "column_name": "mortgage_monthly_payment",
+            "data_type": "numeric",
+            "is_nullable": "NO",
+            "column_default": "0"
+          },
+          {
+            "column_name": "mortgage_interest_rate",
+            "data_type": "numeric",
+            "is_nullable": "NO",
+            "column_default": "0"
+          },
+          {
+            "column_name": "property_tax",
+            "data_type": "numeric",
+            "is_nullable": "NO",
+            "column_default": "0"
+          },
+          {
+            "column_name": "insurance",
+            "data_type": "numeric",
+            "is_nullable": "NO",
+            "column_default": "0"
+          },
+          {
+            "column_name": "maintenance_costs",
+            "data_type": "numeric",
+            "is_nullable": "NO",
+            "column_default": "0"
+          },
+          {
+            "column_name": "utilities",
+            "data_type": "numeric",
+            "is_nullable": "NO",
+            "column_default": "0"
+          },
+          {
+            "column_name": "monthly_cash_flow",
+            "data_type": "numeric",
+            "is_nullable": "YES",
+            "column_default": null
+          },
+          {
+            "column_name": "yearly_cash_flow",
+            "data_type": "numeric",
+            "is_nullable": "YES",
+            "column_default": null
+          },
+          {
+            "column_name": "encrypted",
+            "data_type": "boolean",
+            "is_nullable": "YES",
+            "column_default": "false"
+          },
+          {
+            "column_name": "created_at",
+            "data_type": "timestamp with time zone",
+            "is_nullable": "YES",
+            "column_default": "now()"
+          },
+          {
+            "column_name": "updated_at",
+            "data_type": "timestamp with time zone",
+            "is_nullable": "YES",
+            "column_default": "now()"
+          }
+        ]
+      },
+      {
+        "table_name": "stocks",
+        "columns": [
+          {
+            "column_name": "price",
+            "data_type": "numeric",
+            "is_nullable": "NO",
+            "column_default": null
+          },
+          {
+            "column_name": "volume",
+            "data_type": "numeric",
+            "is_nullable": "YES",
+            "column_default": null
+          },
+          {
+            "column_name": "created_at",
+            "data_type": "timestamp with time zone",
+            "is_nullable": "YES",
+            "column_default": "now()"
+          },
+          {
+            "column_name": "id",
+            "data_type": "uuid",
+            "is_nullable": "NO",
+            "column_default": "gen_random_uuid()"
+          },
+          {
+            "column_name": "date",
+            "data_type": "timestamp with time zone",
+            "is_nullable": "NO",
+            "column_default": null
+          },
+          {
+            "column_name": "name",
+            "data_type": "character varying",
+            "is_nullable": "NO",
+            "column_default": null
+          },
+          {
+            "column_name": "symbol",
+            "data_type": "character varying",
+            "is_nullable": "NO",
+            "column_default": null
+          },
+          {
+            "column_name": "date_day",
+            "data_type": "text",
+            "is_nullable": "YES",
+            "column_default": null
+          }
+        ]
+      },
+      {
+        "table_name": "system_settings",
+        "columns": [
+          {
+            "column_name": "id",
+            "data_type": "uuid",
+            "is_nullable": "NO",
+            "column_default": "uuid_generate_v4()"
+          },
+          {
+            "column_name": "key",
+            "data_type": "text",
+            "is_nullable": "NO",
+            "column_default": null
+          },
+          {
+            "column_name": "trial_enabled",
+            "data_type": "boolean",
+            "is_nullable": "YES",
+            "column_default": "true"
+          },
+          {
+            "column_name": "created_at",
+            "data_type": "timestamp with time zone",
+            "is_nullable": "YES",
+            "column_default": "now()"
+          },
+          {
+            "column_name": "updated_at",
+            "data_type": "timestamp with time zone",
+            "is_nullable": "YES",
+            "column_default": "now()"
+          }
+        ]
+      },
+      {
+        "table_name": "transactions",
+        "columns": [
+          {
+            "column_name": "id",
+            "data_type": "uuid",
+            "is_nullable": "NO",
+            "column_default": "uuid_generate_v4()"
+          },
+          {
+            "column_name": "user_id",
+            "data_type": "uuid",
+            "is_nullable": "NO",
+            "column_default": null
+          },
+          {
+            "column_name": "portfolio_id",
+            "data_type": "uuid",
+            "is_nullable": "NO",
+            "column_default": null
+          },
+          {
+            "column_name": "category",
+            "data_type": "text",
+            "is_nullable": "NO",
+            "column_default": null
+          },
+          {
+            "column_name": "asset_type",
+            "data_type": "text",
+            "is_nullable": "NO",
+            "column_default": null
+          },
+          {
+            "column_name": "transaction_type",
+            "data_type": "text",
+            "is_nullable": "NO",
+            "column_default": null
+          },
+          {
+            "column_name": "quantity",
+            "data_type": "numeric",
+            "is_nullable": "NO",
+            "column_default": null
+          },
+          {
+            "column_name": "price",
+            "data_type": "numeric",
+            "is_nullable": "NO",
+            "column_default": null
+          },
+          {
+            "column_name": "date",
+            "data_type": "timestamp with time zone",
+            "is_nullable": "NO",
+            "column_default": null
+          },
+          {
+            "column_name": "created_at",
+            "data_type": "timestamp with time zone",
+            "is_nullable": "YES",
+            "column_default": "now()"
+          },
+          {
+            "column_name": "updated_at",
+            "data_type": "timestamp with time zone",
+            "is_nullable": "YES",
+            "column_default": "now()"
+          },
+          {
+            "column_name": "encrypted",
+            "data_type": "boolean",
+            "is_nullable": "YES",
+            "column_default": "false"
+          }
+        ]
+      },
+      {
+        "table_name": "user_profiles",
+        "columns": [
+          {
+            "column_name": "id",
+            "data_type": "uuid",
+            "is_nullable": "NO",
+            "column_default": null
+          },
+          {
+            "column_name": "name",
+            "data_type": "text",
+            "is_nullable": "YES",
+            "column_default": null
+          },
+          {
+            "column_name": "role",
+            "data_type": "text",
+            "is_nullable": "NO",
+            "column_default": "'user'::text"
+          },
+          {
+            "column_name": "avatar_url",
+            "data_type": "text",
+            "is_nullable": "YES",
+            "column_default": null
+          },
+          {
+            "column_name": "selected_currency",
+            "data_type": "text",
+            "is_nullable": "NO",
+            "column_default": "'USD'::text"
+          },
+          {
+            "column_name": "selected_period",
+            "data_type": "text",
+            "is_nullable": "NO",
+            "column_default": "'24H'::text"
+          },
+          {
+            "column_name": "theme_preference",
+            "data_type": "text",
+            "is_nullable": "NO",
+            "column_default": "'blue'::text"
+          },
+          {
+            "column_name": "last_active_tab",
+            "data_type": "text",
+            "is_nullable": "YES",
+            "column_default": "'portfolio'::text"
+          },
+          {
+            "column_name": "language",
+            "data_type": "text",
+            "is_nullable": "YES",
+            "column_default": "'en'::text"
+          },
+          {
+            "column_name": "market_show_more",
+            "data_type": "boolean",
+            "is_nullable": "YES",
+            "column_default": "false"
+          },
+          {
+            "column_name": "created_at",
+            "data_type": "timestamp with time zone",
+            "is_nullable": "YES",
+            "column_default": "now()"
+          },
+          {
+            "column_name": "updated_at",
+            "data_type": "timestamp with time zone",
+            "is_nullable": "YES",
+            "column_default": "now()"
+          }
+        ]
+      },
+      {
+        "table_name": "user_subscriptions",
+        "columns": [
+          {
+            "column_name": "id",
+            "data_type": "uuid",
+            "is_nullable": "NO",
+            "column_default": null
+          },
+          {
+            "column_name": "stripe_customer_id",
+            "data_type": "text",
+            "is_nullable": "YES",
+            "column_default": null
+          },
+          {
+            "column_name": "stripe_subscription_id",
+            "data_type": "text",
+            "is_nullable": "YES",
+            "column_default": null
+          },
+          {
+            "column_name": "subscription_status",
+            "data_type": "text",
+            "is_nullable": "YES",
+            "column_default": "'inactive'::text"
+          },
+          {
+            "column_name": "subscription_start_date",
+            "data_type": "timestamp with time zone",
+            "is_nullable": "YES",
+            "column_default": null
+          },
+          {
+            "column_name": "subscription_end_date",
+            "data_type": "timestamp with time zone",
+            "is_nullable": "YES",
+            "column_default": null
+          },
+          {
+            "column_name": "is_trial",
+            "data_type": "boolean",
+            "is_nullable": "YES",
+            "column_default": "false"
+          },
+          {
+            "column_name": "trial_ending_notified",
+            "data_type": "boolean",
+            "is_nullable": "YES",
+            "column_default": "false"
+          },
+          {
+            "column_name": "trial_until",
+            "data_type": "timestamp with time zone",
+            "is_nullable": "YES",
+            "column_default": null
+          },
+          {
+            "column_name": "created_at",
+            "data_type": "timestamp with time zone",
+            "is_nullable": "YES",
+            "column_default": "now()"
+          },
+          {
+            "column_name": "updated_at",
+            "data_type": "timestamp with time zone",
+            "is_nullable": "YES",
+            "column_default": "now()"
+          }
+        ]
+      },
+      {
+        "table_name": "watchlist",
+        "columns": [
+          {
+            "column_name": "id",
+            "data_type": "uuid",
+            "is_nullable": "NO",
+            "column_default": "uuid_generate_v4()"
+          },
+          {
+            "column_name": "user_id",
+            "data_type": "uuid",
+            "is_nullable": "NO",
+            "column_default": null
+          },
+          {
+            "column_name": "category",
+            "data_type": "text",
+            "is_nullable": "NO",
+            "column_default": null
+          },
+          {
+            "column_name": "symbol",
+            "data_type": "text",
+            "is_nullable": "NO",
+            "column_default": null
+          },
+          {
+            "column_name": "order_index",
+            "data_type": "integer",
+            "is_nullable": "YES",
+            "column_default": "0"
+          },
+          {
+            "column_name": "created_at",
+            "data_type": "timestamp with time zone",
+            "is_nullable": "YES",
+            "column_default": "now()"
+          },
+          {
+            "column_name": "updated_at",
+            "data_type": "timestamp with time zone",
+            "is_nullable": "YES",
+            "column_default": "now()"
+          }
+        ]
+      }
+    ]
+  }
+]
