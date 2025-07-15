@@ -310,7 +310,7 @@ export default async function Page(props: any) {
         <TabNavigation currentTab={currentTab} />
 
         {/* Content Area */}
-        <div className="bg-[var(--bg-secondary)] rounded-b-xl p-6 shadow-md">
+        <div className="bg-[var(--bg-secondary)] rounded-b-xl px-6 py-2 shadow-md">
           {currentTab === "budget" && (
             <Budget budgets={budgetData} userId={user.id} />
           )}

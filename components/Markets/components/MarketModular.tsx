@@ -14,16 +14,13 @@ import {
   CurrencyCode,
   AssetCategory,
   Crypto as CryptoType,
-  LegacyWatchlistItem  // ONLY CHANGE: Changed from WatchlistItem to LegacyWatchlistItem
+  LegacyWatchlistItem
 } from "@/types";
 import { useCurrencyConverter } from "@/hooks/useCurrencyConverter";
 import { AssetContextMenu } from "@/components/ui/ContextMenu";
 import { CategoryIcon } from "@/components/ui/CategoryIcon";
 import { 
-  CryptoEnhancedView, 
-  StocksEnhancedView, 
-  MetalsEnhancedView, 
-  CurrenciesEnhancedView 
+  UnifiedEnhancedView
 } from "./EnhancedSubTabs";
 
 type Asset = Currency | CryptoType | Metal | Stock;
@@ -31,7 +28,7 @@ type Asset = Currency | CryptoType | Metal | Stock;
 interface MarketAssetsProps {
   assets: Asset[] | null;
   limit: number;
-  watchlist: LegacyWatchlistItem[];  // ONLY CHANGE: Changed from WatchlistItem[] to LegacyWatchlistItem[]
+  watchlist: LegacyWatchlistItem[];
   onToggleWatchlist: (category: AssetCategory, symbol: string) => void;
   selectedCurrency: CurrencyCode;
   currencyRates: {
@@ -164,7 +161,7 @@ export const MarketAssets = memo(
       return uniqueAssets;
     }, [assets, limit, assetType]);
 
-    // Asset type specific configurations - NOW USING CategoryIcon
+    // Asset type specific configurations
     const config = useMemo(() => {
       switch (assetType) {
         case "Crypto":
@@ -213,48 +210,31 @@ export const MarketAssets = memo(
       );
     }
 
-    // Enhanced sub-tab views
+    // ALL SUBTABS NOW USE THE UNIFIED ENHANCED VIEW
     if (isSubtabView) {
       console.log("🔥 Enhanced view requested for:", assetType, "with", displayAssets.length, "assets");
-      console.log("🔥 IsSubtabView:", isSubtabView);
-      console.log("🔥 Full assets array length:", assets?.length);
       
       const enhancedProps = {
         assets: displayAssets,
-        fullAssets: assets || [], // Pass full assets array for charts
+        fullAssets: assets || [],
         assetType,
         config,
         watchlist,
         onToggleWatchlist,
-        selectedCurrency, // Add selectedCurrency prop
+        selectedCurrency,
         currencyRates,
         calculatePriceChange,
         updatedItems,
         formatLargeNumber
       };
 
-      switch (assetType) {
-        case "Crypto":
-          console.log("🚀 Rendering Crypto enhanced view");
-          return <CryptoEnhancedView {...enhancedProps} assets={displayAssets as CryptoType[]} />;
-        case "Stocks & Indexes":
-          console.log("📈 Rendering Stocks enhanced view");
-          return <StocksEnhancedView {...enhancedProps} assets={displayAssets as Stock[]} />;
-        case "Precious Metals":
-          console.log("🥇 Rendering Metals enhanced view");
-          return <MetalsEnhancedView {...enhancedProps} assets={displayAssets as Metal[]} />;
-        case "Cash":
-          console.log("💰 Rendering Currencies enhanced view");
-          return <CurrenciesEnhancedView {...enhancedProps} assets={displayAssets as Currency[]} />;
-        default:
-          console.log("❌ No enhanced view for asset type:", assetType);
-          break;
-      }
+      // ALL asset types now use the same UnifiedEnhancedView component
+      return <UnifiedEnhancedView {...enhancedProps} />;
     }
 
     console.log("📝 Rendering original 'All' view for:", assetType);
 
-    // Original "All" view with 3-dots context menu
+    // Original "All" view with 3-dots context menu (unchanged)
     return (
       <div className="space-y-3 transition-all duration-300 ease-in-out">
         <div className="flex items-center gap-2">
