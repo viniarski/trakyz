@@ -3,16 +3,14 @@
 'use client'
 
 import { useState } from 'react'
-import { 
-  DebtHeader,
-  DebtList,
-  AddLoanModal,
-  AddCreditCardModal,
-  EditLoanModal,
-  EditCreditCardModal,
-  DeleteDebtModal
-} from '@/components/Debt'
-import type { DebtData, Loan, CreditCard } from '@/types'
+import { DebtHeader } from '@/components/Debt/components/DebtHeader'
+import { DebtList } from '@/components/Debt/components/DebtList'
+import { AddLoanModal } from '@/components/Debt/modals/AddLoanModal'
+import { AddCreditCardModal } from '@/components/Debt/modals/AddCreditCardModal'
+import { EditLoanModal } from '@/components/Debt/modals/EditLoanModal'
+import { EditCreditCardModal } from '@/components/Debt/modals/EditCreditCardModal'
+import { DeleteDebtModal } from '@/components/Debt/modals/DeleteDebtModal'
+import type { Loan, CreditCard, DebtData } from '@/types'
 
 interface DebtProps {
   debtData: DebtData
@@ -20,20 +18,16 @@ interface DebtProps {
 }
 
 export default function Debt({ debtData, userId }: DebtProps) {
-  // State management
-  const [loans, setLoans] = useState<Loan[]>(debtData.loans)
-  const [creditCards, setCreditCards] = useState<CreditCard[]>(debtData.creditCards)
-  
-  // Modal states
+  // State for modals
   const [showAddLoan, setShowAddLoan] = useState(false)
   const [showAddCreditCard, setShowAddCreditCard] = useState(false)
   const [editingLoan, setEditingLoan] = useState<Loan | null>(null)
   const [editingCreditCard, setEditingCreditCard] = useState<CreditCard | null>(null)
-  const [deletingDebt, setDeletingDebt] = useState<{
-    type: 'loan' | 'credit_card'
-    id: string
-    name: string
-  } | null>(null)
+  const [deletingDebt, setDeletingDebt] = useState<{ type: 'loan' | 'credit_card'; id: string; name: string } | null>(null)
+
+  // State for debt data
+  const [loans, setLoans] = useState<Loan[]>(debtData?.loans || [])
+  const [creditCards, setCreditCards] = useState<CreditCard[]>(debtData?.creditCards || [])
 
   // Add new loan
   const handleAddLoan = async (loanData: Omit<Loan, 'id' | 'user_id' | 'created_at' | 'updated_at'>) => {
@@ -140,38 +134,65 @@ export default function Debt({ debtData, userId }: DebtProps) {
     }
   }
 
-  // Calculate totals for summary
-  const totalDebt = loans.reduce((sum, loan) => sum + loan.current_balance, 0) +
-                   creditCards.reduce((sum, card) => sum + card.balance, 0)
-  
-  const monthlyPayments = loans.reduce((sum, loan) => sum + loan.monthly_payment, 0) +
-                         creditCards.reduce((sum, card) => sum + card.min_payment, 0)
-
-  const totalCreditLimit = creditCards.reduce((sum, card) => sum + card.credit_limit, 0)
-  const totalCreditUsed = creditCards.reduce((sum, card) => sum + card.balance, 0)
-  const creditUtilization = totalCreditLimit > 0 ? (totalCreditUsed / totalCreditLimit) * 100 : 0
-
-return (
-  <div className="p-3 sm:p-6 md:p-6">
-    {/* Header Section with Summary */}
-    <DebtHeader
-      onAddLoan={() => setShowAddLoan(true)}
-      onAddCreditCard={() => setShowAddCreditCard(true)}
-      debtData={{ loans, creditCards }}
-    />
-
-    {/* Debt Lists */}
-    <div className="p-4">
-      <DebtList
-        loans={loans}
-        creditCards={creditCards}
-        onEditLoan={setEditingLoan}
-        onEditCreditCard={setEditingCreditCard}
-        onDeleteDebt={setDeletingDebt}
+  return (
+    <>
+      {/* Header Section with Summary */}
+      <DebtHeader
+        onAddLoan={() => setShowAddLoan(true)}
+        onAddCreditCard={() => setShowAddCreditCard(true)}
+        debtData={{ loans, creditCards }}
       />
-    </div>
 
-    {/* Modals... */}
-  </div>
-)
+      {/* Debt Lists */}
+      <div className="mt-4">
+        <DebtList
+          loans={loans}
+          creditCards={creditCards}
+          onEditLoan={setEditingLoan}
+          onEditCreditCard={setEditingCreditCard}
+          onDeleteDebt={setDeletingDebt}
+        />
+      </div>
+
+      {/* Modals */}
+      {showAddLoan && (
+        <AddLoanModal
+          onSubmit={handleAddLoan}
+          onClose={() => setShowAddLoan(false)}
+        />
+      )}
+
+      {showAddCreditCard && (
+        <AddCreditCardModal
+          onSubmit={handleAddCreditCard}
+          onClose={() => setShowAddCreditCard(false)}
+        />
+      )}
+
+      {editingLoan && (
+        <EditLoanModal
+          loan={editingLoan}
+          onSubmit={(loanData) => handleUpdateLoan(editingLoan.id, loanData)}
+          onClose={() => setEditingLoan(null)}
+        />
+      )}
+
+      {editingCreditCard && (
+        <EditCreditCardModal
+          creditCard={editingCreditCard}
+          onSubmit={(cardData) => handleUpdateCreditCard(editingCreditCard.id, cardData)}
+          onClose={() => setEditingCreditCard(null)}
+        />
+      )}
+
+      {deletingDebt && (
+        <DeleteDebtModal
+          debtType={deletingDebt.type}
+          debtName={deletingDebt.name}
+          onConfirm={handleDeleteDebt}
+          onClose={() => setDeletingDebt(null)}
+        />
+      )}
+    </>
+  )
 }

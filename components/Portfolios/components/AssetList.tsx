@@ -21,7 +21,7 @@ export function AssetList({
   return (
     <div className="mt-2 space-y-2 md:mt-0">
       {/* Column Headers (Big Screens Only) */}
-      <div className="hidden md:grid md:grid-cols-[2fr,1fr,1fr,1fr,1fr,1.5fr,0.5fr] gap-4 px-2 py-3 border-b border-gray-700">
+      <div className="hidden md:grid md:grid-cols-[2fr,1fr,1fr,1fr,1fr,1.5fr,0.5fr] gap-4 px-2 py-3 border-b border-[var(--bg-hover)]">
         <div className="text-[var(--text-secondary)] text-sm">Asset</div>
         <div className="text-[var(--text-secondary)] text-sm text-right">Quantity</div>
         <div className="text-[var(--text-secondary)] text-sm text-right">Current Price</div>

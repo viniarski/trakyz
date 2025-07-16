@@ -41,11 +41,11 @@ export function DebtList({
   const totalCreditBalance = creditCards.reduce((sum, card) => sum + card.balance, 0)
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-4">
       {/* Loans Section */}
-      <div className="bg-[var(--bg-hover)]/30 rounded-xl">
+      <div className="bg-[var(--bg-secondary)] rounded-xl border border-[var(--bg-hover)] overflow-hidden">
         <div 
-          className="flex items-center justify-between p-4 cursor-pointer hover:bg-[var(--bg-hover)]/50 transition-colors rounded-xl"
+          className="flex items-center justify-between p-4 cursor-pointer hover:bg-[var(--bg-hover)]/50 transition-colors border-b border-[var(--bg-hover)]"
           onClick={() => toggleSection('loans')}
         >
           <div className="flex items-center gap-3">
@@ -69,18 +69,33 @@ export function DebtList({
         </div>
 
         {expandedSections.has('loans') && (
-          <div className="px-4 pb-4">
+          <div>
             {loans.length > 0 ? (
-              <div className="space-y-3">
-                {loans.map((loan) => (
-                  <LoanItem
-                    key={loan.id}
-                    loan={loan}
-                    onEdit={() => onEditLoan(loan)}
-                    onDelete={() => onDeleteDebt({ type: 'loan', id: loan.id, name: loan.name })}
-                  />
-                ))}
-              </div>
+              <>
+                {/* Table Header */}
+                <div className="hidden md:grid md:grid-cols-[2fr,1fr,1fr,1fr,1fr,1fr,0.5fr] gap-4 px-4 py-3 bg-[var(--bg-hover)] border-b border-[var(--bg-hover)]">
+                  <div className="text-[var(--text-secondary)] text-sm font-medium">Loan Name</div>
+                  <div className="text-[var(--text-secondary)] text-sm font-medium text-right">Balance</div>
+                  <div className="text-[var(--text-secondary)] text-sm font-medium text-right">Monthly Payment</div>
+                  <div className="text-[var(--text-secondary)] text-sm font-medium text-right">Interest Rate</div>
+                  <div className="text-[var(--text-secondary)] text-sm font-medium text-right">Term</div>
+                  <div className="text-[var(--text-secondary)] text-sm font-medium text-right">Next Payment</div>
+                  <div className="text-[var(--text-secondary)] text-sm font-medium text-right">Actions</div>
+                </div>
+                
+                {/* Loan Rows */}
+                <div>
+                  {loans.map((loan, index) => (
+                    <div key={loan.id} className={`${index < loans.length - 1 ? 'border-b border-[var(--bg-hover)]' : ''}`}>
+                      <LoanItem
+                        loan={loan}
+                        onEdit={() => onEditLoan(loan)}
+                        onDelete={() => onDeleteDebt({ type: 'loan', id: loan.id, name: loan.name })}
+                      />
+                    </div>
+                  ))}
+                </div>
+              </>
             ) : (
               <div className="text-center py-8">
                 <p className="text-[var(--text-secondary)]">No loans found</p>
@@ -94,9 +109,9 @@ export function DebtList({
       </div>
 
       {/* Credit Cards Section */}
-      <div className="bg-[var(--bg-hover)]/30 rounded-xl">
+      <div className="bg-[var(--bg-secondary)] rounded-xl border border-[var(--bg-hover)] overflow-hidden">
         <div 
-          className="flex items-center justify-between p-4 cursor-pointer hover:bg-[var(--bg-hover)]/50 transition-colors rounded-xl"
+          className="flex items-center justify-between p-4 cursor-pointer hover:bg-[var(--bg-hover)]/50 transition-colors border-b border-[var(--bg-hover)]"
           onClick={() => toggleSection('credit_cards')}
         >
           <div className="flex items-center gap-3">
@@ -120,18 +135,33 @@ export function DebtList({
         </div>
 
         {expandedSections.has('credit_cards') && (
-          <div className="px-4 pb-4">
+          <div>
             {creditCards.length > 0 ? (
-              <div className="space-y-3">
-                {creditCards.map((card) => (
-                  <CreditCardItem
-                    key={card.id}
-                    creditCard={card}
-                    onEdit={() => onEditCreditCard(card)}
-                    onDelete={() => onDeleteDebt({ type: 'credit_card', id: card.id, name: card.name })}
-                  />
-                ))}
-              </div>
+              <>
+                {/* Table Header */}
+                <div className="hidden md:grid md:grid-cols-[2fr,1fr,1fr,1fr,1fr,1fr,0.5fr] gap-4 px-4 py-3 bg-[var(--bg-hover)] border-b border-[var(--bg-hover)]">
+                  <div className="text-[var(--text-secondary)] text-sm font-medium">Card Name</div>
+                  <div className="text-[var(--text-secondary)] text-sm font-medium text-right">Balance</div>
+                  <div className="text-[var(--text-secondary)] text-sm font-medium text-right">Credit Limit</div>
+                  <div className="text-[var(--text-secondary)] text-sm font-medium text-right">Utilization</div>
+                  <div className="text-[var(--text-secondary)] text-sm font-medium text-right">Min Payment</div>
+                  <div className="text-[var(--text-secondary)] text-sm font-medium text-right">APR</div>
+                  <div className="text-[var(--text-secondary)] text-sm font-medium text-right">Actions</div>
+                </div>
+                
+                {/* Credit Card Rows */}
+                <div>
+                  {creditCards.map((card, index) => (
+                    <div key={card.id} className={`${index < creditCards.length - 1 ? 'border-b border-[var(--bg-hover)]' : ''}`}>
+                      <CreditCardItem
+                        creditCard={card}
+                        onEdit={() => onEditCreditCard(card)}
+                        onDelete={() => onDeleteDebt({ type: 'credit_card', id: card.id, name: card.name })}
+                      />
+                    </div>
+                  ))}
+                </div>
+              </>
             ) : (
               <div className="text-center py-8">
                 <p className="text-[var(--text-secondary)]">No credit cards found</p>
