@@ -93,93 +93,96 @@ export function AnalyticsOverview({
   }
 
   return (
-    <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-      {/* Portfolio Allocation */}
-      <div className="bg-[var(--bg-secondary)] rounded-lg p-6">
-        <h3 className="text-lg font-semibold mb-4 text-[var(--text-primary)]">Portfolio Allocation</h3>
-        
-        {/* Pie Chart */}
-        <div className="h-64 mb-4">
-          <ResponsiveContainer width="100%" height="100%">
-            <PieChart>
-              <Pie
-                data={allocationData}
-                cx="50%"
-                cy="50%"
-                innerRadius={60}
-                outerRadius={120}
-                paddingAngle={0}
-                dataKey="value"
-                label={({ category, percentage }) => `${category}: ${percentage}%`}
-                labelLine={false}
-              >
-                {allocationData.map((entry, index) => (
-                  <Cell key={`cell-${index}`} fill={colors[index % colors.length]} />
-                ))}
-              </Pie>
-              <Tooltip content={<CustomTooltip />} />
-            </PieChart>
-          </ResponsiveContainer>
-        </div>
-        
-        {/* Allocation Legend */}
-        <div className="space-y-2">
-          {allocationData.map((item, index) => (
-            <div key={item.category} className="flex items-center justify-between">
-              <div className="flex items-center gap-2">
-                <div 
-                  className="w-3 h-3 rounded-full" 
-                  style={{ backgroundColor: colors[index % colors.length] }}
-                />
-                <span className="text-[var(--text-primary)] text-sm">{item.category}</span>
-              </div>
-              <div className="text-right">
-                <div className="text-[var(--text-primary)] font-medium text-sm">
-                  {formatCurrency(item.value)}
+    <div className="space-y-6">
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+        {/* Portfolio Allocation */}
+        <div className="bg-[var(--bg-secondary)] rounded-lg p-6">
+          <h3 className="text-lg font-semibold mb-4 text-[var(--text-primary)]">Portfolio Allocation</h3>
+          
+          {/* Pie Chart */}
+          <div className="h-64 mb-4">
+            <ResponsiveContainer width="100%" height="100%">
+              <PieChart>
+                <Pie
+                  data={allocationData}
+                  cx="50%"
+                  cy="50%"
+                  innerRadius={60}
+                  outerRadius={120}
+                  paddingAngle={0}
+                  dataKey="value"
+                  label={({ category, percentage }) => `${category}: ${percentage}%`}
+                  labelLine={false}
+                  stroke="none"
+                >
+                  {allocationData.map((entry, index) => (
+                    <Cell key={`cell-${index}`} fill={colors[index % colors.length]} />
+                  ))}
+                </Pie>
+                <Tooltip content={<CustomTooltip />} />
+              </PieChart>
+            </ResponsiveContainer>
+          </div>
+          
+          {/* Allocation Legend */}
+          <div className="space-y-2">
+            {allocationData.map((item, index) => (
+              <div key={item.category} className="flex items-center justify-between">
+                <div className="flex items-center gap-2">
+                  <div 
+                    className="w-3 h-3 rounded-full" 
+                    style={{ backgroundColor: colors[index % colors.length] }}
+                  />
+                  <span className="text-[var(--text-primary)] text-sm">{item.category}</span>
                 </div>
-                <div className="text-[var(--text-secondary)] text-xs">
-                  {item.percentage}%
+                <div className="text-right">
+                  <div className="text-[var(--text-primary)] font-medium text-sm">
+                    {formatCurrency(item.value)}
+                  </div>
+                  <div className="text-[var(--text-secondary)] text-xs">
+                    {item.percentage}%
+                  </div>
                 </div>
               </div>
-            </div>
-          ))}
+            ))}
+          </div>
         </div>
-      </div>
 
-      {/* Top Assets */}
-      <div className="bg-[var(--bg-secondary)] rounded-lg p-6">
-        <h3 className="text-lg font-semibold mb-4 text-[var(--text-primary)]">Top Assets</h3>
-        <div className="space-y-3">
-          {assetPerformance.slice(0, 5).map((asset, index) => (
-            <div key={asset.asset} className="flex items-center justify-between p-3 rounded-lg bg-[var(--bg-hover)]/30">
-              <div className="flex items-center gap-3">
-                <div className="w-8 h-8 bg-[var(--accent-primary-10)] rounded-full flex items-center justify-center">
-                  <span className="text-xs font-medium text-[var(--accent-primary)]">
-                    {index + 1}
-                  </span>
+        {/* Top Assets */}
+        <div className="bg-[var(--bg-secondary)] rounded-lg p-6">
+          <h3 className="text-lg font-semibold mb-4 text-[var(--text-primary)]">Top Assets</h3>
+          <div className="space-y-3">
+            {assetPerformance.slice(0, 5).map((asset, index) => (
+              <div key={asset.asset} className="flex items-center justify-between p-3 rounded-lg bg-[var(--bg-hover)]/30">
+                <div className="flex items-center gap-3">
+                  <div className="w-8 h-8 bg-[var(--accent-primary-10)] rounded-full flex items-center justify-center">
+                    <span className="text-xs font-medium text-[var(--accent-primary)]">
+                      {index + 1}
+                    </span>
+                  </div>
+                  <div>
+                    <span className="font-medium text-[var(--text-primary)]">{asset.asset}</span>
+                    <div className="text-sm text-[var(--text-secondary)]">{asset.category}</div>
+                  </div>
                 </div>
-                <div>
-                  <span className="font-medium text-[var(--text-primary)]">{asset.asset}</span>
-                  <div className="text-sm text-[var(--text-secondary)]">{asset.category}</div>
+                <div className="text-right">
+                  <div className="font-medium text-[var(--text-primary)]">
+                    {formatCurrency(asset.currentValue)}
+                  </div>
+                  <div className="flex items-center gap-1 justify-end">
+                    {asset.profitPercentage >= 0 ? (
+                      <TrendingUp className="h-3 w-3 text-green-500" />
+                    ) : (
+                      <TrendingDown className="h-3 w-3 text-red-500" />
+                    )}
+                    <span className={`text-sm ${asset.profitPercentage >= 0 ? 'text-green-500' : 'text-red-500'}`}>
+                      {formatPercentage(asset.profitPercentage)}
+                    </span>
+                  </div>
                 </div>
               </div>
-              <div className="text-right">
-                <div className="font-medium text-[var(--text-primary)]">
-                  {formatCurrency(asset.currentValue)}
-                </div>
-                <div className="flex items-center gap-1 justify-end">
-                  {asset.profitPercentage >= 0 ? (
-                    <TrendingUp className="h-3 w-3 text-green-500" />
-                  ) : (
-                    <TrendingDown className="h-3 w-3 text-red-500" />
-                  )}
-                  <span className={`text-sm ${asset.profitPercentage >= 0 ? 'text-green-500' : 'text-red-500'}`}>
-                    {formatPercentage(asset.profitPercentage)}
-                  </span>
-                </div>
-              </div>
-            </div>
-          ))}
+            ))}
+          </div>
         </div>
       </div>
     </div>

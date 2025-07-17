@@ -178,7 +178,6 @@ export default async function Page(props: any) {
         loans: loans || [],
         creditCards: creditCards || [],
       };
-      
       if (loanError) console.error("Error fetching loan data:", loanError);
       if (creditCardError) console.error("Error fetching credit card data:", creditCardError);
       break;
@@ -186,29 +185,32 @@ export default async function Page(props: any) {
     case "real-estate":
       const [
         { data: realEstate, error: realEstateError },
-        { data: realEstatePortfolios, error: realEstatePortfolioError }
+        { data: realEstatePortfolios, error: realEstatePortfoliosError }
       ] = await Promise.all([
         supabase
           .from("real_estate")
           .select("*")
-          .eq("user_id", user.id)
-          .order("created_at", { ascending: false }),
+          .eq("user_id", user.id),
         supabase
           .from("portfolios")
           .select("*")
-          .eq("user_id", user.id)
+          .eq("user_id", user.id),
       ]);
 
       realEstateData = realEstate || [];
       portfoliosData = realEstatePortfolios || [];
       if (realEstateError) console.error("Error fetching real estate data:", realEstateError);
-      if (realEstatePortfolioError) console.error("Error fetching portfolio data:", realEstatePortfolioError);
+      if (realEstatePortfoliosError) console.error("Error fetching real estate portfolios data:", realEstatePortfoliosError);
       break;
 
     case "portfolios":
       const [
         { data: portfolios, error: portfolioError },
         { data: portfolioTransactions, error: portfolioTransactionError },
+        { data: portfolioMetals, error: portfolioMetalsError },
+        { data: portfolioCrypto, error: portfolioCryptoError },
+        { data: portfolioCurrencies, error: portfolioCurrenciesError },
+        { data: portfolioStocks, error: portfolioStocksError },
       ] = await Promise.all([
         supabase
           .from("portfolios")
@@ -220,12 +222,27 @@ export default async function Page(props: any) {
           .eq("user_id", user.id)
           .order("date", { ascending: false })
           .limit(1000),
+        supabase.from("metals").select("*").order("date", { ascending: false }),
+        supabase.from("crypto").select("*").order("date", { ascending: false }),
+        supabase.from("currencies").select("*").order("date", { ascending: false }),
+        supabase.from("stocks").select("*").order("date", { ascending: false }),
       ]);
 
       portfoliosData = portfolios || [];
       transactionsData = portfolioTransactions || [];
+      marketData = {
+        metals: portfolioMetals || [],
+        crypto: portfolioCrypto || [],
+        currencies: portfolioCurrencies || [],
+        stocks: portfolioStocks || [],
+        selectedCurrency: userProfile?.selected_currency || "USD",
+      };
       if (portfolioError) console.error("Error fetching portfolio data:", portfolioError);
-      if (portfolioTransactionError) console.error("Error fetching portfolio transactions:", portfolioTransactionError);
+      if (portfolioTransactionError) console.error("Error fetching portfolio transaction data:", portfolioTransactionError);
+      if (portfolioMetalsError) console.error("Error fetching portfolio metals data:", portfolioMetalsError);
+      if (portfolioCryptoError) console.error("Error fetching portfolio crypto data:", portfolioCryptoError);
+      if (portfolioCurrenciesError) console.error("Error fetching portfolio currencies data:", portfolioCurrenciesError);
+      if (portfolioStocksError) console.error("Error fetching portfolio stocks data:", portfolioStocksError);
       break;
 
     case "transactions":
@@ -241,12 +258,17 @@ export default async function Page(props: any) {
       break;
 
     case "analytics":
-      // Analytics needs multiple data sources
+      // Analytics needs both transaction data AND market data for historical prices
       const [
         { data: analyticsLoans },
         { data: analyticsCreditCards },
         { data: analyticsTransactions },
         { data: analyticsPortfolios },
+        // Add market data fetching for analytics
+        { data: analyticsMetals, error: analyticsMetalsError },
+        { data: analyticsCrypto, error: analyticsCryptoError },
+        { data: analyticsCurrencies, error: analyticsCurrenciesError },
+        { data: analyticsStocks, error: analyticsStocksError },
       ] = await Promise.all([
         supabase
           .from("loans")
@@ -266,14 +288,35 @@ export default async function Page(props: any) {
           .from("portfolios")
           .select("*")
           .eq("user_id", user.id),
+        // Fetch all market data for analytics
+        supabase.from("metals").select("*").order("date", { ascending: false }),
+        supabase.from("crypto").select("*").order("date", { ascending: false }),
+        supabase.from("currencies").select("*").order("date", { ascending: false }),
+        supabase.from("stocks").select("*").order("date", { ascending: false }),
       ]);
 
+      // Set up all data for analytics
       debtData = {
         loans: analyticsLoans || [],
         creditCards: analyticsCreditCards || [],
       };
       transactionsData = analyticsTransactions || [];
       portfoliosData = analyticsPortfolios || [];
+      
+      // Set up market data for analytics
+      marketData = {
+        metals: analyticsMetals || [],
+        crypto: analyticsCrypto || [],
+        currencies: analyticsCurrencies || [],
+        stocks: analyticsStocks || [],
+        selectedCurrency: userProfile?.selected_currency || "USD",
+      };
+
+      // Log any market data errors
+      if (analyticsMetalsError) console.error("Error fetching analytics metals data:", analyticsMetalsError);
+      if (analyticsCryptoError) console.error("Error fetching analytics crypto data:", analyticsCryptoError);
+      if (analyticsCurrenciesError) console.error("Error fetching analytics currencies data:", analyticsCurrenciesError);
+      if (analyticsStocksError) console.error("Error fetching analytics stocks data:", analyticsStocksError);
       break;
 
     default:
@@ -352,6 +395,7 @@ export default async function Page(props: any) {
               portfolios={portfoliosData}
               transactions={transactionsData}
               debtData={debtData}
+              marketData={marketData}
               userId={user.id}
             />
           )}

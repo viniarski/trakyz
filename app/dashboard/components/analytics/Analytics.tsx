@@ -2,18 +2,19 @@
 
 'use client'
 
-import { useState } from 'react'
+import { useState, useMemo } from 'react'
 import { AnalyticsHeader } from '@/components/Analytics/components/AnalyticsHeader'
 import { AnalyticsOverview } from '@/components/Analytics/components/AnalyticsOverview'
 import { AnalyticsPerformance } from '@/components/Analytics/components/AnalyticsPerformance'
 import { AnalyticsAllocation } from '@/components/Analytics/components/AnalyticsAllocation'
 import { AnalyticsInsights } from '@/components/Analytics/components/AnalyticsInsights'
-import type { Transaction, Portfolio, DebtData } from '@/types'
+import type { Transaction, Portfolio, DebtData, MarketData } from '@/types'
 
 interface AnalyticsProps {
   transactions: Transaction[]
   portfolios: Portfolio[]
   debtData: DebtData
+  marketData: MarketData  // Add marketData prop
   userId: string
 }
 
@@ -21,20 +22,61 @@ export default function Analytics({
   transactions, 
   portfolios, 
   debtData, 
+  marketData,  // Receive marketData
   userId 
 }: AnalyticsProps) {
   const [activeTab, setActiveTab] = useState('overview')
   const [selectedPeriod, setSelectedPeriod] = useState<'1W' | '1M' | '3M' | '6M' | '1Y' | 'ALL'>('1M')
   
-  // Mock data for current prices and historical data
-  const currentPrices: Record<string, number> = {}
-  const historicalData = {
-    crypto: [],
-    stocks: [],
-    metals: [],
-    currencies: []
-  }
-  const selectedCurrency = 'USD'
+  // Process market data to create currentPrices lookup and historicalData
+  const { currentPrices, historicalData } = useMemo(() => {
+    const prices: Record<string, number> = {}
+    
+    // Get latest prices for each asset
+    if (marketData.crypto) {
+      marketData.crypto.forEach(crypto => {
+        if (!prices[crypto.symbol] || new Date(crypto.date) > new Date(marketData.crypto.find(c => c.symbol === crypto.symbol && prices[c.symbol])?.date || '')) {
+          prices[crypto.symbol] = crypto.price
+        }
+      })
+    }
+    
+    if (marketData.stocks) {
+      marketData.stocks.forEach(stock => {
+        if (!prices[stock.symbol] || new Date(stock.date) > new Date(marketData.stocks.find(s => s.symbol === stock.symbol && prices[s.symbol])?.date || '')) {
+          prices[stock.symbol] = stock.price
+        }
+      })
+    }
+    
+    if (marketData.metals) {
+      marketData.metals.forEach(metal => {
+        const key = metal.metal.toUpperCase()
+        if (!prices[key] || new Date(metal.date) > new Date(marketData.metals.find(m => m.metal.toUpperCase() === key && prices[key])?.date || '')) {
+          prices[key] = metal.price
+        }
+      })
+    }
+    
+    if (marketData.currencies) {
+      marketData.currencies.forEach(currency => {
+        if (!prices[currency.symbol] || new Date(currency.date) > new Date(marketData.currencies.find(c => c.symbol === currency.symbol && prices[c.symbol])?.date || '')) {
+          prices[currency.symbol] = currency.price
+        }
+      })
+    }
+
+    const historical = {
+      crypto: marketData.crypto || [],
+      stocks: marketData.stocks || [],
+      metals: marketData.metals || [],
+      currencies: marketData.currencies || []
+    }
+
+    return { currentPrices: prices, historicalData: historical }
+  }, [marketData])
+
+  const selectedCurrency = marketData.selectedCurrency || 'USD'
 
   // Show empty state if no transactions
   if (!transactions || transactions.length === 0) {

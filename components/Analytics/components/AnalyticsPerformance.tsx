@@ -3,8 +3,8 @@
 'use client'
 
 import { useMemo, useState } from 'react'
-import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer, AreaChart, Area } from 'recharts'
-import { TrendingUp, TrendingDown, BarChart3 } from 'lucide-react'
+import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer } from 'recharts'
+import { Eye, EyeOff } from 'lucide-react'
 import type { Transaction, Crypto, Stock, Metal, Currency } from '@/types'
 
 interface AnalyticsPerformanceProps {
@@ -20,6 +20,22 @@ interface AnalyticsPerformanceProps {
   } | null
 }
 
+interface BenchmarkSettings {
+  'S&P 500': boolean
+  'Bitcoin': boolean
+  'Gold': boolean
+}
+
+interface ChartDataPoint {
+  date: string
+  portfolio: number
+  'S&P 500': number
+  'Bitcoin': number
+  'Gold': number
+}
+
+type TimePeriod = '1D' | '7D' | '1M' | '3M' | '1Y' | 'ALL'
+
 export function AnalyticsPerformance({
   transactions,
   currentPrices,
@@ -27,16 +43,40 @@ export function AnalyticsPerformance({
   selectedPeriod,
   historicalData
 }: AnalyticsPerformanceProps) {
-  const [showBenchmarks, setShowBenchmarks] = useState(true)
-  const [normalizeData, setNormalizeData] = useState(false)
+  const [benchmarkSettings, setBenchmarkSettings] = useState<BenchmarkSettings>({
+    'S&P 500': true,
+    'Bitcoin': true,
+    'Gold': true
+  })
+  const [timePeriod, setTimePeriod] = useState<TimePeriod>('3M')
 
-  // Calculate portfolio performance over time
+  const toggleBenchmark = (benchmark: keyof BenchmarkSettings) => {
+    setBenchmarkSettings(prev => ({
+      ...prev,
+      [benchmark]: !prev[benchmark]
+    }))
+  }
+
+  // Calculate portfolio performance over time using your working approach
   const portfolioChartData = useMemo(() => {
+    if (!historicalData || transactions.length === 0) {
+      console.log('No historical data or transactions')
+      return []
+    }
+
+    console.log('=== PORTFOLIO CALCULATION DEBUG ===')
+    console.log('Transactions count:', transactions.length)
+    console.log('Sample transaction:', transactions[0])
+
+    // Get date range based on selected period
     const now = new Date()
     let startDate = new Date()
     
-    switch(selectedPeriod) {
-      case '1W':
+    switch(timePeriod) {
+      case '1D':
+        startDate.setDate(now.getDate() - 1)
+        break
+      case '7D':
         startDate.setDate(now.getDate() - 7)
         break
       case '1M':
@@ -45,13 +85,11 @@ export function AnalyticsPerformance({
       case '3M':
         startDate.setMonth(now.getMonth() - 3)
         break
-      case '6M':
-        startDate.setMonth(now.getMonth() - 6)
-        break
       case '1Y':
         startDate.setFullYear(now.getFullYear() - 1)
         break
       case 'ALL':
+        // Find earliest transaction date
         const dates = transactions.map(t => new Date(t.date).getTime())
         if (dates.length > 0) {
           startDate = new Date(Math.min(...dates))
@@ -61,30 +99,37 @@ export function AnalyticsPerformance({
         break
     }
 
-    // Generate date range
-    const dateRange: Date[] = []
-    const tempDate = new Date(startDate)
-    const dateStep = selectedPeriod === '1W' ? 1 : 
-                     selectedPeriod === '1M' ? 1 : 
-                     selectedPeriod === '3M' ? 3 : 
-                     selectedPeriod === '6M' ? 7 : 14
-    
-    while (tempDate <= now) {
-      dateRange.push(new Date(tempDate))
-      tempDate.setDate(tempDate.getDate() + dateStep)
-    }
+    console.log('Date range:', startDate.toISOString().slice(0, 10), 'to', now.toISOString().slice(0, 10))
 
     // Sort transactions by date
     const sortedTransactions = [...transactions].sort(
       (a, b) => new Date(a.date).getTime() - new Date(b.date).getTime()
     )
 
+    // Generate date range - use fewer points for better performance
+    const dateRange: Date[] = []
+    const tempDate = new Date(startDate)
+    const dateStep = timePeriod === '1D' ? 1 : 
+                     timePeriod === '7D' ? 1 : 
+                     timePeriod === '1M' ? 2 : 
+                     timePeriod === '3M' ? 5 : 
+                     timePeriod === '1Y' ? 7 : 10
+    
+    while (tempDate <= now) {
+      dateRange.push(new Date(tempDate))
+      tempDate.setDate(tempDate.getDate() + dateStep)
+    }
+
+    console.log('Generated', dateRange.length, 'data points')
+
     // Calculate portfolio value for each date
     const chartData = dateRange.map(date => {
+      // Get transactions up to this date
       const relevantTransactions = sortedTransactions.filter(
         t => new Date(t.date) <= date
       )
 
+      // Calculate portfolio holdings for this date
       let portfolioValue = 0
       const assetQuantities: Record<string, number> = {}
 
@@ -102,7 +147,8 @@ export function AnalyticsPerformance({
         }
       })
 
-      // Calculate value using current prices (ideally would use historical prices for the specific date)
+      // Calculate value using CURRENT PRICES (simplified approach)
+      // This is what your working version likely does
       Object.entries(assetQuantities).forEach(([assetKey, quantity]) => {
         if (quantity <= 0) return
         
@@ -114,84 +160,117 @@ export function AnalyticsPerformance({
         }
       })
 
+      // Debug first data point
+      if (date.getTime() === dateRange[0]?.getTime()) {
+        console.log('=== FIRST DATA POINT DEBUG ===')
+        console.log('Date:', date.toISOString().slice(0, 10))
+        console.log('Relevant transactions:', relevantTransactions.length)
+        console.log('Asset quantities:', assetQuantities)
+        console.log('Current prices:', currentPrices)
+        console.log('Portfolio value:', portfolioValue)
+      }
+
       return {
         date: date.toISOString().slice(0, 10),
         portfolio: portfolioValue
       }
     })
 
+    console.log('Chart data sample:', chartData.slice(0, 3))
     return chartData
-  }, [transactions, selectedPeriod, currentPrices])
+  }, [transactions, timePeriod, currentPrices])
 
-  // Generate benchmark data (sample data - you could replace with real benchmark APIs)
-  const benchmarkData = useMemo(() => {
-    return portfolioChartData.map((point, index) => ({
-      ...point,
-      'S&P 500': 100 * (1 + (index * 0.005) + (Math.random() * 0.02 - 0.01)), // Sample S&P 500
-      'NASDAQ': 100 * (1 + (index * 0.007) + (Math.random() * 0.03 - 0.015)), // Sample NASDAQ
-      'Bitcoin': 100 * (1 + (index * 0.01) + (Math.random() * 0.05 - 0.025)), // Sample Bitcoin
-    }))
-  }, [portfolioChartData])
+  // Generate benchmark data using actual historical data with performance over time
+  const benchmarkData = useMemo((): ChartDataPoint[] => {
+    if (!historicalData || portfolioChartData.length === 0) return []
 
-  // Calculate performance metrics
-  const performanceMetrics = useMemo(() => {
-    if (portfolioChartData.length < 2) return null
+    console.log('=== BENCHMARK CALCULATION ===')
 
-    const firstValue = portfolioChartData[0].portfolio
-    const lastValue = portfolioChartData[portfolioChartData.length - 1].portfolio
-    
-    if (firstValue <= 0) return null
+    return portfolioChartData.map(point => {
+      const targetDate = new Date(point.date)
+      const dateStr = targetDate.toISOString().slice(0, 10)
+      
+      // Find closest available historical prices for each benchmark on this date
+      const findClosestPrice = (data: any[], symbol: string, symbolField: string = 'symbol') => {
+        // First try exact date match
+        let exactMatch = data.find(item => 
+          item[symbolField] === symbol && item.date.startsWith(dateStr)
+        )
+        if (exactMatch) return exactMatch.price
 
-    const totalReturn = lastValue - firstValue
-    const totalReturnPercent = (totalReturn / firstValue) * 100
-    
-    // Calculate volatility (standard deviation of daily returns)
-    const returns = []
-    for (let i = 1; i < portfolioChartData.length; i++) {
-      const prevValue = portfolioChartData[i - 1].portfolio
-      const currentValue = portfolioChartData[i].portfolio
-      if (prevValue > 0) {
-        returns.push((currentValue - prevValue) / prevValue)
+        // If no exact match, find closest date before target date
+        const beforeTarget = data
+          .filter(item => item[symbolField] === symbol && new Date(item.date) <= targetDate)
+          .sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime())
+        
+        if (beforeTarget.length > 0) return beforeTarget[0].price
+
+        // Fallback to latest available
+        const latest = data
+          .filter(item => item[symbolField] === symbol)
+          .sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime())
+        
+        return latest.length > 0 ? latest[0].price : 0
       }
-    }
-    
-    const avgReturn = returns.reduce((sum, r) => sum + r, 0) / returns.length
-    const variance = returns.reduce((sum, r) => sum + Math.pow(r - avgReturn, 2), 0) / returns.length
-    const volatility = Math.sqrt(variance) * 100
 
-    // Calculate max drawdown
-    let maxDrawdown = 0
-    let peak = firstValue
-    
-    portfolioChartData.forEach(point => {
-      if (point.portfolio > peak) {
-        peak = point.portfolio
+      const spyPrice = findClosestPrice(historicalData.stocks, 'SPY')
+      const btcPrice = findClosestPrice(historicalData.crypto, 'Bitcoin') || 
+                      findClosestPrice(historicalData.crypto, 'BTC') ||
+                      findClosestPrice(historicalData.crypto, 'bitcoin')
+      const goldPrice = findClosestPrice(historicalData.metals, 'gold', 'metal')
+
+      // Debug first point
+      if (point.date === portfolioChartData[0]?.date) {
+        console.log('Benchmark prices for', dateStr, ':', {
+          spy: spyPrice,
+          bitcoin: btcPrice,
+          gold: goldPrice
+        })
+        
+        // Debug Bitcoin specifically
+        const bitcoinData = historicalData.crypto.filter(c => 
+          c.symbol === 'Bitcoin' || c.symbol === 'BTC' || c.symbol === 'bitcoin'
+        )
+        console.log('Available Bitcoin data:', bitcoinData.length, 'records')
+        if (bitcoinData.length > 0) {
+          console.log('Sample Bitcoin data:', bitcoinData.slice(0, 3))
+        }
       }
-      const drawdown = ((peak - point.portfolio) / peak) * 100
-      if (drawdown > maxDrawdown) {
-        maxDrawdown = drawdown
+
+      return {
+        ...point,
+        'S&P 500': spyPrice,
+        'Bitcoin': btcPrice,
+        'Gold': goldPrice,
       }
     })
+  }, [portfolioChartData, historicalData])
 
-    return {
-      totalReturn,
-      totalReturnPercent,
-      volatility,
-      maxDrawdown,
-      sharpeRatio: volatility > 0 ? (totalReturnPercent / volatility) : 0
-    }
-  }, [portfolioChartData])
+  // Normalize all data to start from 100% for fair comparison
+  const normalizedData = useMemo((): ChartDataPoint[] => {
+    if (benchmarkData.length === 0) return []
 
-  const formatCurrency = (value: number) => {
-    return new Intl.NumberFormat('en-US', {
-      style: 'currency',
-      currency: selectedCurrency === 'BTC' ? 'USD' : selectedCurrency,
-      minimumFractionDigits: 0,
-      maximumFractionDigits: 0
-    }).format(value)
-  }
+    const firstPoint = benchmarkData[0]
+    if (!firstPoint) return []
 
-  const formatPercentage = (value: number) => `${value >= 0 ? '+' : ''}${value.toFixed(2)}%`
+    console.log('=== NORMALIZATION ===')
+    console.log('First point values:', {
+      portfolio: firstPoint.portfolio,
+      spy: firstPoint['S&P 500'],
+      bitcoin: firstPoint['Bitcoin'],
+      gold: firstPoint['Gold']
+    })
+
+    return benchmarkData.map(point => ({
+      date: point.date,
+      portfolio: firstPoint.portfolio > 0 ? (point.portfolio / firstPoint.portfolio) * 100 : 100,
+      'S&P 500': firstPoint['S&P 500'] > 0 ? (point['S&P 500'] / firstPoint['S&P 500']) * 100 : 100,
+      'Bitcoin': firstPoint['Bitcoin'] > 0 ? (point['Bitcoin'] / firstPoint['Bitcoin']) * 100 : 100,
+      'Gold': firstPoint['Gold'] > 0 ? (point['Gold'] / firstPoint['Gold']) * 100 : 100,
+    }))
+  }, [benchmarkData])
+
+  const formatPercentage = (value: number) => `${(value - 100).toFixed(1)}%`
 
   const CustomTooltip = ({ active, payload }: {
     active?: boolean
@@ -203,7 +282,7 @@ export function AnalyticsPerformance({
           <p className="text-[var(--text-secondary)] text-sm">{payload[0]?.payload?.date}</p>
           {payload.map((entry: any, index: number) => (
             <p key={index} className="text-[var(--text-primary)]" style={{ color: entry.color }}>
-              {entry.name}: {formatCurrency(entry.value)}
+              {entry.name}: {formatPercentage(entry.value)}
             </p>
           ))}
         </div>
@@ -212,44 +291,80 @@ export function AnalyticsPerformance({
     return null
   }
 
+  const timePeriods: TimePeriod[] = ['1D', '7D', '1M', '3M', '1Y', 'ALL']
+
   return (
     <div className="space-y-6">
       {/* Performance Chart */}
-      <div className="bg-[var(--bg-secondary)] rounded-xl p-6 border border-[var(--border-primary)]">
+      <div className="bg-[var(--bg-secondary)] rounded-xl p-6">
         <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 mb-6">
           <h3 className="text-lg font-semibold text-[var(--text-primary)]">Portfolio Performance</h3>
-          <div className="flex gap-2">
-            <button
-              onClick={() => setShowBenchmarks(!showBenchmarks)}
-              className={`px-3 py-1 rounded-lg text-sm transition-colors ${
-                showBenchmarks 
-                  ? 'bg-[var(--accent-primary)] text-white' 
-                  : 'bg-[var(--bg-hover)] text-[var(--text-secondary)] hover:bg-[var(--bg-tertiary)]'
-              }`}
-            >
-              Benchmarks
-            </button>
-            <button
-              onClick={() => setNormalizeData(!normalizeData)}
-              className={`px-3 py-1 rounded-lg text-sm transition-colors ${
-                normalizeData 
-                  ? 'bg-[var(--accent-primary)] text-white' 
-                  : 'bg-[var(--bg-hover)] text-[var(--text-secondary)] hover:bg-[var(--bg-tertiary)]'
-              }`}
-            >
-              Normalize
-            </button>
+          
+          {/* Controls */}
+          <div className="flex flex-wrap gap-2">
+            {/* Time Period Selector */}
+            <div className="flex gap-1">
+              {timePeriods.map((period) => (
+                <button
+                  key={period}
+                  onClick={() => setTimePeriod(period)}
+                  className={`px-2 py-1 rounded text-xs transition-colors ${
+                    timePeriod === period
+                      ? 'bg-[var(--accent-primary)] text-white' 
+                      : 'bg-[var(--bg-hover)] text-[var(--text-secondary)] hover:bg-[var(--bg-tertiary)]'
+                  }`}
+                >
+                  {period}
+                </button>
+              ))}
+            </div>
+            
+            {/* Benchmark Toggles */}
+            <div className="flex gap-1">
+              {Object.entries(benchmarkSettings).map(([benchmark, enabled]) => (
+                <button
+                  key={benchmark}
+                  onClick={() => toggleBenchmark(benchmark as keyof BenchmarkSettings)}
+                  className={`px-2 py-1 rounded text-xs transition-colors flex items-center gap-1 ${
+                    enabled 
+                      ? 'bg-[var(--accent-primary)] text-white' 
+                      : 'bg-[var(--bg-hover)] text-[var(--text-secondary)] hover:bg-[var(--bg-tertiary)]'
+                  }`}
+                >
+                  {enabled ? <Eye className="h-3 w-3" /> : <EyeOff className="h-3 w-3" />}
+                  {benchmark}
+                </button>
+              ))}
+            </div>
           </div>
         </div>
         
         <div className="h-96">
           <ResponsiveContainer width="100%" height="100%">
-            <LineChart data={showBenchmarks ? benchmarkData : portfolioChartData}>
+            <LineChart data={normalizedData}>
               <CartesianGrid strokeDasharray="3 3" stroke="var(--border-primary)" />
-              <XAxis dataKey="date" stroke="var(--text-secondary)" />
-              <YAxis stroke="var(--text-secondary)" />
+              <XAxis 
+                dataKey="date" 
+                stroke="var(--text-secondary)"
+                tick={{ fontSize: 12 }}
+                tickFormatter={(date) => {
+                  const d = new Date(date)
+                  return d.toLocaleDateString('en-US', { 
+                    month: 'short', 
+                    day: 'numeric' 
+                  })
+                }}
+                interval="preserveStartEnd"
+              />
+              <YAxis 
+                stroke="var(--text-secondary)" 
+                domain={['dataMin - 5', 'dataMax + 5']}
+                tickFormatter={(value) => `${(value - 100).toFixed(0)}%`}
+              />
               <Tooltip content={<CustomTooltip />} />
               <Legend />
+              
+              {/* Portfolio Line - Always Shown */}
               <Line 
                 type="monotone" 
                 dataKey="portfolio" 
@@ -258,100 +373,44 @@ export function AnalyticsPerformance({
                 name="Portfolio" 
                 dot={false}
               />
-              {showBenchmarks && (
-                <>
-                  <Line 
-                    type="monotone" 
-                    dataKey="S&P 500" 
-                    stroke="#10B981" 
-                    strokeWidth={2} 
-                    name="S&P 500" 
-                    dot={false}
-                  />
-                  <Line 
-                    type="monotone" 
-                    dataKey="NASDAQ" 
-                    stroke="#F59E0B" 
-                    strokeWidth={2} 
-                    name="NASDAQ" 
-                    dot={false}
-                  />
-                  <Line 
-                    type="monotone" 
-                    dataKey="Bitcoin" 
-                    stroke="#EF4444" 
-                    strokeWidth={2} 
-                    name="Bitcoin" 
-                    dot={false}
-                  />
-                </>
+              
+              {/* Conditional Benchmark Lines */}
+              {benchmarkSettings['S&P 500'] && (
+                <Line 
+                  type="monotone" 
+                  dataKey="S&P 500" 
+                  stroke="#10B981" 
+                  strokeWidth={2} 
+                  name="S&P 500" 
+                  dot={false}
+                />
+              )}
+              
+              {benchmarkSettings['Bitcoin'] && (
+                <Line 
+                  type="monotone" 
+                  dataKey="Bitcoin" 
+                  stroke="#EF4444" 
+                  strokeWidth={2} 
+                  name="Bitcoin" 
+                  dot={false}
+                />
+              )}
+              
+              {benchmarkSettings['Gold'] && (
+                <Line 
+                  type="monotone" 
+                  dataKey="Gold" 
+                  stroke="#D97706" 
+                  strokeWidth={2} 
+                  name="Gold" 
+                  dot={false}
+                />
               )}
             </LineChart>
           </ResponsiveContainer>
         </div>
       </div>
-
-      {/* Performance Metrics */}
-      {performanceMetrics && (
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-4">
-          <div className="bg-[var(--bg-secondary)] rounded-xl p-4 border border-[var(--border-primary)]">
-            <div className="flex items-center gap-2 mb-2">
-              <TrendingUp className="h-4 w-4 text-[var(--accent-primary)]" />
-              <h4 className="text-sm font-medium text-[var(--text-secondary)]">Total Return</h4>
-            </div>
-            <div className="text-xl font-bold text-[var(--text-primary)]">
-              {formatCurrency(performanceMetrics.totalReturn)}
-            </div>
-            <div className={`text-sm ${performanceMetrics.totalReturnPercent >= 0 ? 'text-green-500' : 'text-red-500'}`}>
-              {formatPercentage(performanceMetrics.totalReturnPercent)}
-            </div>
-          </div>
-
-          <div className="bg-[var(--bg-secondary)] rounded-xl p-4 border border-[var(--border-primary)]">
-            <div className="flex items-center gap-2 mb-2">
-              <BarChart3 className="h-4 w-4 text-orange-500" />
-              <h4 className="text-sm font-medium text-[var(--text-secondary)]">Volatility</h4>
-            </div>
-            <div className="text-xl font-bold text-[var(--text-primary)]">
-              {performanceMetrics.volatility.toFixed(2)}%
-            </div>
-            <div className="text-sm text-[var(--text-secondary)]">Annualized</div>
-          </div>
-
-          <div className="bg-[var(--bg-secondary)] rounded-xl p-4 border border-[var(--border-primary)]">
-            <div className="flex items-center gap-2 mb-2">
-              <TrendingDown className="h-4 w-4 text-red-500" />
-              <h4 className="text-sm font-medium text-[var(--text-secondary)]">Max Drawdown</h4>
-            </div>
-            <div className="text-xl font-bold text-red-500">
-              -{performanceMetrics.maxDrawdown.toFixed(2)}%
-            </div>
-            <div className="text-sm text-[var(--text-secondary)]">Peak to trough</div>
-          </div>
-
-          <div className="bg-[var(--bg-secondary)] rounded-xl p-4 border border-[var(--border-primary)]">
-            <div className="flex items-center gap-2 mb-2">
-              <div className="h-4 w-4 bg-blue-500 rounded-full" />
-              <h4 className="text-sm font-medium text-[var(--text-secondary)]">Sharpe Ratio</h4>
-            </div>
-            <div className="text-xl font-bold text-[var(--text-primary)]">
-              {performanceMetrics.sharpeRatio.toFixed(2)}
-            </div>
-            <div className="text-sm text-[var(--text-secondary)]">Risk-adjusted</div>
-          </div>
-
-          <div className="bg-[var(--bg-secondary)] rounded-xl p-4 border border-[var(--border-primary)]">
-            <div className="flex items-center gap-2 mb-2">
-              <div className="h-4 w-4 bg-purple-500 rounded-full" />
-              <h4 className="text-sm font-medium text-[var(--text-secondary)]">Period</h4>
-            </div>
-            <div className="text-xl font-bold text-[var(--text-primary)]">
-              {selectedPeriod}
-            </div>
-            <div className="text-sm text-[var(--text-secondary)]">Time frame</div>
-          </div>
-        </div>
-      )}
     </div>
   )
 }
