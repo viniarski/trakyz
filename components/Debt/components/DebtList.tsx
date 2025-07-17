@@ -3,9 +3,10 @@
 'use client'
 
 import { useState } from 'react'
-import { ChevronUp, ChevronDown } from 'lucide-react'
 import { LoanItem } from './LoanItem'
 import { CreditCardItem } from './CreditCardItem'
+import { ExpandableCategory } from '@/components/ui/ExpandableCategory'
+import { useCurrencyConverter } from '@/hooks/useCurrencyConverter'
 import type { Loan, CreditCard } from '@/types'
 
 interface DebtListProps {
@@ -23,7 +24,8 @@ export function DebtList({
   onEditCreditCard,
   onDeleteDebt
 }: DebtListProps) {
-  const [expandedSections, setExpandedSections] = useState<Set<string>>(new Set(['loans', 'credit_cards']))
+  const { formatPreciseValue } = useCurrencyConverter()
+  const [expandedSections, setExpandedSections] = useState<Set<string>>(new Set())
 
   const toggleSection = (section: string) => {
     setExpandedSections(prev => {
@@ -37,142 +39,143 @@ export function DebtList({
     })
   }
 
+  // Calculate loan totals
   const totalLoanBalance = loans.reduce((sum, loan) => sum + loan.current_balance, 0)
+  const totalLoanPayments = loans.reduce((sum, loan) => sum + loan.monthly_payment, 0)
+
+  // Calculate credit card totals
   const totalCreditBalance = creditCards.reduce((sum, card) => sum + card.balance, 0)
+  const totalCreditPayments = creditCards.reduce((sum, card) => sum + card.min_payment, 0)
 
   return (
-    <div className="space-y-4">
+    <div className="space-y-2 sm:space-y-4 md:space-y-4">
       {/* Loans Section */}
-      <div className="bg-[var(--bg-secondary)] rounded-xl border border-[var(--bg-hover)] overflow-hidden">
-        <div 
-          className="flex items-center justify-between p-4 cursor-pointer hover:bg-[var(--bg-hover)]/50 transition-colors border-b border-[var(--bg-hover)]"
-          onClick={() => toggleSection('loans')}
-        >
-          <div className="flex items-center gap-3">
+      {loans.length > 0 && (
+        <ExpandableCategory
+          icon={
             <svg className="h-5 w-5 text-[var(--text-secondary)]" fill="none" viewBox="0 0 24 24" stroke="currentColor">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4" />
             </svg>
-            <div>
-              <h2 className="text-lg font-semibold text-[var(--text-primary)]">Loans</h2>
-              <p className="text-sm text-[var(--text-secondary)]">
-                {loans.length} {loans.length === 1 ? 'loan' : 'loans'} • ${totalLoanBalance.toLocaleString()}
-              </p>
-            </div>
-          </div>
-          <div className="flex items-center">
-            {expandedSections.has('loans') ? (
-              <ChevronUp className="h-5 w-5 text-[var(--text-secondary)]" />
-            ) : (
-              <ChevronDown className="h-5 w-5 text-[var(--text-secondary)]" />
-            )}
-          </div>
-        </div>
-
-        {expandedSections.has('loans') && (
-          <div>
-            {loans.length > 0 ? (
-              <>
-                {/* Table Header */}
-                <div className="hidden md:grid md:grid-cols-[2fr,1fr,1fr,1fr,1fr,1fr,0.5fr] gap-4 px-4 py-3 bg-[var(--bg-hover)] border-b border-[var(--bg-hover)]">
-                  <div className="text-[var(--text-secondary)] text-sm font-medium">Loan Name</div>
-                  <div className="text-[var(--text-secondary)] text-sm font-medium text-right">Balance</div>
-                  <div className="text-[var(--text-secondary)] text-sm font-medium text-right">Monthly Payment</div>
-                  <div className="text-[var(--text-secondary)] text-sm font-medium text-right">Interest Rate</div>
-                  <div className="text-[var(--text-secondary)] text-sm font-medium text-right">Term</div>
-                  <div className="text-[var(--text-secondary)] text-sm font-medium text-right">Next Payment</div>
-                  <div className="text-[var(--text-secondary)] text-sm font-medium text-right">Actions</div>
-                </div>
-                
-                {/* Loan Rows */}
-                <div>
-                  {loans.map((loan, index) => (
-                    <div key={loan.id} className={`${index < loans.length - 1 ? 'border-b border-[var(--bg-hover)]' : ''}`}>
-                      <LoanItem
-                        loan={loan}
-                        onEdit={() => onEditLoan(loan)}
-                        onDelete={() => onDeleteDebt({ type: 'loan', id: loan.id, name: loan.name })}
-                      />
-                    </div>
-                  ))}
-                </div>
-              </>
-            ) : (
-              <div className="text-center py-8">
-                <p className="text-[var(--text-secondary)]">No loans found</p>
-                <p className="text-sm text-[var(--text-tertiary)] mt-1">
-                  Add your first loan to start tracking
+          }
+          title="Loans"
+          subtitle={`${loans.length} ${loans.length === 1 ? 'loan' : 'loans'}`}
+          isExpanded={expandedSections.has('loans')}
+          onToggle={() => toggleSection('loans')}
+          rightContent={
+            <div className="flex items-center gap-8">
+              {/* Total Balance */}
+              <div className="flex flex-col items-end">
+                <p className="text-xs text-[var(--text-secondary)] uppercase tracking-wide">Total Balance</p>
+                <p className="text-sm font-medium text-red-500">
+                  {formatPreciseValue(totalLoanBalance)}
                 </p>
               </div>
-            )}
+              
+              {/* Monthly Payments */}
+              <div className="flex flex-col items-end">
+                <p className="text-xs text-[var(--text-secondary)] uppercase tracking-wide">Monthly Payments</p>
+                <p className="text-sm font-medium text-[var(--text-primary)]">
+                  {formatPreciseValue(totalLoanPayments)}
+                </p>
+              </div>
+            </div>
+          }
+        >
+          <div className="mt-2 space-y-2">
+            {/* Loans Table Header */}
+            <div className="hidden md:grid md:grid-cols-[2fr,1fr,1fr,1fr,1fr,1fr,0.5fr] gap-4 px-2 py-3 border-b border-[var(--bg-hover)]">
+              <div className="text-[var(--text-secondary)] text-sm">Loan Name</div>
+              <div className="text-[var(--text-secondary)] text-sm text-right">Balance</div>
+              <div className="text-[var(--text-secondary)] text-sm text-right">Monthly Payment</div>
+              <div className="text-[var(--text-secondary)] text-sm text-right">Interest Rate</div>
+              <div className="text-[var(--text-secondary)] text-sm text-right">Term</div>
+              <div className="text-[var(--text-secondary)] text-sm text-right">Next Payment</div>
+              <div className="text-[var(--text-secondary)] text-sm text-right">Actions</div>
+            </div>
+
+            {/* Loans Rows */}
+            <div className="space-y-2">
+              {loans.map(loan => (
+                <LoanItem
+                  key={loan.id}
+                  loan={loan}
+                  onEdit={() => onEditLoan(loan)}
+                  onDelete={() => onDeleteDebt({ type: 'loan', id: loan.id, name: loan.name })}
+                />
+              ))}
+            </div>
           </div>
-        )}
-      </div>
+        </ExpandableCategory>
+      )}
 
       {/* Credit Cards Section */}
-      <div className="bg-[var(--bg-secondary)] rounded-xl border border-[var(--bg-hover)] overflow-hidden">
-        <div 
-          className="flex items-center justify-between p-4 cursor-pointer hover:bg-[var(--bg-hover)]/50 transition-colors border-b border-[var(--bg-hover)]"
-          onClick={() => toggleSection('credit_cards')}
-        >
-          <div className="flex items-center gap-3">
+      {creditCards.length > 0 && (
+        <ExpandableCategory
+          icon={
             <svg className="h-5 w-5 text-[var(--text-secondary)]" fill="none" viewBox="0 0 24 24" stroke="currentColor">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 10h18M7 15h1m4 0h1m-7 4h12a3 3 0 003-3V8a3 3 0 00-3-3H6a3 3 0 00-3 3v8a3 3 0 003 3z" />
             </svg>
-            <div>
-              <h2 className="text-lg font-semibold text-[var(--text-primary)]">Credit Cards</h2>
-              <p className="text-sm text-[var(--text-secondary)]">
-                {creditCards.length} {creditCards.length === 1 ? 'card' : 'cards'} • ${totalCreditBalance.toLocaleString()}
-              </p>
-            </div>
-          </div>
-          <div className="flex items-center">
-            {expandedSections.has('credit_cards') ? (
-              <ChevronUp className="h-5 w-5 text-[var(--text-secondary)]" />
-            ) : (
-              <ChevronDown className="h-5 w-5 text-[var(--text-secondary)]" />
-            )}
-          </div>
-        </div>
-
-        {expandedSections.has('credit_cards') && (
-          <div>
-            {creditCards.length > 0 ? (
-              <>
-                {/* Table Header */}
-                <div className="hidden md:grid md:grid-cols-[2fr,1fr,1fr,1fr,1fr,1fr,0.5fr] gap-4 px-4 py-3 bg-[var(--bg-hover)] border-b border-[var(--bg-hover)]">
-                  <div className="text-[var(--text-secondary)] text-sm font-medium">Card Name</div>
-                  <div className="text-[var(--text-secondary)] text-sm font-medium text-right">Balance</div>
-                  <div className="text-[var(--text-secondary)] text-sm font-medium text-right">Credit Limit</div>
-                  <div className="text-[var(--text-secondary)] text-sm font-medium text-right">Utilization</div>
-                  <div className="text-[var(--text-secondary)] text-sm font-medium text-right">Min Payment</div>
-                  <div className="text-[var(--text-secondary)] text-sm font-medium text-right">APR</div>
-                  <div className="text-[var(--text-secondary)] text-sm font-medium text-right">Actions</div>
-                </div>
-                
-                {/* Credit Card Rows */}
-                <div>
-                  {creditCards.map((card, index) => (
-                    <div key={card.id} className={`${index < creditCards.length - 1 ? 'border-b border-[var(--bg-hover)]' : ''}`}>
-                      <CreditCardItem
-                        creditCard={card}
-                        onEdit={() => onEditCreditCard(card)}
-                        onDelete={() => onDeleteDebt({ type: 'credit_card', id: card.id, name: card.name })}
-                      />
-                    </div>
-                  ))}
-                </div>
-              </>
-            ) : (
-              <div className="text-center py-8">
-                <p className="text-[var(--text-secondary)]">No credit cards found</p>
-                <p className="text-sm text-[var(--text-tertiary)] mt-1">
-                  Add your first credit card to start tracking
+          }
+          title="Credit Cards"
+          subtitle={`${creditCards.length} ${creditCards.length === 1 ? 'card' : 'cards'}`}
+          isExpanded={expandedSections.has('credit_cards')}
+          onToggle={() => toggleSection('credit_cards')}
+          rightContent={
+            <div className="flex items-center gap-8">
+              {/* Total Balance */}
+              <div className="flex flex-col items-end">
+                <p className="text-xs text-[var(--text-secondary)] uppercase tracking-wide">Total Balance</p>
+                <p className="text-sm font-medium text-red-500">
+                  {formatPreciseValue(totalCreditBalance)}
                 </p>
               </div>
-            )}
+              
+              {/* Min Payments */}
+              <div className="flex flex-col items-end">
+                <p className="text-xs text-[var(--text-secondary)] uppercase tracking-wide">Min Payments</p>
+                <p className="text-sm font-medium text-[var(--text-primary)]">
+                  {formatPreciseValue(totalCreditPayments)}
+                </p>
+              </div>
+            </div>
+          }
+        >
+          <div className="mt-2 space-y-2">
+            {/* Credit Cards Table Header */}
+            <div className="hidden md:grid md:grid-cols-[2fr,1fr,1fr,1fr,1fr,1fr,0.5fr] gap-4 px-2 py-3 border-b border-[var(--bg-hover)]">
+              <div className="text-[var(--text-secondary)] text-sm">Card Name</div>
+              <div className="text-[var(--text-secondary)] text-sm text-right">Balance</div>
+              <div className="text-[var(--text-secondary)] text-sm text-right">Credit Limit</div>
+              <div className="text-[var(--text-secondary)] text-sm text-right">Utilization</div>
+              <div className="text-[var(--text-secondary)] text-sm text-right">Min Payment</div>
+              <div className="text-[var(--text-secondary)] text-sm text-right">Interest Rate</div>
+              <div className="text-[var(--text-secondary)] text-sm text-right">Actions</div>
+            </div>
+
+            {/* Credit Cards Rows */}
+            <div className="space-y-2">
+              {creditCards.map(card => (
+                <CreditCardItem
+                  key={card.id}
+                  creditCard={card}
+                  onEdit={() => onEditCreditCard(card)}
+                  onDelete={() => onDeleteDebt({ type: 'credit_card', id: card.id, name: card.name })}
+                />
+              ))}
+            </div>
           </div>
-        )}
-      </div>
+        </ExpandableCategory>
+      )}
+
+      {/* Empty State */}
+      {loans.length === 0 && creditCards.length === 0 && (
+        <div className="text-center py-8">
+          <p className="text-[var(--text-secondary)]">No debt accounts found</p>
+          <p className="text-sm text-[var(--text-tertiary)] mt-1">
+            Add your first loan or credit card to start tracking
+          </p>
+        </div>
+      )}
     </div>
   )
 }

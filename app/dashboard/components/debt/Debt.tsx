@@ -144,7 +144,7 @@ export default function Debt({ debtData, userId }: DebtProps) {
       />
 
       {/* Debt Lists */}
-      <div className="mt-4">
+      <div className="px-6 py-4">
         <DebtList
           loans={loans}
           creditCards={creditCards}

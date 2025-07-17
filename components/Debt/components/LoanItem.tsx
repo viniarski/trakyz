@@ -2,7 +2,7 @@
 
 'use client'
 
-import { Edit, Trash2, Calendar, DollarSign, TrendingUp, Clock } from 'lucide-react'
+import { Edit, Trash2, DollarSign } from 'lucide-react'
 import { useCurrencyConverter } from '@/hooks/useCurrencyConverter'
 import type { Loan } from '@/types'
 
@@ -32,15 +32,34 @@ export function LoanItem({
   }
 
   return (
-    <div className="hover:bg-[var(--bg-hover)]/30 transition-colors">
+    <div className="bg-[var(--bg-primary)] rounded-lg p-2 sm:p-3 md:bg-transparent md:rounded-none md:p-0 md:hover:bg-[var(--bg-hover)] md:border-b md:border-[var(--bg-hover)]">
       {/* Mobile Card Layout */}
-      <div className="md:hidden p-4 space-y-3">
-        {/* Header */}
-        <div className="flex items-center justify-between">
-          <div className="flex items-center gap-2">
+      <div className="md:hidden grid grid-cols-2 gap-2">
+        <div>
+          <div className="flex items-center gap-2 mb-1">
             <DollarSign className="h-4 w-4 text-[var(--text-secondary)]" />
-            <h3 className="font-medium text-[var(--text-primary)]">{loan.name}</h3>
+            <p className="text-sm text-[var(--text-primary)] font-medium">{loan.name}</p>
           </div>
+          <div className="w-full bg-[var(--bg-hover)] rounded-full h-1.5 mb-1">
+            <div 
+              className="bg-green-500 h-1.5 rounded-full transition-all duration-300"
+              style={{ width: `${progressPercentage}%` }}
+            />
+          </div>
+          <p className="text-xs text-[var(--text-secondary)]">
+            {progressPercentage.toFixed(1)}% paid
+          </p>
+        </div>
+        <div className="text-right">
+          <p className="text-sm text-[var(--text-primary)] font-medium">
+            {formatPreciseValue(loan.current_balance)}
+          </p>
+          <p className="text-xs text-[var(--text-secondary)]">
+            {formatPreciseValue(loan.monthly_payment)}/month
+          </p>
+        </div>
+        <div className="col-span-2 flex justify-between items-center text-xs text-[var(--text-secondary)]">
+          <span>{loan.interest_rate}% • {loan.term_months} months</span>
           <div className="flex gap-2">
             <button
               onClick={onEdit}
@@ -56,49 +75,15 @@ export function LoanItem({
             </button>
           </div>
         </div>
-
-        {/* Progress Bar */}
-        <div>
-          <div className="flex justify-between items-center mb-1">
-            <span className="text-xs text-[var(--text-secondary)]">Progress</span>
-            <span className="text-xs text-[var(--text-secondary)]">{progressPercentage.toFixed(1)}%</span>
-          </div>
-          <div className="w-full bg-[var(--bg-hover)] rounded-full h-1.5">
-            <div 
-              className="bg-green-500 h-1.5 rounded-full transition-all duration-300"
-              style={{ width: `${progressPercentage}%` }}
-            />
-          </div>
-        </div>
-
-        {/* Details Grid */}
-        <div className="grid grid-cols-2 gap-3 text-sm">
-          <div>
-            <p className="text-[var(--text-secondary)] text-xs">Balance</p>
-            <p className="font-medium text-[var(--text-primary)]">{formatPreciseValue(loan.current_balance)}</p>
-          </div>
-          <div>
-            <p className="text-[var(--text-secondary)] text-xs">Monthly Payment</p>
-            <p className="font-medium text-[var(--text-primary)]">{formatPreciseValue(loan.monthly_payment)}</p>
-          </div>
-          <div>
-            <p className="text-[var(--text-secondary)] text-xs">Interest Rate</p>
-            <p className="font-medium text-[var(--text-primary)]">{loan.interest_rate}%</p>
-          </div>
-          <div>
-            <p className="text-[var(--text-secondary)] text-xs">Next Payment</p>
-            <p className="font-medium text-[var(--text-primary)]">{formatNextPayment(loan.next_payment_date)}</p>
-          </div>
-        </div>
       </div>
 
       {/* Desktop Table Layout */}
-      <div className="hidden md:grid md:grid-cols-[2fr,1fr,1fr,1fr,1fr,1fr,0.5fr] gap-4 items-center px-4 py-3">
+      <div className="hidden md:grid md:grid-cols-[2fr,1fr,1fr,1fr,1fr,1fr,0.5fr] gap-4 items-center px-2 py-3">
         {/* Loan Name with Progress */}
         <div>
           <div className="flex items-center gap-2 mb-1">
             <DollarSign className="h-4 w-4 text-[var(--text-secondary)]" />
-            <span className="font-medium text-[var(--text-primary)]">{loan.name}</span>
+            <span className="text-[var(--text-primary)]">{loan.name}</span>
           </div>
           <div className="w-full bg-[var(--bg-hover)] rounded-full h-1.5">
             <div 
@@ -111,27 +96,27 @@ export function LoanItem({
 
         {/* Balance */}
         <div className="text-right">
-          <p className="font-medium text-[var(--text-primary)]">{formatPreciseValue(loan.current_balance)}</p>
+          <p className="text-[var(--text-primary)]">{formatPreciseValue(loan.current_balance)}</p>
         </div>
 
         {/* Monthly Payment */}
         <div className="text-right">
-          <p className="font-medium text-[var(--text-primary)]">{formatPreciseValue(loan.monthly_payment)}</p>
+          <p className="text-[var(--text-primary)]">{formatPreciseValue(loan.monthly_payment)}</p>
         </div>
 
         {/* Interest Rate */}
         <div className="text-right">
-          <p className="font-medium text-[var(--text-primary)]">{loan.interest_rate}%</p>
+          <p className="text-[var(--text-primary)]">{loan.interest_rate}%</p>
         </div>
 
         {/* Term */}
         <div className="text-right">
-          <p className="font-medium text-[var(--text-primary)]">{loan.term_months} months</p>
+          <p className="text-[var(--text-primary)]">{loan.term_months} months</p>
         </div>
 
         {/* Next Payment */}
         <div className="text-right">
-          <p className="font-medium text-[var(--text-primary)]">{formatNextPayment(loan.next_payment_date)}</p>
+          <p className="text-[var(--text-primary)]">{formatNextPayment(loan.next_payment_date)}</p>
         </div>
 
         {/* Actions */}

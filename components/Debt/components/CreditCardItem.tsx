@@ -2,7 +2,7 @@
 
 'use client'
 
-import { Edit, Trash2, CreditCard as CreditCardIcon, DollarSign, Percent } from 'lucide-react'
+import { Edit, Trash2, CreditCard as CreditCardIcon } from 'lucide-react'
 import { useCurrencyConverter } from '@/hooks/useCurrencyConverter'
 import type { CreditCard } from '@/types'
 
@@ -45,15 +45,34 @@ export function CreditCardItem({
   }
 
   return (
-    <div className="hover:bg-[var(--bg-hover)]/30 transition-colors">
+    <div className="bg-[var(--bg-primary)] rounded-lg p-2 sm:p-3 md:bg-transparent md:rounded-none md:p-0 md:hover:bg-[var(--bg-hover)] md:border-b md:border-[var(--bg-hover)]">
       {/* Mobile Card Layout */}
-      <div className="md:hidden p-4 space-y-3">
-        {/* Header */}
-        <div className="flex items-center justify-between">
-          <div className="flex items-center gap-2">
+      <div className="md:hidden grid grid-cols-2 gap-2">
+        <div>
+          <div className="flex items-center gap-2 mb-1">
             <CreditCardIcon className="h-4 w-4 text-[var(--text-secondary)]" />
-            <h3 className="font-medium text-[var(--text-primary)]">{creditCard.name}</h3>
+            <p className="text-sm text-[var(--text-primary)] font-medium">{creditCard.name}</p>
           </div>
+          <div className="w-full bg-[var(--bg-hover)] rounded-full h-1.5 mb-1">
+            <div 
+              className={`h-1.5 rounded-full transition-all duration-300 ${getUtilizationBgColor(utilization)}`}
+              style={{ width: `${Math.min(utilization, 100)}%` }}
+            />
+          </div>
+          <p className={`text-xs ${getUtilizationColor(utilization)}`}>
+            {utilization.toFixed(1)}% • {getUtilizationStatus(utilization)}
+          </p>
+        </div>
+        <div className="text-right">
+          <p className="text-sm text-[var(--text-primary)] font-medium">
+            {formatPreciseValue(creditCard.balance)}
+          </p>
+          <p className="text-xs text-[var(--text-secondary)]">
+            of {formatPreciseValue(creditCard.credit_limit)}
+          </p>
+        </div>
+        <div className="col-span-2 flex justify-between items-center text-xs text-[var(--text-secondary)]">
+          <span>{creditCard.interest_rate}% • Min: {formatPreciseValue(creditCard.min_payment)}</span>
           <div className="flex gap-2">
             <button
               onClick={onEdit}
@@ -69,51 +88,15 @@ export function CreditCardItem({
             </button>
           </div>
         </div>
-
-        {/* Utilization Bar */}
-        <div>
-          <div className="flex justify-between items-center mb-1">
-            <span className="text-xs text-[var(--text-secondary)]">Credit Utilization</span>
-            <span className={`text-xs font-medium ${getUtilizationColor(utilization)}`}>
-              {utilization.toFixed(1)}% • {getUtilizationStatus(utilization)}
-            </span>
-          </div>
-          <div className="w-full bg-[var(--bg-hover)] rounded-full h-1.5">
-            <div 
-              className={`h-1.5 rounded-full transition-all duration-300 ${getUtilizationBgColor(utilization)}`}
-              style={{ width: `${Math.min(utilization, 100)}%` }}
-            />
-          </div>
-        </div>
-
-        {/* Details Grid */}
-        <div className="grid grid-cols-2 gap-3 text-sm">
-          <div>
-            <p className="text-[var(--text-secondary)] text-xs">Balance</p>
-            <p className="font-medium text-[var(--text-primary)]">{formatPreciseValue(creditCard.balance)}</p>
-          </div>
-          <div>
-            <p className="text-[var(--text-secondary)] text-xs">Credit Limit</p>
-            <p className="font-medium text-[var(--text-primary)]">{formatPreciseValue(creditCard.credit_limit)}</p>
-          </div>
-          <div>
-            <p className="text-[var(--text-secondary)] text-xs">Min Payment</p>
-            <p className="font-medium text-[var(--text-primary)]">{formatPreciseValue(creditCard.min_payment)}</p>
-          </div>
-          <div>
-            <p className="text-[var(--text-secondary)] text-xs">Interest Rate</p>
-            <p className="font-medium text-[var(--text-primary)]">{creditCard.interest_rate}%</p>
-          </div>
-        </div>
       </div>
 
       {/* Desktop Table Layout */}
-      <div className="hidden md:grid md:grid-cols-[2fr,1fr,1fr,1fr,1fr,1fr,0.5fr] gap-4 items-center px-4 py-3">
+      <div className="hidden md:grid md:grid-cols-[2fr,1fr,1fr,1fr,1fr,1fr,0.5fr] gap-4 items-center px-2 py-3">
         {/* Card Name with Utilization */}
         <div>
           <div className="flex items-center gap-2 mb-1">
             <CreditCardIcon className="h-4 w-4 text-[var(--text-secondary)]" />
-            <span className="font-medium text-[var(--text-primary)]">{creditCard.name}</span>
+            <span className="text-[var(--text-primary)]">{creditCard.name}</span>
           </div>
           <div className="w-full bg-[var(--bg-hover)] rounded-full h-1.5">
             <div 
@@ -128,27 +111,27 @@ export function CreditCardItem({
 
         {/* Balance */}
         <div className="text-right">
-          <p className="font-medium text-[var(--text-primary)]">{formatPreciseValue(creditCard.balance)}</p>
+          <p className="text-[var(--text-primary)]">{formatPreciseValue(creditCard.balance)}</p>
         </div>
 
         {/* Credit Limit */}
         <div className="text-right">
-          <p className="font-medium text-[var(--text-primary)]">{formatPreciseValue(creditCard.credit_limit)}</p>
+          <p className="text-[var(--text-primary)]">{formatPreciseValue(creditCard.credit_limit)}</p>
         </div>
 
         {/* Utilization Percentage */}
         <div className="text-right">
-          <p className={`font-medium ${getUtilizationColor(utilization)}`}>{utilization.toFixed(1)}%</p>
+          <p className={`${getUtilizationColor(utilization)}`}>{utilization.toFixed(1)}%</p>
         </div>
 
         {/* Min Payment */}
         <div className="text-right">
-          <p className="font-medium text-[var(--text-primary)]">{formatPreciseValue(creditCard.min_payment)}</p>
+          <p className="text-[var(--text-primary)]">{formatPreciseValue(creditCard.min_payment)}</p>
         </div>
 
-        {/* APR */}
+        {/* Interest Rate */}
         <div className="text-right">
-          <p className="font-medium text-[var(--text-primary)]">{creditCard.interest_rate}%</p>
+          <p className="text-[var(--text-primary)]">{creditCard.interest_rate}%</p>
         </div>
 
         {/* Actions */}
