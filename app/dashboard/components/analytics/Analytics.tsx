@@ -2,172 +2,53 @@
 
 'use client'
 
-import { useState, useEffect } from 'react'
-import { Loader2 } from 'lucide-react'
-import { 
-  AnalyticsHeader,
-  AnalyticsOverview,
-  AnalyticsPerformance,
-  AnalyticsAllocation,
-  AnalyticsAssets,
-  AnalyticsInsights
-} from '@/components/Analytics'
-import type { 
-  DebtData, 
-  Portfolio, 
-  Transaction, 
-  MarketData,
-  Currency,
-  Crypto,
-  Stock,
-  Metal
-} from '@/types'
+import { useState } from 'react'
+import { AnalyticsHeader } from '@/components/Analytics/components/AnalyticsHeader'
+import { AnalyticsOverview } from '@/components/Analytics/components/AnalyticsOverview'
+import { AnalyticsPerformance } from '@/components/Analytics/components/AnalyticsPerformance'
+import { AnalyticsAllocation } from '@/components/Analytics/components/AnalyticsAllocation'
+import { AnalyticsInsights } from '@/components/Analytics/components/AnalyticsInsights'
+import type { Transaction, Portfolio, DebtData } from '@/types'
 
 interface AnalyticsProps {
-  portfolios: Portfolio[]
   transactions: Transaction[]
+  portfolios: Portfolio[]
   debtData: DebtData
   userId: string
-  selectedCurrency?: string
 }
 
-interface HistoricalData {
-  crypto: Crypto[]
-  stocks: Stock[]
-  metals: Metal[]
-  currencies: Currency[]
-}
-
-interface CurrencyRates {
-  currencies: Currency[] | null
-  crypto: Crypto[] | null
-}
-
-export default function Analytics({
-  portfolios,
-  transactions,
-  debtData,
-  userId,
-  selectedCurrency = 'USD'
+export default function Analytics({ 
+  transactions, 
+  portfolios, 
+  debtData, 
+  userId 
 }: AnalyticsProps) {
-  const [currentPrices, setCurrentPrices] = useState<Record<string, number>>({})
-  const [historicalData, setHistoricalData] = useState<HistoricalData | null>(null)
-  const [currencyRates, setCurrencyRates] = useState<CurrencyRates>({
-    currencies: null,
-    crypto: null
-  })
-  const [isLoading, setIsLoading] = useState(true)
   const [activeTab, setActiveTab] = useState('overview')
-  const [selectedPeriod, setSelectedPeriod] = useState<'1W' | '1M' | '3M' | '6M' | '1Y' | 'ALL'>('3M')
-
-  // Everyone who can authenticate is Pro in your system
-  const hasProAccess = true
-
-  // Fetch market data and historical prices
-  useEffect(() => {
-    const fetchData = async () => {
-      if (!userId || !hasProAccess) return
-
-      try {
-        setIsLoading(true)
-        
-        // Fetch current prices from all market endpoints
-        const [metalsRes, cryptoRes, stocksRes, currenciesRes] = await Promise.all([
-          fetch('/api/market/metals'),
-          fetch('/api/market/crypto'),
-          fetch('/api/market/stocks'),
-          fetch('/api/market/currencies')
-        ])
-
-        const [metalsData, cryptoData, stocksData, currenciesData] = await Promise.all([
-          metalsRes.json(),
-          cryptoRes.json(),
-          stocksRes.json(),
-          currenciesRes.json()
-        ])
-
-        // Combine all price data
-        const prices: Record<string, number> = {}
-
-        metalsData.data?.forEach((metal: any) => {
-          if (metal.metal) {
-            prices[metal.metal.toLowerCase()] = metal.price
-          }
-        })
-
-        cryptoData.data?.forEach((crypto: any) => {
-          if (crypto.symbol) {
-            prices[crypto.symbol] = crypto.price
-          }
-        })
-
-        stocksData.data?.forEach((stock: any) => {
-          if (stock.symbol) {
-            prices[stock.symbol] = stock.price
-          }
-        })
-
-        currenciesData.data?.forEach((currency: any) => {
-          if (currency.symbol) {
-            prices[currency.symbol] = currency.price
-          }
-        })
-
-        setCurrentPrices(prices)
-        setCurrencyRates({
-          currencies: currenciesData.data || null,
-          crypto: cryptoData.data || null
-        })
-
-        // Set historical data for portfolio value calculation
-        setHistoricalData({
-          crypto: cryptoData.data || [],
-          stocks: stocksData.data || [],
-          metals: metalsData.data || [],
-          currencies: currenciesData.data || []
-        })
-
-      } catch (error) {
-        console.error('Error fetching analytics data:', error)
-      } finally {
-        setIsLoading(false)
-      }
-    }
-
-    if (userId && hasProAccess) {
-      fetchData()
-    } else {
-      setIsLoading(false)
-    }
-  }, [userId, hasProAccess])
-
-  // Show loading state
-  if (isLoading) {
-    return (
-      <div className="min-h-screen bg-[var(--bg-primary)] flex items-center justify-center">
-        <div className="flex items-center gap-3">
-          <Loader2 className="w-6 h-6 animate-spin text-[var(--accent-primary)]" />
-          <span className="text-[var(--text-secondary)]">Loading analytics...</span>
-        </div>
-      </div>
-    )
+  const [selectedPeriod, setSelectedPeriod] = useState<'1W' | '1M' | '3M' | '6M' | '1Y' | 'ALL'>('1M')
+  
+  // Mock data for current prices and historical data
+  const currentPrices: Record<string, number> = {}
+  const historicalData = {
+    crypto: [],
+    stocks: [],
+    metals: [],
+    currencies: []
   }
+  const selectedCurrency = 'USD'
 
-  // No transactions state
+  // Show empty state if no transactions
   if (!transactions || transactions.length === 0) {
     return (
-      <div className="min-h-screen bg-[var(--bg-primary)] flex items-center justify-center">
-        <div className="bg-[var(--bg-secondary)] p-8 rounded-xl text-center max-w-md">
-          <div className="mb-4 flex justify-center">
-            <div className="p-4 bg-[var(--bg-hover)] rounded-full">
-              <svg className="h-16 w-16 text-[var(--text-secondary)]" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z" />
-              </svg>
-            </div>
+      <div className="flex flex-col items-center justify-center py-12 text-center">
+        <div className="mb-4">
+          <div className="w-16 h-16 bg-[var(--bg-hover)] rounded-full flex items-center justify-center mb-4">
+            <svg className="w-8 h-8 text-[var(--text-secondary)]" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z" />
+            </svg>
           </div>
-          <h3 className="text-xl font-bold mb-2">No Transaction Data</h3>
-          <p className="text-[var(--text-secondary)] mb-6">
-            Add some transactions to see your portfolio analytics.
+          <h3 className="text-lg font-medium text-[var(--text-primary)] mb-2">No Analytics Available</h3>
+          <p className="text-[var(--text-secondary)] mb-6 max-w-md">
+            Start by adding some transactions to your portfolio to see detailed analytics and insights about your investments.
           </p>
           <button
             onClick={() => {/* Add your routing logic here */}}
@@ -181,7 +62,7 @@ export default function Analytics({
   }
 
   return (
-    <div className="space-y-0">
+    <>
       {/* Header with title, metrics, and navigation tabs */}
       <AnalyticsHeader
         activeTab={activeTab}
@@ -194,7 +75,7 @@ export default function Analytics({
       />
 
       {/* Content area for tab content */}
-      <div className="p-4">
+      <div className="px-6 py-4">
         {activeTab === 'overview' && (
           <AnalyticsOverview
             transactions={transactions}
@@ -223,14 +104,6 @@ export default function Analytics({
           />
         )}
 
-        {activeTab === 'assets' && (
-          <AnalyticsAssets
-            transactions={transactions}
-            currentPrices={currentPrices}
-            selectedCurrency={selectedCurrency}
-          />
-        )}
-
         {activeTab === 'insights' && (
           <AnalyticsInsights
             transactions={transactions}
@@ -241,6 +114,6 @@ export default function Analytics({
           />
         )}
       </div>
-    </div>
+    </>
   )
 }

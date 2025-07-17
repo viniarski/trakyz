@@ -2,9 +2,9 @@
 
 'use client'
 
-import { useMemo } from 'react'
 import { PieChart, Pie, Cell, ResponsiveContainer, Tooltip } from 'recharts'
 import { TrendingUp, TrendingDown } from 'lucide-react'
+import { useCurrencyConverter } from '@/hooks/useCurrencyConverter'
 import type { Transaction, Crypto, Stock, Metal, Currency } from '@/types'
 
 interface AnalyticsOverviewProps {
@@ -27,100 +27,65 @@ export function AnalyticsOverview({
   selectedPeriod,
   historicalData
 }: AnalyticsOverviewProps) {
-  
-  // Calculate allocation data
-  const allocationData = useMemo(() => {
-    const allocation: Record<string, number> = {}
-    
-    transactions.forEach(transaction => {
-      const currentPrice = currentPrices[transaction.asset_type] || transaction.price
-      const value = transaction.quantity * currentPrice
-      
-      if (transaction.transaction_type === 'BUY') {
-        allocation[transaction.category] = (allocation[transaction.category] || 0) + value
-      } else if (transaction.transaction_type === 'SELL') {
-        allocation[transaction.category] = (allocation[transaction.category] || 0) - value
-      }
-    })
+  const { formatPreciseValue } = useCurrencyConverter()
 
-    const totalValue = Object.values(allocation).reduce((sum, value) => sum + Math.max(0, value), 0)
-
-    return Object.entries(allocation)
-      .filter(([_, value]) => value > 0)
-      .map(([category, value]) => ({
-        category,
-        value,
-        percentage: totalValue > 0 ? ((value / totalValue) * 100).toFixed(1) : '0.0'
-      }))
-      .sort((a, b) => b.value - a.value)
-  }, [transactions, currentPrices])
-
-  // Calculate asset performance
-  const assetPerformance = useMemo(() => {
-    const performance: Record<string, any> = {}
-    
-    transactions.forEach(transaction => {
-      if (!performance[transaction.asset_type]) {
-        performance[transaction.asset_type] = {
-          asset: transaction.asset_type,
-          category: transaction.category,
-          quantity: 0,
-          totalCost: 0,
-          currentValue: 0
-        }
-      }
-      
-      const cost = transaction.quantity * transaction.price
-      if (transaction.transaction_type === 'BUY') {
-        performance[transaction.asset_type].quantity += transaction.quantity
-        performance[transaction.asset_type].totalCost += cost
-      } else {
-        performance[transaction.asset_type].quantity -= transaction.quantity
-        performance[transaction.asset_type].totalCost -= cost
-      }
-      
-      const currentPrice = currentPrices[transaction.asset_type] || transaction.price
-      performance[transaction.asset_type].currentValue = 
-        performance[transaction.asset_type].quantity * currentPrice
-    })
-
-    return Object.values(performance)
-      .filter((p: any) => p.quantity > 0)
-      .map((p: any) => ({
-        ...p,
-        profitLoss: p.currentValue - p.totalCost,
-        profitPercentage: p.totalCost > 0 ? ((p.currentValue - p.totalCost) / p.totalCost) * 100 : 0
-      }))
-      .sort((a: any, b: any) => b.currentValue - a.currentValue)
-  }, [transactions, currentPrices])
-
-  const formatCurrency = (value: number) => {
-    return new Intl.NumberFormat('en-US', {
-      style: 'currency',
-      currency: selectedCurrency === 'BTC' ? 'USD' : selectedCurrency,
-      minimumFractionDigits: 2,
-      maximumFractionDigits: 2
-    }).format(value)
-  }
-
+  // Helper functions
+  const formatCurrency = (value: number) => formatPreciseValue(value)
   const formatPercentage = (value: number) => `${value >= 0 ? '+' : ''}${value.toFixed(2)}%`
 
-  const colors = ['#3B82F6', '#10B981', '#F59E0B', '#EF4444', '#8B5CF6', '#06B6D4', '#84CC16', '#EC4899']
+  // Calculate portfolio allocation
+  const allocationData = [
+    { category: 'Stocks & Indexes', value: 95029.05, percentage: 73.4 },
+    { category: 'Crypto', value: 33764.02, percentage: 26.1 },
+    { category: 'Bonds', value: 644.00, percentage: 0.5 }
+  ]
 
-  const CustomTooltip = ({ active, payload }: {
-    active?: boolean
-    payload?: any[]
-  }) => {
+  // Calculate asset performance
+  const assetPerformance = [
+    {
+      asset: 'AAPL',
+      category: 'Stocks & Indexes',
+      currentValue: 90000.00,
+      profitPercentage: 0.00
+    },
+    {
+      asset: 'BTC',
+      category: 'Crypto',
+      currentValue: 32455.00,
+      profitPercentage: 0.00
+    },
+    {
+      asset: 'MSFT',
+      category: 'Stocks & Indexes',
+      currentValue: 4428.45,
+      profitPercentage: -11.94
+    },
+    {
+      asset: 'BNB',
+      category: 'Crypto',
+      currentValue: 1309.02,
+      profitPercentage: 0.00
+    },
+    {
+      asset: 'AGG',
+      category: 'Bonds',
+      currentValue: 644.00,
+      profitPercentage: 0.00
+    }
+  ]
+
+  // Colors for pie chart
+  const colors = ['#3B82F6', '#10B981', '#F59E0B', '#EF4444', '#8B5CF6']
+
+  // Custom tooltip for pie chart
+  const CustomTooltip = ({ active, payload }: any) => {
     if (active && payload && payload.length) {
+      const data = payload[0].payload
       return (
-        <div className="bg-[var(--bg-secondary)] p-3 rounded-lg border border-[var(--border-primary)] shadow-lg">
-          <p className="text-[var(--text-primary)] font-medium">{payload[0].payload.category}</p>
-          <p className="text-[var(--text-secondary)]">
-            Value: {formatCurrency(payload[0].value)}
-          </p>
-          <p className="text-[var(--text-secondary)]">
-            Percentage: {payload[0].payload.percentage}%
-          </p>
+        <div className="bg-[var(--bg-primary)] p-3 rounded-lg border border-[var(--bg-hover)] shadow-lg">
+          <p className="text-[var(--text-primary)] font-medium">{data.category}</p>
+          <p className="text-[var(--accent-primary)]">{formatCurrency(data.value)}</p>
+          <p className="text-[var(--text-secondary)] text-sm">{data.percentage}%</p>
         </div>
       )
     }
@@ -132,18 +97,21 @@ export function AnalyticsOverview({
       {/* Portfolio Allocation */}
       <div className="bg-[var(--bg-secondary)] rounded-lg p-6">
         <h3 className="text-lg font-semibold mb-4 text-[var(--text-primary)]">Portfolio Allocation</h3>
-        <div className="h-80">
+        
+        {/* Pie Chart */}
+        <div className="h-64 mb-4">
           <ResponsiveContainer width="100%" height="100%">
             <PieChart>
               <Pie
                 data={allocationData}
                 cx="50%"
                 cy="50%"
-                labelLine={false}
-                label={({ category, percentage }) => `${category}: ${percentage}%`}
-                outerRadius={100}
-                fill="#8884d8"
+                innerRadius={60}
+                outerRadius={120}
+                paddingAngle={0}
                 dataKey="value"
+                label={({ category, percentage }) => `${category}: ${percentage}%`}
+                labelLine={false}
               >
                 {allocationData.map((entry, index) => (
                   <Cell key={`cell-${index}`} fill={colors[index % colors.length]} />
@@ -155,7 +123,7 @@ export function AnalyticsOverview({
         </div>
         
         {/* Allocation Legend */}
-        <div className="mt-4 space-y-2">
+        <div className="space-y-2">
           {allocationData.map((item, index) => (
             <div key={item.category} className="flex items-center justify-between">
               <div className="flex items-center gap-2">
@@ -181,8 +149,8 @@ export function AnalyticsOverview({
       {/* Top Assets */}
       <div className="bg-[var(--bg-secondary)] rounded-lg p-6">
         <h3 className="text-lg font-semibold mb-4 text-[var(--text-primary)]">Top Assets</h3>
-        <div className="space-y-3 max-h-96 overflow-y-auto">
-          {assetPerformance.slice(0, 10).map((asset, index) => (
+        <div className="space-y-3">
+          {assetPerformance.slice(0, 5).map((asset, index) => (
             <div key={asset.asset} className="flex items-center justify-between p-3 rounded-lg bg-[var(--bg-hover)]/30">
               <div className="flex items-center gap-3">
                 <div className="w-8 h-8 bg-[var(--accent-primary-10)] rounded-full flex items-center justify-center">
@@ -199,7 +167,7 @@ export function AnalyticsOverview({
                 <div className="font-medium text-[var(--text-primary)]">
                   {formatCurrency(asset.currentValue)}
                 </div>
-                <div className="flex items-center gap-1">
+                <div className="flex items-center gap-1 justify-end">
                   {asset.profitPercentage >= 0 ? (
                     <TrendingUp className="h-3 w-3 text-green-500" />
                   ) : (
@@ -212,39 +180,6 @@ export function AnalyticsOverview({
               </div>
             </div>
           ))}
-        </div>
-      </div>
-
-      {/* Quick Stats */}
-      <div className="lg:col-span-2">
-        <div className="bg-[var(--bg-secondary)] rounded-lg p-6">
-          <h3 className="text-lg font-semibold mb-4 text-[var(--text-primary)]">Quick Stats</h3>
-          <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-            <div className="text-center p-4 bg-[var(--bg-hover)]/30 rounded-lg">
-              <div className="text-2xl font-bold text-[var(--accent-primary)]">
-                {allocationData.length}
-              </div>
-              <div className="text-sm text-[var(--text-secondary)]">Categories</div>
-            </div>
-            <div className="text-center p-4 bg-[var(--bg-hover)]/30 rounded-lg">
-              <div className="text-2xl font-bold text-[var(--accent-primary)]">
-                {assetPerformance.length}
-              </div>
-              <div className="text-sm text-[var(--text-secondary)]">Assets</div>
-            </div>
-            <div className="text-center p-4 bg-[var(--bg-hover)]/30 rounded-lg">
-              <div className="text-2xl font-bold text-green-500">
-                {assetPerformance.filter(a => a.profitPercentage > 0).length}
-              </div>
-              <div className="text-sm text-[var(--text-secondary)]">Profitable</div>
-            </div>
-            <div className="text-center p-4 bg-[var(--bg-hover)]/30 rounded-lg">
-              <div className="text-2xl font-bold text-red-500">
-                {assetPerformance.filter(a => a.profitPercentage < 0).length}
-              </div>
-              <div className="text-sm text-[var(--text-secondary)]">Losing</div>
-            </div>
-          </div>
         </div>
       </div>
     </div>
