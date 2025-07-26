@@ -344,8 +344,52 @@ export default async function Page(props: any) {
         </div>
       )}
 
-      {/* Financial Summary */}
-      <FinancialSummary />
+{/* Financial Summary with Real Data */}
+      <FinancialSummary 
+        transactions={transactionsData}
+        debtData={debtData}
+        realEstateData={realEstateData}
+        currentPrices={(() => {
+          // Generate currentPrices from marketData similar to Analytics component
+          const prices: Record<string, number> = {}
+          
+          // Get latest prices for each asset
+          if (marketData.crypto) {
+            marketData.crypto.forEach(crypto => {
+              if (!prices[crypto.symbol] || new Date(crypto.date) > new Date(marketData.crypto.find(c => c.symbol === crypto.symbol && prices[c.symbol])?.date || '')) {
+                prices[crypto.symbol] = crypto.price
+              }
+            })
+          }
+          
+          if (marketData.stocks) {
+            marketData.stocks.forEach(stock => {
+              if (!prices[stock.symbol] || new Date(stock.date) > new Date(marketData.stocks.find(s => s.symbol === stock.symbol && prices[s.symbol])?.date || '')) {
+                prices[stock.symbol] = stock.price
+              }
+            })
+          }
+          
+          if (marketData.metals) {
+            marketData.metals.forEach(metal => {
+              const key = metal.metal.toUpperCase()
+              if (!prices[key] || new Date(metal.date) > new Date(marketData.metals.find(m => m.metal.toUpperCase() === key && prices[key])?.date || '')) {
+                prices[key] = metal.price
+              }
+            })
+          }
+          
+          if (marketData.currencies) {
+            marketData.currencies.forEach(currency => {
+              if (!prices[currency.symbol] || new Date(currency.date) > new Date(marketData.currencies.find(c => c.symbol === currency.symbol && prices[c.symbol])?.date || '')) {
+                prices[currency.symbol] = currency.price
+              }
+            })
+          }
+
+          return prices
+        })()}
+      />
 
       {/* Main Content with proper width constraint */}
       <div className="flex-1 w-[90%] mx-auto py-8">
