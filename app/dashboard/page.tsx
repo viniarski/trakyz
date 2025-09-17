@@ -59,50 +59,116 @@ export default async function Page(props: any) {
 
   // Get the current tab from URL, with smart fallback logic
   const tabParam = searchParams.tab;
-  const tabValue = Array.isArray(tabParam) ? tabParam[0] : tabParam;
-  
-  let currentTab: string;
-  
-  if (tabValue && validTabs.includes(tabValue)) {
-    // URL has a valid tab parameter - use it
-    currentTab = tabValue;
-  } else if (userProfile?.last_active_tab && validTabs.includes(userProfile.last_active_tab)) {
-    // No URL tab, but user has a saved preference - use it
-    currentTab = userProfile.last_active_tab;
-  } else {
-    // No URL tab and no saved preference - use "markets" as default
-    currentTab = "markets";
-  }
+  const tabValue = Array.isArray(tabParam) ? 
+    tabParam[0] : 
+    tabParam;
 
-  // Update user's last active tab if it's different (async, don't await)
-  if (currentTab !== userProfile?.last_active_tab) {
-    supabase
+  // Determine current tab
+  const currentTab = validTabs.includes(tabValue) ? 
+    tabValue : 
+    (userProfile?.last_active_tab && validTabs.includes(userProfile.last_active_tab) ? 
+      userProfile.last_active_tab : 
+      "budget");
+
+  // Update user's last active tab if it's different
+  if (currentTab !== userProfile?.last_active_tab && validTabs.includes(currentTab)) {
+    await supabase
       .from("user_profiles")
       .update({ last_active_tab: currentTab })
-      .eq("id", user.id)
-      .then(({ error }) => {
-        if (error) {
-          console.error("Error updating last active tab:", error);
-        }
-      });
+      .eq("id", user.id);
   }
 
-  // Check for checkout success
-  const checkoutSuccessParam = searchParams.checkout_success;
-  const hasCheckoutSuccess = checkoutSuccessParam === "true";
+  // FETCH ALL DATA FOR FINANCIAL SUMMARY (ALWAYS NEEDED)
+  const [
+    { data: summaryTransactions },
+    { data: summaryDebts },
+    { data: summaryCreditCards },
+    { data: summaryRealEstate },
+    { data: summaryMetals },
+    { data: summaryCrypto },
+    { data: summaryStocks },
+    { data: summaryCurrencies }
+  ] = await Promise.all([
+    supabase
+      .from("transactions")
+      .select("*")
+      .eq("user_id", user.id)
+      .order("date", { ascending: false })
+      .limit(1000),
+    supabase
+      .from("loans")
+      .select("*")
+      .eq("user_id", user.id),
+    supabase
+      .from("credit_cards")
+      .select("*")
+      .eq("user_id", user.id),
+    supabase
+      .from("real_estate")
+      .select("*")
+      .eq("user_id", user.id),
+    // Get latest market prices for portfolio calculation
+    supabase.from("metals").select("*").order("date", { ascending: false }).limit(20),
+    supabase.from("crypto").select("*").order("date", { ascending: false }).limit(50),
+    supabase.from("stocks").select("*").order("date", { ascending: false }).limit(50),
+    supabase.from("currencies").select("*").order("date", { ascending: false }).limit(30)
+  ]);
 
-  // Fetch user subscription status
-  const { data: subscriptionData } = await supabase
-    .from("user_subscriptions")
-    .select("subscription_status")
-    .eq("id", user.id)
-    .single();
+  // Set up basic data for FinancialSummary
+  const summaryData = {
+    transactions: summaryTransactions || [],
+    debtData: {
+      loans: summaryDebts || [],
+      creditCards: summaryCreditCards || []
+    },
+    realEstateData: summaryRealEstate || [],
+    marketData: {
+      metals: summaryMetals || [],
+      crypto: summaryCrypto || [],
+      stocks: summaryStocks || [],
+      currencies: summaryCurrencies || []
+    }
+  };
 
-  const isSubscribed =
-    subscriptionData?.subscription_status === "active" ||
-    subscriptionData?.subscription_status === "trialing";
+  // Generate currentPrices for FinancialSummary
+  const summaryCurrentPrices: Record<string, number> = {};
 
-  // Initialize data variables
+  // Get latest prices for each asset type
+  if (summaryData.marketData.crypto) {
+    summaryData.marketData.crypto.forEach(crypto => {
+      if (!summaryCurrentPrices[crypto.symbol] || new Date(crypto.date) > new Date(summaryData.marketData.crypto.find(c => c.symbol === crypto.symbol && summaryCurrentPrices[c.symbol])?.date || '')) {
+        summaryCurrentPrices[crypto.symbol] = crypto.price;
+      }
+    });
+  }
+
+  if (summaryData.marketData.stocks) {
+    summaryData.marketData.stocks.forEach(stock => {
+      if (!summaryCurrentPrices[stock.symbol] || new Date(stock.date) > new Date(summaryData.marketData.stocks.find(s => s.symbol === stock.symbol && summaryCurrentPrices[s.symbol])?.date || '')) {
+        summaryCurrentPrices[stock.symbol] = stock.price;
+      }
+    });
+  }
+
+  if (summaryData.marketData.metals) {
+    summaryData.marketData.metals.forEach(metal => {
+      const key = metal.metal.toUpperCase();
+      if (!summaryCurrentPrices[key] || new Date(metal.date) > new Date(summaryData.marketData.metals.find(m => m.metal.toUpperCase() === key && summaryCurrentPrices[key])?.date || '')) {
+        summaryCurrentPrices[key] = metal.price;
+      }
+    });
+  }
+
+  if (summaryData.marketData.currencies) {
+    summaryData.marketData.currencies.forEach(currency => {
+      if (!summaryCurrentPrices[currency.symbol] || new Date(currency.date) > new Date(summaryData.marketData.currencies.find(c => c.symbol === currency.symbol && summaryCurrentPrices[c.symbol])?.date || '')) {
+        summaryCurrentPrices[currency.symbol] = currency.price;
+      }
+    });
+  }
+
+  // Initialize component-specific data
+  let budgetData: BudgetData[] = [];
   let marketData: MarketData = {
     metals: [],
     crypto: [],
@@ -110,16 +176,15 @@ export default async function Page(props: any) {
     stocks: [],
     selectedCurrency: userProfile?.selected_currency || "USD",
   };
-  let budgetData: BudgetData[] = [];
-  let realEstateData: RealEstateProperty[] = [];
-  let transactionsData: Transaction[] = [];
-  let portfoliosData: Portfolio[] = [];
   let debtData: DebtData = {
     loans: [],
     creditCards: [],
   };
+  let realEstateData: RealEstateProperty[] = [];
+  let portfoliosData: Portfolio[] = [];
+  let transactionsData: Transaction[] = [];
 
-  // Conditionally fetch data based on the current tab for performance
+  // Fetch tab-specific data based on current tab
   switch (currentTab) {
     case "markets":
       const [
@@ -160,26 +225,8 @@ export default async function Page(props: any) {
       break;
 
     case "debt":
-      const [
-        { data: loans, error: loanError },
-        { data: creditCards, error: creditCardError }
-      ] = await Promise.all([
-        supabase
-          .from("loans")
-          .select("*")
-          .eq("user_id", user.id),
-        supabase
-          .from("credit_cards")
-          .select("*")
-          .eq("user_id", user.id)
-      ]);
-
-      debtData = {
-        loans: loans || [],
-        creditCards: creditCards || [],
-      };
-      if (loanError) console.error("Error fetching loan data:", loanError);
-      if (creditCardError) console.error("Error fetching credit card data:", creditCardError);
+      // Use summary data for debt tab
+      debtData = summaryData.debtData;
       break;
 
     case "real-estate":
@@ -194,7 +241,7 @@ export default async function Page(props: any) {
         supabase
           .from("portfolios")
           .select("*")
-          .eq("user_id", user.id),
+          .eq("user_id", user.id)
       ]);
 
       realEstateData = realEstate || [];
@@ -237,6 +284,7 @@ export default async function Page(props: any) {
         stocks: portfolioStocks || [],
         selectedCurrency: userProfile?.selected_currency || "USD",
       };
+
       if (portfolioError) console.error("Error fetching portfolio data:", portfolioError);
       if (portfolioTransactionError) console.error("Error fetching portfolio transaction data:", portfolioTransactionError);
       if (portfolioMetalsError) console.error("Error fetching portfolio metals data:", portfolioMetalsError);
@@ -246,23 +294,13 @@ export default async function Page(props: any) {
       break;
 
     case "transactions":
-      const { data: transactions, error: transactionError } = await supabase
-        .from("transactions")
-        .select("*")
-        .eq("user_id", user.id)
-        .order("date", { ascending: false })
-        .limit(1000);
-
-      transactionsData = transactions || [];
-      if (transactionError) console.error("Error fetching transaction data:", transactionError);
+      // Use summary data for transactions
+      transactionsData = summaryData.transactions;
       break;
 
     case "analytics":
       // Analytics needs both transaction data AND market data for historical prices
       const [
-        { data: analyticsLoans },
-        { data: analyticsCreditCards },
-        { data: analyticsTransactions },
         { data: analyticsPortfolios },
         // Add market data fetching for analytics
         { data: analyticsMetals, error: analyticsMetalsError },
@@ -271,39 +309,21 @@ export default async function Page(props: any) {
         { data: analyticsStocks, error: analyticsStocksError },
       ] = await Promise.all([
         supabase
-          .from("loans")
-          .select("*")
-          .eq("user_id", user.id),
-        supabase
-          .from("credit_cards")
-          .select("*")
-          .eq("user_id", user.id),
-        supabase
-          .from("transactions")
-          .select("*")
-          .eq("user_id", user.id)
-          .order("date", { ascending: false })
-          .limit(1000),
-        supabase
           .from("portfolios")
           .select("*")
           .eq("user_id", user.id),
-        // Fetch all market data for analytics
+        // Fetch all market data for historical analysis
         supabase.from("metals").select("*").order("date", { ascending: false }),
         supabase.from("crypto").select("*").order("date", { ascending: false }),
         supabase.from("currencies").select("*").order("date", { ascending: false }),
         supabase.from("stocks").select("*").order("date", { ascending: false }),
       ]);
 
-      // Set up all data for analytics
-      debtData = {
-        loans: analyticsLoans || [],
-        creditCards: analyticsCreditCards || [],
-      };
-      transactionsData = analyticsTransactions || [];
+      // Use summary data for analytics
+      transactionsData = summaryData.transactions;
+      debtData = summaryData.debtData;
       portfoliosData = analyticsPortfolios || [];
       
-      // Set up market data for analytics
       marketData = {
         metals: analyticsMetals || [],
         crypto: analyticsCrypto || [],
@@ -312,7 +332,6 @@ export default async function Page(props: any) {
         selectedCurrency: userProfile?.selected_currency || "USD",
       };
 
-      // Log any market data errors
       if (analyticsMetalsError) console.error("Error fetching analytics metals data:", analyticsMetalsError);
       if (analyticsCryptoError) console.error("Error fetching analytics crypto data:", analyticsCryptoError);
       if (analyticsCurrenciesError) console.error("Error fetching analytics currencies data:", analyticsCurrenciesError);
@@ -320,75 +339,32 @@ export default async function Page(props: any) {
       break;
 
     default:
-      // For default case, fetch minimal market data
-      const { data: defaultMetals } = await supabase
-        .from("metals")
-        .select("*")
-        .order("date", { ascending: false })
-        .limit(10);
-      
-      marketData.metals = defaultMetals || [];
+      // For budget tab, no additional data needed
       break;
   }
 
-  return (
-    <div className="min-h-screen flex flex-col bg-[var(--bg-primary)]">
-      <Header isSubscribed={isSubscribed} />
+  // Check if user has made their first transaction
+  const hasTransactions = summaryData.transactions.length > 0;
 
-      {/* Success message for checkout */}
-      {hasCheckoutSuccess && (
-        <div className="bg-green-600/20 border border-green-600/30 text-green-400 p-4 rounded-lg mb-6 mx-4">
-          <p className="text-center font-medium">
-            🎉 Success! Thank you for subscribing to Trakyz!
+  return (
+    <div className="min-h-screen bg-[var(--bg-primary)] text-[var(--text-primary)]">
+      <Header />
+      
+      {/* Welcome message for first-time users */}
+      {!hasTransactions && (
+        <div className="w-[90%] mx-auto mt-6 bg-[var(--accent-primary)] text-white p-4 rounded-lg">
+          <p className="text-center">
+            Thank you for subscribing to Trakyz!
           </p>
         </div>
       )}
 
-{/* Financial Summary with Real Data */}
+      {/* Financial Summary with Real Data - ALWAYS SHOWS COMPLETE DATA */}
       <FinancialSummary 
-        transactions={transactionsData}
-        debtData={debtData}
-        realEstateData={realEstateData}
-        currentPrices={(() => {
-          // Generate currentPrices from marketData similar to Analytics component
-          const prices: Record<string, number> = {}
-          
-          // Get latest prices for each asset
-          if (marketData.crypto) {
-            marketData.crypto.forEach(crypto => {
-              if (!prices[crypto.symbol] || new Date(crypto.date) > new Date(marketData.crypto.find(c => c.symbol === crypto.symbol && prices[c.symbol])?.date || '')) {
-                prices[crypto.symbol] = crypto.price
-              }
-            })
-          }
-          
-          if (marketData.stocks) {
-            marketData.stocks.forEach(stock => {
-              if (!prices[stock.symbol] || new Date(stock.date) > new Date(marketData.stocks.find(s => s.symbol === stock.symbol && prices[s.symbol])?.date || '')) {
-                prices[stock.symbol] = stock.price
-              }
-            })
-          }
-          
-          if (marketData.metals) {
-            marketData.metals.forEach(metal => {
-              const key = metal.metal.toUpperCase()
-              if (!prices[key] || new Date(metal.date) > new Date(marketData.metals.find(m => m.metal.toUpperCase() === key && prices[key])?.date || '')) {
-                prices[key] = metal.price
-              }
-            })
-          }
-          
-          if (marketData.currencies) {
-            marketData.currencies.forEach(currency => {
-              if (!prices[currency.symbol] || new Date(currency.date) > new Date(marketData.currencies.find(c => c.symbol === currency.symbol && prices[c.symbol])?.date || '')) {
-                prices[currency.symbol] = currency.price
-              }
-            })
-          }
-
-          return prices
-        })()}
+        transactions={summaryData.transactions}
+        debtData={summaryData.debtData}
+        realEstateData={summaryData.realEstateData}
+        currentPrices={summaryCurrentPrices}
       />
 
       {/* Main Content with proper width constraint */}

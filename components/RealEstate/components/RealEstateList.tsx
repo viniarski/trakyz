@@ -3,7 +3,7 @@
 'use client'
 
 import { useState, useMemo } from 'react'
-import { ChevronDown, ChevronUp, Search, MapPin, DollarSign, Calendar, TrendingUp, TrendingDown } from 'lucide-react'
+import { ChevronDown, ChevronUp, Search, MapPin, DollarSign, Calendar, TrendingUp, TrendingDown, Edit, Trash2 } from 'lucide-react'
 import { useCurrencyConverter } from '@/hooks/useCurrencyConverter'
 import type { RealEstateProperty } from '@/types/realestate'
 
@@ -272,15 +272,17 @@ export function RealEstateList({
                     <div className="flex items-center justify-center gap-2">
                       <button
                         onClick={() => onEditProperty(property)}
-                        className="px-3 py-1 text-sm bg-[var(--bg-hover)] text-[var(--text-primary)] rounded hover:bg-[var(--accent-primary)]/20 transition-colors"
+                        className="p-1 text-[var(--text-secondary)] hover:text-[var(--accent-primary)] rounded transition-colors"
+                        title="Edit Property"
                       >
-                        Edit
+                        <Edit className="h-4 w-4" />
                       </button>
                       <button
                         onClick={() => onDeleteProperty(property.id, property.property_address || 'Unknown Property')}
-                        className="px-3 py-1 text-sm bg-red-500/20 text-red-500 rounded hover:bg-red-500/30 transition-colors"
+                        className="p-1 text-[var(--text-secondary)] hover:text-red-500 rounded transition-colors"
+                        title="Delete Property"
                       >
-                        Delete
+                        <Trash2 className="h-4 w-4" />
                       </button>
                     </div>
                   </td>

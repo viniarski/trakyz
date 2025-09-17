@@ -41,7 +41,7 @@ export function AnalyticsHeader({
   const formatCurrency = (value: number) => formatPreciseValue(value)
   const formatPercentage = (value: number) => `${value >= 0 ? '+' : ''}${value.toFixed(2)}%`
 
-  // Tab Button Component
+  // Tab Button Component - Using original styling
   const TabButton = ({ id, label, active, onClick }: {
     id: string
     label: string
@@ -94,7 +94,6 @@ export function AnalyticsHeader({
       <div className="flex flex-wrap gap-2">
         <TabButton id="overview" label="Overview" active={activeTab === 'overview'} onClick={setActiveTab} />
         <TabButton id="performance" label="Performance" active={activeTab === 'performance'} onClick={setActiveTab} />
-        <TabButton id="allocation" label="Allocation" active={activeTab === 'allocation'} onClick={setActiveTab} />
         <TabButton id="insights" label="Insights" active={activeTab === 'insights'} onClick={setActiveTab} />
       </div>
     </>

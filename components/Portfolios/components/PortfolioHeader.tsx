@@ -7,6 +7,7 @@ import { Button } from '@/components/ui/button'
 import { Header } from '@/components/ui/DashboardHeader'
 import { useCurrencyConverter } from '@/hooks/useCurrencyConverter'
 import { Portfolio, PortfolioSummary as PortfolioSummaryType } from '@/types'
+import { useState } from 'react'
 
 interface PortfolioHeaderProps {
   setShowAddAsset: (value: boolean) => void
@@ -32,6 +33,24 @@ export function PortfolioHeader({
   hideBalances = false
 }: PortfolioHeaderProps) {
   const { formatPreciseValue } = useCurrencyConverter()
+  const [showCreatePortfolio, setShowCreatePortfolio] = useState(false)
+  const [newPortfolioName, setNewPortfolioName] = useState('')
+  const [isCreating, setIsCreating] = useState(false)
+
+  const handleCreatePortfolio = async () => {
+    if (!newPortfolioName.trim()) return
+    
+    try {
+      setIsCreating(true)
+      await onCreatePortfolio(newPortfolioName.trim())
+      setNewPortfolioName('')
+      setShowCreatePortfolio(false)
+    } catch (error) {
+      console.error('Error creating portfolio:', error)
+    } finally {
+      setIsCreating(false)
+    }
+  }
 
   const leftContent = (
     <>
@@ -51,8 +70,12 @@ export function PortfolioHeader({
         <select
           value={selectedPortfolio.id}
           onChange={(e) => {
-            const portfolio = portfolios.find(p => p.id === e.target.value)
-            if (portfolio) onSelectPortfolio(portfolio)
+            if (e.target.value === '__add_new__') {
+              setShowCreatePortfolio(true)
+            } else {
+              const portfolio = portfolios.find(p => p.id === e.target.value)
+              if (portfolio) onSelectPortfolio(portfolio)
+            }
           }}
           className="text-sm px-3 py-1.5 rounded-md transition-colors font-medium bg-transparent text-[var(--text-secondary)] hover:bg-[var(--bg-hover)] hover:text-[var(--text-primary)] focus:outline-none"
         >
@@ -62,6 +85,9 @@ export function PortfolioHeader({
               {portfolio.is_default ? ' (Default)' : ''}
             </option>
           ))}
+          <option value="__add_new__">
+            + Add New Portfolio
+          </option>
         </select>
       )}
     </>
@@ -116,5 +142,68 @@ export function PortfolioHeader({
     </>
   )
 
-  return <Header leftContent={leftContent} rightContent={rightContent} />
+  return (
+    <>
+      <Header leftContent={leftContent} rightContent={rightContent} />
+
+      {/* Create Portfolio Modal */}
+      {showCreatePortfolio && (
+        <div className="fixed inset-0 bg-black/80 flex items-center justify-center z-50">
+          <div className="bg-[var(--bg-secondary)] rounded-xl p-6 w-full max-w-md relative animate-scale-up">
+            <div className="flex items-center justify-between mb-6">
+              <h2 className="text-lg font-semibold text-[var(--text-primary)]">Create New Portfolio</h2>
+              <button
+                onClick={() => {
+                  setShowCreatePortfolio(false)
+                  setNewPortfolioName('')
+                }}
+                className="text-[var(--text-secondary)] hover:text-[var(--text-primary)] transition-colors"
+              >
+                ×
+              </button>
+            </div>
+
+            <div className="space-y-4">
+              <div>
+                <label className="block text-sm font-medium text-[var(--text-secondary)] mb-1">
+                  Portfolio Name
+                </label>
+                <input
+                  type="text"
+                  value={newPortfolioName}
+                  onChange={(e) => setNewPortfolioName(e.target.value)}
+                  placeholder="Enter portfolio name..."
+                  className="w-full p-2 rounded-lg bg-[var(--bg-hover)] text-[var(--text-primary)] border-0 focus:ring-2 focus:ring-[var(--accent-primary)]"
+                  onKeyDown={(e) => {
+                    if (e.key === 'Enter') {
+                      handleCreatePortfolio()
+                    }
+                  }}
+                />
+              </div>
+
+              <div className="flex gap-2">
+                <button
+                  onClick={() => {
+                    setShowCreatePortfolio(false)
+                    setNewPortfolioName('')
+                  }}
+                  className="flex-1 px-4 py-2 text-[var(--text-secondary)] hover:text-[var(--text-primary)] transition-colors"
+                >
+                  Cancel
+                </button>
+                <button
+                  onClick={handleCreatePortfolio}
+                  disabled={!newPortfolioName.trim() || isCreating}
+                  className="flex-1 px-4 py-2 bg-[var(--accent-primary)] text-white rounded-lg hover:bg-[var(--accent-secondary)] disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+                >
+                  {isCreating ? 'Creating...' : 'Create Portfolio'}
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
+    </>
+  )
 }
