@@ -5,7 +5,6 @@
 import Navigation from '@/components/ui/navigation'
 import PageHeader from '@/components/ui/PageHeader'
 import FeatureList from './components/feature-list'
-import CtaSection from './components/cta-section'
 
 export default function Roadmap() {
   return (
@@ -17,7 +16,6 @@ export default function Roadmap() {
           description="Discover what's coming next for Trakyz as we innovate to enhance your investment experience."
         />
         <FeatureList />
-        <CtaSection />
       </div>
     </div>
   )
