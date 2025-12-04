@@ -5,7 +5,6 @@ import type { Metadata } from 'next';
 import { Inter } from 'next/font/google';
 import { SpeedInsights } from "@vercel/speed-insights/next"
 import { Analytics } from "@vercel/analytics/react"
-import { GoogleAnalytics } from '@next/third-parties/google';
 import { Providers } from '@/lib/providers/providers';
 import { createClient } from '@/lib/supabase/server';
 import { cookies } from 'next/headers';
@@ -152,7 +151,6 @@ export default async function RootLayout({
         <Providers>
           {children}
         </Providers>
-        {gaId && <GoogleAnalytics gaId={gaId} />}
         <SpeedInsights />
         <Analytics />
         {/* Placeholder for cookie consent - implement as needed */}
